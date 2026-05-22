@@ -1,0 +1,13 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+overrides:
+  "@effect/cluster": "^0.58.2"
+  "@effect/experimental": "^0.60.0"
+  "@effect/rpc": "^0.75.1"
+  "@effect/sql": "^0.51.1"
+  "@effect/workflow": "^0.18.1"
+allowBuilds:
+  "@parcel/watcher": true
+  esbuild: true
+  msgpackr-extract: true
