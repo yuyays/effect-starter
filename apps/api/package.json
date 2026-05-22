@@ -21,10 +21,11 @@
     "@effect/platform-node": "^0.106.0",
     "@effect/rpc": "^0.75.1",
     "@effect/sql": "^0.51.1",
+    "@effect/sql-drizzle": "^0.50.0",
+    "@effect/sql-pg": "^0.52.1",
     "@effect/workflow": "^0.18.1",
     "drizzle-orm": "^0.44.0",
-    "effect": "^3.21.2",
-    "postgres": "^3.4.7"
+    "effect": "^3.21.2"
   },
   "devDependencies": {
     "@types/node": "^24.10.0",

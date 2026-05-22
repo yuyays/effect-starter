@@ -1,14 +1,11 @@
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
-import { Effect } from "effect";
-import { AppConfig } from "../config.js";
-import * as schema from "./schema.js";
+import { PgClient } from "@effect/sql-pg"
+import * as PgDrizzle from "@effect/sql-drizzle/Pg"
+import { Config, Layer } from "effect"
 
-export const makeDb = Effect.gen(function* () {
-  const config = yield* AppConfig;
-  const client = postgres(config.databaseUrl, { max: 1 });
+const PgLive = PgClient.layerConfig({
+  url: Config.redacted("DATABASE_URL"),
+})
 
-  return drizzle(client, { schema });
-});
+const DrizzleLive = PgDrizzle.layer.pipe(Layer.provide(PgLive))
 
-export type Db = Effect.Effect.Success<typeof makeDb>;
+export { DrizzleLive }
