@@ -1,6 +1,7 @@
 packages:
   - "apps/*"
   - "packages/*"
+minimumReleaseAge: "1 day"
 overrides:
   "@effect/cluster": "^0.58.2"
   "@effect/experimental": "^0.60.0"
