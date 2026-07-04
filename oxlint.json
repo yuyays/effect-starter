@@ -1,5 +1,8 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "options": {
+    "typeAware": true
+  },
   "categories": {
     "correctness": "error",
     "suspicious": "error",
@@ -10,7 +13,11 @@
   "rules": {
     "react/exhaustive-deps": "warn",
     "react/rules-of-hooks": "error",
-    "typescript/consistent-type-imports": "error"
+    "typescript/consistent-type-imports": "error",
+    "typescript/no-base-to-string": "warn",
+    "typescript/no-floating-promises": "warn",
+    "typescript/no-misused-spread": "warn",
+    "require-yield": "off"
   },
   "ignorePatterns": ["**/dist/**", "**/node_modules/**", "apps/web/src/routeTree.gen.ts"]
 }
