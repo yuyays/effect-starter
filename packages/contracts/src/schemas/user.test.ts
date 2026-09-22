@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Schema } from "effect";
+import { UsersListError } from "../http/errors.js";
 import { User } from "./user.js";
 
 describe("User schema", () => {
@@ -11,5 +12,15 @@ describe("User schema", () => {
     });
 
     expect(user.name).toBe("Ada");
+  });
+
+  it("decodes the typed users list error", () => {
+    const error = Schema.decodeUnknownSync(UsersListError)({
+      _tag: "UsersListError",
+      message: "Failed to list users",
+    });
+
+    expect(error).toBeInstanceOf(UsersListError);
+    expect(error.message).toBe("Failed to list users");
   });
 });
