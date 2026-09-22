@@ -8,7 +8,7 @@ const HealthLive = HttpApiBuilder.group(StarterApi, "health", (handlers) =>
 );
 
 const UsersLive = HttpApiBuilder.group(StarterApi, "users", (handlers) =>
-  handlers.handle("list", () => listUsers.pipe(Effect.orDie)),
+  handlers.handle("list", () => listUsers),
 );
 
 const ApiRoutes = HttpLayerRouter.addHttpApi(StarterApi, {

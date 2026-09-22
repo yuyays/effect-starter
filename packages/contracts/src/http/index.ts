@@ -1,6 +1,9 @@
 import { HttpApi, HttpApiEndpoint, HttpApiGroup } from "@effect/platform";
 import { Schema } from "effect";
 import { UsersResponse } from "../schemas/user.js";
+import { UsersListError } from "./errors.js";
+
+export { UsersListError } from "./errors.js";
 
 export const HealthResponse = Schema.Struct({
   ok: Schema.Boolean,
@@ -14,7 +17,9 @@ export class HealthApi extends HttpApiGroup.make("health").add(
 ) {}
 
 export class UsersApi extends HttpApiGroup.make("users").add(
-  HttpApiEndpoint.get("list", "/users").addSuccess(UsersResponse),
+  HttpApiEndpoint.get("list", "/users")
+    .addSuccess(UsersResponse)
+    .addError(UsersListError, { status: 500 }),
 ) {}
 
 export class StarterApi extends HttpApi.make("starter-api")
