@@ -5,6 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { usersQueryOptions } from "@/lib/users.js";
 
 export const Route = createFileRoute("/")({
+  loader: ({ context }) => {
+    void context.queryClient.prefetchQuery(usersQueryOptions);
+  },
   component: IndexRoute,
 });
 
