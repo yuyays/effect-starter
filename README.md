@@ -1,6 +1,10 @@
 # effect-starter
 
-Full-stack TypeScript starter with React, TanStack Router/Query, Effect Platform, Drizzle, Supabase Postgres, Oxlint, and Oxfmt.
+Full-stack TypeScript starter with React, TanStack Router/Query, Effect v4, Drizzle, Supabase Postgres, Oxlint, and Oxfmt.
+
+Effect and its Node/PostgreSQL adapters use v4. Drizzle ORM and Kit are pinned to
+`1.0.0-rc.5-5935859` because this build fixes compatibility with stable Effect v4.
+The API uses Drizzle’s native `effect-postgres` integration through the `Database` service.
 
 ## Setup
 

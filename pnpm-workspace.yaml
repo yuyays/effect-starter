@@ -1,13 +1,7 @@
 packages:
   - "apps/*"
   - "packages/*"
-minimumReleaseAge: "1 day"
-overrides:
-  "@effect/cluster": "^0.60.2"
-  "@effect/experimental": "^0.61.1"
-  "@effect/rpc": "^0.76.2"
-  "@effect/sql": "^0.52.1"
-  "@effect/workflow": "^0.19.1"
+minimumReleaseAge: 1440
 allowBuilds:
   "@parcel/watcher": true
   esbuild: true

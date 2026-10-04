@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Schema } from "effect";
 import { UsersListError } from "../http/errors.js";
-import { User } from "./user.js";
+import { User, UserId } from "./user.js";
 
 describe("User schema", () => {
   it("decodes a valid user", () => {
@@ -12,6 +12,24 @@ describe("User schema", () => {
     });
 
     expect(user.name).toBe("Ada");
+  });
+
+  it("preserves UUID shape validation without requiring version or variant bits", () => {
+    const user = Schema.decodeUnknownSync(User)({
+      id: "00000000-0000-0000-0000-000000000001",
+      name: "Ada",
+      createdAt: "2026-01-01T00:00:00.000Z",
+    });
+
+    expect(user.id).toBe("00000000-0000-0000-0000-000000000001");
+  });
+
+  it.each([
+    "not-a-uuid",
+    "00000000000000000000000000000001",
+    "g0000000-0000-0000-0000-000000000001",
+  ])("rejects malformed UUID %s", (id) => {
+    expect(() => Schema.decodeUnknownSync(UserId)(id)).toThrow();
   });
 
   it("decodes the typed users list error", () => {

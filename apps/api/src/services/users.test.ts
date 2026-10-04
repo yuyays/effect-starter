@@ -1,5 +1,5 @@
-import { PgDrizzle } from "@effect/sql-drizzle/Pg";
-import { Context, Effect, Either } from "effect";
+import { Database } from "../db/client.js";
+import { Context, Effect, Result } from "effect";
 import { describe, expect, it } from "vitest";
 import { UsersListError } from "@effect-starter/contracts/http";
 import { listUsers } from "./users.js";
@@ -9,10 +9,10 @@ const makeDb = (query: Effect.Effect<ReadonlyArray<unknown>, unknown>) =>
     select: () => ({
       from: () => query,
     }),
-  }) as unknown as Context.Tag.Service<typeof PgDrizzle>;
+  }) as unknown as Context.Service.Shape<typeof Database>;
 
-const runWithDb = (db: Context.Tag.Service<typeof PgDrizzle>) =>
-  Effect.runPromise(listUsers.pipe(Effect.provideService(PgDrizzle, db)));
+const runWithDb = (db: Context.Service.Shape<typeof Database>) =>
+  Effect.runPromise(listUsers.pipe(Effect.provideService(Database, db)));
 
 describe("listUsers", () => {
   it("decodes rows returned by the database", async () => {
@@ -33,14 +33,14 @@ describe("listUsers", () => {
 
   it("translates database failures into the API error", async () => {
     const program = listUsers.pipe(
-      Effect.provideService(PgDrizzle, makeDb(Effect.fail(new Error("database unavailable")))),
+      Effect.provideService(Database, makeDb(Effect.fail(new Error("database unavailable")))),
     );
-    const result = await Effect.runPromise(Effect.either(program));
+    const result = await Effect.runPromise(Effect.result(program));
 
-    expect(Either.isLeft(result)).toBe(true);
-    if (Either.isLeft(result)) {
-      expect(result.left).toBeInstanceOf(UsersListError);
-      expect(result.left.message).toBe("Failed to list users");
+    expect(Result.isFailure(result)).toBe(true);
+    if (Result.isFailure(result)) {
+      expect(result.failure).toBeInstanceOf(UsersListError);
+      expect(result.failure.message).toBe("Failed to list users");
     }
   });
 });

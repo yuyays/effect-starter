@@ -1,11 +1,15 @@
 import { PgClient } from "@effect/sql-pg";
-import * as PgDrizzle from "@effect/sql-drizzle/Pg";
-import { Config, Layer } from "effect";
+import * as PgDrizzle from "drizzle-orm/effect-postgres";
+import { Config, Context, Effect, Layer } from "effect";
+
+const makeDb = PgDrizzle.makeWithDefaults();
+
+export class Database extends Context.Service<Database, Effect.Success<typeof makeDb>>()(
+  "Database",
+) {}
 
 const PgLive = PgClient.layerConfig({
-  url: Config.redacted("DATABASE_URL"),
+  url: Config.Redacted("DATABASE_URL"),
 });
 
-const DrizzleLive = PgDrizzle.layer.pipe(Layer.provide(PgLive));
-
-export { DrizzleLive };
+export const DrizzleLive = Layer.effect(Database, makeDb).pipe(Layer.provide(PgLive));
