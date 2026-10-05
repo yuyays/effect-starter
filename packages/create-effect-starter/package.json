@@ -1,0 +1,28 @@
+{
+  "name": "create-effect-starter",
+  "version": "0.1.0",
+  "description": "Create a full-stack Effect v4, React, and Drizzle project",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yuyays/effect-starter.git",
+    "directory": "packages/create-effect-starter"
+  },
+  "bin": {
+    "create-effect-starter": "cli.js"
+  },
+  "files": [
+    "cli.js",
+    "scaffold.js",
+    "template",
+    "README.md"
+  ],
+  "type": "module",
+  "scripts": {
+    "build": "node build-template.js",
+    "prepack": "node build-template.js",
+    "test": "node build-template.js && node --test scaffold.test.js"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

@@ -8,6 +8,23 @@ The API uses Drizzle’s native `effect-postgres` integration through the `Datab
 
 ## Setup
 
+### Scaffolding CLI
+
+The `create-effect-starter` package creates a project with your chosen name,
+including workspace packages, internal imports, scripts, and the page title.
+Once published to npm, use `pnpm create effect-starter my-app`.
+
+To try the CLI locally now:
+
+```sh
+pnpm --filter create-effect-starter build
+node packages/create-effect-starter/cli.js /tmp/my-app
+```
+
+See [the CLI README](packages/create-effect-starter/README.md) for packaging instructions.
+
+### Working on this repository
+
 ```sh
 corepack enable
 pnpm install

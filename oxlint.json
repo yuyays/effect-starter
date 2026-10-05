@@ -19,5 +19,10 @@
     "typescript/no-misused-spread": "warn",
     "require-yield": "off"
   },
-  "ignorePatterns": ["**/dist/**", "**/node_modules/**", "apps/web/src/routeTree.gen.ts"]
+  "ignorePatterns": [
+    "**/dist/**",
+    "**/node_modules/**",
+    "apps/web/src/routeTree.gen.ts",
+    "packages/create-effect-starter/template/**"
+  ]
 }
