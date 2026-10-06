@@ -33,9 +33,7 @@ function IndexRoute() {
         <Card>
           <CardHeader>
             <CardTitle>Users</CardTitle>
-            <CardDescription>
-              Read-only example backed by Drizzle and PostgreSQL.
-            </CardDescription>
+            <CardDescription>Read-only example backed by Drizzle and PostgreSQL.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Button onClick={() => void usersQuery.refetch()} disabled={usersQuery.isFetching}>

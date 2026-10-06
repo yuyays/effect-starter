@@ -27,7 +27,7 @@ if (args.includes("--help") || args.includes("-h")) {
     }
     const project = await scaffold(directory);
     console.log(
-      `\nCreated ${project.name} at ${project.destination}\n\nNext steps:\n  cd ${JSON.stringify(directory)}\n  corepack enable\n  pnpm install\n  # Set DATABASE_URL in apps/api/.env\n  pnpm dev`,
+      `\nCreated ${project.name} at ${project.destination}\n\nNext steps:\n  cd ${JSON.stringify(directory)}\n  pnpm install\n  # Set DATABASE_URL in apps/api/.env\n  pnpm --filter @${project.name}/api db:generate\n  pnpm --filter @${project.name}/api db:migrate\n  pnpm dev`,
     );
   } catch (error) {
     console.error(`Error: ${error.message}`);
