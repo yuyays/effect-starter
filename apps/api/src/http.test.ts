@@ -1,5 +1,5 @@
 import { NodeHttpServer } from "@effect/platform-node";
-import { Context, Effect, Layer } from "effect";
+import { Effect, Layer, type Context } from "effect";
 import { HttpRouter } from "effect/http";
 import { HttpApiClient } from "effect/http-api";
 import { FetchHttpClient } from "effect/http";

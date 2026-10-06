@@ -1,5 +1,5 @@
 import { Database } from "../db/client.js";
-import { Context, Effect, Result } from "effect";
+import { Effect, Result, type Context } from "effect";
 import { describe, expect, it } from "vitest";
 import { UsersListError } from "@effect-starter/contracts/http";
 import { listUsers } from "./users.js";

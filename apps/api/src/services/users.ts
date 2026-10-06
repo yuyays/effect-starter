@@ -9,7 +9,7 @@ export const listUsers = Effect.gen(function* () {
   const rows = yield* db.select().from(users);
   return yield* Schema.decodeUnknownEffect(UsersResponse)(rows);
 }).pipe(
-  Effect.tapError(() => Effect.logError("Failed to list users")),
+  Effect.tapError((error) => Effect.logError("Failed to list users", error)),
   Effect.mapError(() => new UsersListError({ message: "Failed to list users" })),
   Effect.withSpan("users.list"),
 );

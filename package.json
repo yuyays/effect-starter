@@ -2,6 +2,7 @@
   "name": "effect-starter",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "pnpm -r --parallel dev",
@@ -12,9 +13,6 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "lint": "oxlint .",
-    "lint:type-aware": "oxlint . --type-aware",
-    "lint:fix": "oxlint . --fix",
-    "format": "oxfmt .",
     "format:check": "oxfmt . --check",
     "prepare": "effect-tsgo patch --typescript"
   },

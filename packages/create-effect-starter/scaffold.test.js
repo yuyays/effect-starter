@@ -40,6 +40,11 @@ test("CLI generates a renamed project without generator artifacts", async (t) =>
   }
   assert.deepEqual(await readdir(join(project, "packages")), ["contracts"]);
   assert.match(await readFile(join(project, ".gitignore"), "utf8"), /^\.env$/m);
+  assert.equal(
+    await readFile(join(project, "LICENSE"), "utf8"),
+    await readFile(new URL("../../LICENSE", import.meta.url), "utf8"),
+  );
+  assert.equal(manifest.license, "MIT");
   const lockfile = await readFile(join(project, "pnpm-lock.yaml"), "utf8");
   assert.ok(lockfile.includes("@my-app/contracts"));
   assert.ok(!lockfile.includes("effect-starter"));

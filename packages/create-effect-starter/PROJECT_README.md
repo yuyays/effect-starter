@@ -1,5 +1,7 @@
 # effect-starter
 
+Licensed under the [MIT License](LICENSE).
+
 Full-stack TypeScript app with React, TanStack Router/Query, Effect v4, Drizzle,
 PostgreSQL, Oxlint, and Oxfmt. Requires Node.js 24+ and pnpm.
 

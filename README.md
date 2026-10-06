@@ -1,5 +1,7 @@
 # effect-starter
 
+Licensed under the [MIT License](LICENSE).
+
 Full-stack TypeScript starter with React, TanStack Router/Query, Effect v4, Drizzle, PostgreSQL, Oxlint, and Oxfmt.
 
 Effect and its Node/PostgreSQL adapters use v4. Drizzle ORM and Kit are pinned to

@@ -2,6 +2,7 @@
   "name": "create-effect-starter",
   "version": "0.1.0",
   "description": "Create a full-stack Effect v4, React, and Drizzle project",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/yuyays/effect-starter.git",
