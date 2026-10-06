@@ -21,13 +21,12 @@ database and install dependencies. It does not install dependencies or initializ
 From the repository root:
 
 ```sh
-pnpm --filter create-effect-starter build
-node packages/create-effect-starter/cli.js /tmp/my-effect-app
+pnpm scaffold /tmp/my-effect-app
 ```
 
-The build command refreshes the CLI's template from this repository. The `node`
-command creates a separate project at `/tmp/my-effect-app`; it does not run that
-project. To use it, change into that directory, install dependencies, set its
+This builds the CLI's template from this repository and creates a separate
+project at `/tmp/my-effect-app`; it does not run that project. To use it, change
+into that directory, install dependencies, set its
 `apps/api/.env` `DATABASE_URL` to a PostgreSQL database, and run `pnpm dev`.
 
 To test or package the CLI itself:

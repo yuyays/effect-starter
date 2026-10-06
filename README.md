@@ -12,17 +12,16 @@ Requires Node.js 24+ and pnpm 11. From this repository, create a new project
 with your own name:
 
 ```sh
-pnpm --filter create-effect-starter build
-node packages/create-effect-starter/cli.js ../my-app
+pnpm scaffold ../my-app
 cd ../my-app
 pnpm install
 ```
 
-The first command builds the generator's template. The second creates a separate
-project in a sibling directory named `my-app` and renames its packages, imports,
-scripts, and page title. Choose another directory name for your app. The generator
-also copies the `.env.example` files to `.env` files; it does not install
-dependencies or create a database.
+`pnpm scaffold` first builds a template from this repository, then creates a
+separate project in a sibling directory named `my-app`. It renames the packages,
+imports, scripts, and page title. Choose another directory name for your app.
+The generator also copies the `.env.example` files to `.env` files; it does not
+install dependencies or create a database.
 
 Set `DATABASE_URL` in `apps/api/.env` to a running PostgreSQL database. The
 example URL points to a local database; a Supabase Postgres connection string
@@ -38,7 +37,7 @@ Web runs on `http://localhost:5173`. API runs on `http://localhost:3000`.
 API docs are at `http://localhost:3000/docs`.
 
 Once the generator is published to npm, `pnpm create effect-starter my-app`
-will replace the first two commands. See [the CLI README](packages/create-effect-starter/README.md)
+will work without cloning this repository. See [the CLI README](packages/create-effect-starter/README.md)
 for packaging instructions.
 
 ## Work on this starter

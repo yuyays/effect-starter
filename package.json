@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "pnpm -r --parallel dev",
+    "scaffold": "node packages/create-effect-starter/build-template.js && node packages/create-effect-starter/cli.js",
     "dev:web": "pnpm --filter @effect-starter/web dev",
     "dev:api": "pnpm --filter @effect-starter/api dev",
     "build": "pnpm -r build",
