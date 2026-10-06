@@ -23,6 +23,16 @@ From the repository root:
 ```sh
 pnpm --filter create-effect-starter build
 node packages/create-effect-starter/cli.js /tmp/my-effect-app
+```
+
+The build command refreshes the CLI's template from this repository. The `node`
+command creates a separate project at `/tmp/my-effect-app`; it does not run that
+project. To use it, change into that directory, install dependencies, set its
+`apps/api/.env` `DATABASE_URL` to a PostgreSQL database, and run `pnpm dev`.
+
+To test or package the CLI itself:
+
+```sh
 pnpm --filter create-effect-starter test
 pnpm --filter create-effect-starter pack --out /tmp/create-effect-starter.tgz
 ```

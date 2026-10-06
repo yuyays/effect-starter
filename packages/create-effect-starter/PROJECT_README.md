@@ -1,7 +1,7 @@
 # effect-starter
 
 Full-stack TypeScript app with React, TanStack Router/Query, Effect v4, Drizzle,
-Supabase Postgres, Oxlint, and Oxfmt. Requires Node.js 24+ and pnpm.
+PostgreSQL, Oxlint, and Oxfmt. Requires Node.js 24+ and pnpm.
 
 ## Setup
 
@@ -10,7 +10,9 @@ corepack enable
 pnpm install
 ```
 
-Set `DATABASE_URL` in `apps/api/.env`, then run `pnpm dev`.
+Set `DATABASE_URL` in `apps/api/.env` to a PostgreSQL connection string, then run
+`pnpm dev`. The example URL points to a local database; a Supabase Postgres
+connection string also works. You need a running database at that address.
 The environment files have already been created from the included examples.
 
 Web runs on http://localhost:5173. API runs on http://localhost:3000.

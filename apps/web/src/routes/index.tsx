@@ -34,7 +34,7 @@ function IndexRoute() {
           <CardHeader>
             <CardTitle>Users</CardTitle>
             <CardDescription>
-              Read-only example backed by Drizzle and Supabase Postgres.
+              Read-only example backed by Drizzle and PostgreSQL.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
