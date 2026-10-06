@@ -15,13 +15,15 @@
     "lint:type-aware": "oxlint . --type-aware",
     "lint:fix": "oxlint . --fix",
     "format": "oxfmt .",
-    "format:check": "oxfmt . --check"
+    "format:check": "oxfmt . --check",
+    "prepare": "effect-tsgo patch --typescript"
   },
   "devDependencies": {
+    "@effect/tsgo": "0.48.1",
     "oxfmt": "^0.70.0",
     "oxlint": "^1.85.0",
     "oxlint-tsgolint": "7.0.2002",
-    "typescript": "^7.0.2"
+    "typescript": "7.0.2"
   },
   "engines": {
     "node": ">=24"

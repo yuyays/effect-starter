@@ -25,6 +25,8 @@ Web runs on http://localhost:5173. API runs on http://localhost:3000.
 API docs are at http://localhost:3000/docs.
 
 Drizzle ORM and Kit are pinned to `1.0.0-rc.5-5935859` for stable Effect v4 compatibility.
+`@effect/tsgo` adds Effect diagnostics to `pnpm typecheck`. Select the workspace
+TypeScript version in your editor to use its Effect diagnostics and refactors there too.
 
 ## Verify changes
 

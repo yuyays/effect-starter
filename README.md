@@ -5,6 +5,9 @@ Full-stack TypeScript starter with React, TanStack Router/Query, Effect v4, Driz
 Effect and its Node/PostgreSQL adapters use v4. Drizzle ORM and Kit are pinned to
 `1.0.0-rc.5-5935859` because this build fixes compatibility with stable Effect v4.
 The API uses Drizzle’s native `effect-postgres` integration through the `Database` service.
+`@effect/tsgo` adds Effect diagnostics to `pnpm typecheck`. After installing
+dependencies, select the workspace TypeScript version in your editor to use its
+Effect diagnostics and refactors there too.
 
 ## Create your project
 
