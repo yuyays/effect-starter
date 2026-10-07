@@ -38,13 +38,14 @@ async function response(url) {
 async function smokeDev(packageManager, destination) {
   const apiPort = await freePort();
   const webPort = await freePort();
+  // Match the IPv4 probes even when localhost resolves to IPv6 on CI.
   // Use private ports only in this disposable fixture, including its API proxy.
   const configPath = join(destination, "apps/web/vite.config.ts");
   const config = await readFile(configPath, "utf8");
   await writeFile(
     configPath,
     config
-      .replace("server: {", `server: { port: ${webPort}, strictPort: true,`)
+      .replace("server: {", `server: { host: "127.0.0.1", port: ${webPort}, strictPort: true,`)
       .replaceAll("http://localhost:3000", `http://127.0.0.1:${apiPort}`),
   );
   const child = spawn(packageManager, ["run", "dev"], {
