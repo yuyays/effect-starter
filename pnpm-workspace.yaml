@@ -6,3 +6,11 @@ allowBuilds:
   "@parcel/watcher": true
   esbuild: true
   msgpackr-extract: true
+overrides:
+  "vite@*": npm:@voidzero-dev/vite-plus-core@1.0.0
+  "vitest@*": 5.0.1
+
+# Vite+ core uses the toolchain version for its Vite 8-compatible alias.
+peerDependencyRules:
+  allowedVersions:
+    vite: "1.0.0"

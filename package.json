@@ -3,28 +3,34 @@
   "version": "0.1.0",
   "private": true,
   "license": "MIT",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "type": "module",
   "scripts": {
-    "dev": "pnpm -r --parallel dev",
+    "dev": "vp run --filter \"@effect-starter/*\" --parallel dev",
     "create:app": "node packages/create-effect-starter/build-template.js && node packages/create-effect-starter/cli.js",
-    "dev:web": "pnpm --filter @effect-starter/web dev",
-    "dev:api": "pnpm --filter @effect-starter/api dev",
-    "build": "pnpm -r build",
-    "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r test",
-    "lint": "oxlint .",
-    "format:check": "oxfmt . --check",
-    "prepare": "effect-tsgo patch --typescript"
+    "dev:web": "vp run @effect-starter/web#dev",
+    "dev:api": "vp run @effect-starter/api#dev",
+    "build": "vp run --filter \"@effect-starter/*\" build",
+    "typecheck": "vp run --filter \"@effect-starter/*\" typecheck",
+    "test": "vp run --filter \"@effect-starter/*\" test && node packages/create-effect-starter/build-template.js && node --test packages/create-effect-starter/create-project.test.js",
+    "lint": "vp lint .",
+    "format:check": "vp fmt . --check",
+    "prepare": "effect-tsgo patch --typescript",
+    "db:generate": "vp run @effect-starter/api#db:generate",
+    "db:migrate": "vp run @effect-starter/api#db:migrate",
+    "db:studio": "vp run @effect-starter/api#db:studio",
+    "test:generated": "node packages/create-effect-starter/build-template.js && node packages/create-effect-starter/verify-generated.js"
   },
   "devDependencies": {
     "@effect/tsgo": "0.48.1",
-    "oxfmt": "^0.70.0",
-    "oxlint": "^1.85.0",
-    "oxlint-tsgolint": "7.0.2002",
-    "typescript": "7.0.2"
+    "typescript": "7.0.2",
+    "vite-plus": "1.0.0"
   },
   "engines": {
-    "node": ">=24"
+    "node": ">=24.11.0"
   },
   "packageManager": "pnpm@11.7.0"
 }

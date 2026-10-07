@@ -8,11 +8,10 @@ const entries = [
   ".github",
   ".gitignore",
   "LICENSE",
-  ".oxfmtrc.json",
-  ".oxlintrc.json",
   "package.json",
   "pnpm-workspace.yaml",
   "tsconfig.base.json",
+  "vite.config.ts",
 ];
 const excluded = new Set(["node_modules", "dist", "coverage", ".git", ".DS_Store"]);
 
@@ -34,6 +33,8 @@ await cp(new URL("./PROJECT_README.md", import.meta.url), new URL("README.md", t
 const manifestPath = new URL("package.json", template);
 const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
 delete manifest.scripts["create:app"];
+delete manifest.scripts["test:generated"];
+manifest.scripts.test = 'vp run --filter "@effect-starter/*" test';
 await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 const lockfile = await readFile(new URL("pnpm-lock.yaml", root), "utf8");
 await writeFile(

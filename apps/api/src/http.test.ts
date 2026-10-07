@@ -5,7 +5,7 @@ import { HttpApiClient } from "effect/http-api";
 import { FetchHttpClient } from "effect/http";
 import { StarterApi } from "@effect-starter/contracts/http";
 import { DateTime } from "effect";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { Database } from "./db/client.js";
 import { HttpLive } from "./http.js";
 

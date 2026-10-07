@@ -1,0 +1,39 @@
+import { defineConfig } from "vite-plus";
+
+export default defineConfig({
+  lint: {
+    options: {
+      typeAware: true,
+    },
+    categories: {
+      correctness: "error",
+      suspicious: "error",
+      perf: "warn",
+    },
+    plugins: ["react", "typescript", "import", "vitest"],
+    rules: {
+      "react/exhaustive-deps": "warn",
+      "react/rules-of-hooks": "error",
+      "react/react-in-jsx-scope": "off",
+      "typescript/consistent-type-imports": "error",
+      "typescript/no-base-to-string": "warn",
+      "typescript/no-floating-promises": "warn",
+      "typescript/no-misused-spread": "warn",
+      "typescript/no-unsafe-type-assertion": "off",
+      "import/no-unassigned-import": "off",
+      "vitest/no-conditional-expect": "off",
+      "vitest/require-to-throw-message": "off",
+      "no-await-in-loop": "off",
+      "require-yield": "off",
+    },
+    ignorePatterns: [
+      "**/dist/**",
+      "**/node_modules/**",
+      "apps/web/src/routeTree.gen.ts",
+      "packages/create-effect-starter/template/**",
+    ],
+  },
+  fmt: {
+    ignorePatterns: ["apps/web/src/routeTree.gen.ts", "packages/create-effect-starter/template/**"],
+  },
+});

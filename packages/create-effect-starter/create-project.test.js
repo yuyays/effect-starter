@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
+import { versions } from "vite-plus/versions";
 import { createProject } from "./create-project.js";
 
 async function temporary(t) {
@@ -13,7 +14,7 @@ async function temporary(t) {
   return directory;
 }
 
-test("CLI generates a renamed project without generator artifacts", async (t) => {
+void test("CLI generates a renamed project without generator artifacts", async (t) => {
   const directory = await temporary(t);
   const result = spawnSync(
     process.execPath,
@@ -29,7 +30,7 @@ test("CLI generates a renamed project without generator artifacts", async (t) =>
   const manifest = JSON.parse(await readFile(join(project, "package.json"), "utf8"));
   assert.equal(manifest.name, "my-app");
   assert.ok(!("create:app" in manifest.scripts));
-  assert.equal(manifest.scripts["dev:api"], "pnpm --filter @my-app/api dev");
+  assert.equal(manifest.scripts["dev:api"], "vp run @my-app/api#dev");
   for (const [location, name] of [
     ["apps/api", "api"],
     ["apps/web", "web"],
@@ -74,7 +75,7 @@ test("CLI generates a renamed project without generator artifacts", async (t) =>
   );
 });
 
-test("rejects nonempty destinations without changing their contents", async (t) => {
+void test("rejects nonempty destinations without changing their contents", async (t) => {
   const directory = await temporary(t);
   const destination = join(directory, "my-app");
   await mkdir(destination);
@@ -84,7 +85,7 @@ test("rejects nonempty destinations without changing their contents", async (t) 
   assert.equal(await readFile(join(destination, "keep.txt"), "utf8"), "keep me");
 });
 
-test("supports an existing empty directory and rejects symlinks", async (t) => {
+void test("supports an existing empty directory and rejects symlinks", async (t) => {
   const directory = await temporary(t);
   await mkdir(join(directory, "empty-app"));
   await createProject("empty-app", directory);
@@ -94,7 +95,7 @@ test("supports an existing empty directory and rejects symlinks", async (t) => {
   assert.deepEqual(await readdir(join(directory, "target")), []);
 });
 
-test("invalid names fail before creating files", async (t) => {
+void test("invalid names fail before creating files", async (t) => {
   const directory = await temporary(t);
   for (const name of ["My App", "@scope", "_app", "a".repeat(101)]) {
     await assert.rejects(createProject(name, directory), /Use a project name/);
@@ -102,7 +103,7 @@ test("invalid names fail before creating files", async (t) => {
   assert.deepEqual(await readdir(directory), []);
 });
 
-test("help and missing arguments do not create a project", async (t) => {
+void test("help and missing arguments do not create a project", async (t) => {
   const directory = await temporary(t);
   const cli = fileURLToPath(new URL("./cli.js", import.meta.url));
   const help = spawnSync(process.execPath, [cli, "--help"], { cwd: directory, encoding: "utf8" });
@@ -111,5 +112,62 @@ test("help and missing arguments do not create a project", async (t) => {
   const missing = spawnSync(process.execPath, [cli], { cwd: directory, encoding: "utf8" });
   assert.equal(missing.status, 1);
   assert.match(missing.stderr, /Provide a project directory/);
+  assert.deepEqual(await readdir(directory), []);
+});
+
+void test("Bun CLI emits Bun configuration, instructions, and CI", async (t) => {
+  const directory = await temporary(t);
+  const result = spawnSync(
+    process.execPath,
+    [fileURLToPath(new URL("./cli.js", import.meta.url)), "bun-app", "--package-manager", "bun"],
+    { cwd: directory, encoding: "utf8" },
+  );
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /bun install/);
+  assert.match(result.stdout, /bun run db:migrate/);
+  const project = join(directory, "bun-app");
+  const manifest = JSON.parse(await readFile(join(project, "package.json"), "utf8"));
+  assert.equal(manifest.packageManager, "bun@1.4.2");
+  assert.deepEqual(manifest.workspaces, ["apps/*", "packages/*"]);
+  assert.equal(manifest.overrides.vite, manifest.devDependencies.vite);
+  assert.equal(
+    manifest.overrides.vite,
+    `npm:@voidzero-dev/vite-plus-core@${manifest.devDependencies["vite-plus"]}`,
+  );
+  assert.equal(manifest.overrides.vitest, versions.vitest);
+  assert.ok(manifest.trustedDependencies.includes("esbuild"));
+  const files = await readdir(project);
+  assert.ok(!files.some((file) => file.startsWith("pnpm")));
+  assert.match(await readFile(join(project, "bunfig.toml"), "utf8"), /minimumReleaseAge = 86400/);
+  const readme = await readFile(join(project, "README.md"), "utf8");
+  assert.match(readme, /bun run typecheck/);
+  assert.match(readme, /Commit it before pushing/);
+  assert.ok(!readme.includes("{{"));
+  const ci = await readFile(join(project, ".github/workflows/ci.yml"), "utf8");
+  assert.match(ci, /bun install --frozen-lockfile/);
+  assert.match(ci, /bun run test/);
+  assert.ok(!ci.includes("pnpm"));
+  assert.ok(!manifest.scripts.test.includes("create-effect-starter"));
+});
+
+void test("invalid package managers and CLI flags fail before creating files", async (t) => {
+  const directory = await temporary(t);
+  await assert.rejects(
+    createProject("my-app", directory, { packageManager: "npm" }),
+    /Unsupported package manager/,
+  );
+  const cli = fileURLToPath(new URL("./cli.js", import.meta.url));
+  for (const args of [
+    ["my-app", "--package-manager", "npm"],
+    ["my-app", "--package-manager"],
+    ["my-app", "--unknown"],
+    ["my-app", "--package-manager", "bun", "--package-manager", "pnpm"],
+  ]) {
+    const result = spawnSync(process.execPath, [cli, ...args], {
+      cwd: directory,
+      encoding: "utf8",
+    });
+    assert.equal(result.status, 1);
+  }
   assert.deepEqual(await readdir(directory), []);
 });

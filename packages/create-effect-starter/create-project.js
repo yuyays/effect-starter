@@ -2,7 +2,11 @@ import { lstat, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-export async function createProject(directory, cwd = process.cwd()) {
+import { configurePackageManager, getPackageManager } from "./package-manager.js";
+
+export async function createProject(directory, cwd = process.cwd(), options = {}) {
+  const packageManager = options.packageManager ?? "pnpm";
+  getPackageManager(packageManager);
   const destination = resolve(cwd, directory);
   const name = basename(destination);
   if (!/^[a-z0-9][a-z0-9-]*$/.test(name) || name.length > 100) {
@@ -33,7 +37,8 @@ export async function createProject(directory, cwd = process.cwd()) {
     const example = await readFile(join(destination, "apps", app, ".env.example"));
     await writeFile(join(destination, "apps", app, ".env"), example, { flag: "wx" });
   }
-  return { destination, name };
+  await configurePackageManager(destination, packageManager);
+  return { destination, name, packageManager };
 }
 
 async function copy(source, destination, name) {

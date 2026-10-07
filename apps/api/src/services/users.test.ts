@@ -1,6 +1,6 @@
 import { Database } from "../db/client.js";
 import { Effect, Result, type Context } from "effect";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { UsersListError } from "@effect-starter/contracts/http";
 import { listUsers } from "./users.js";
 
