@@ -1,6 +1,6 @@
 # create-effect-starter
 
-Scaffold a full-stack Effect v4, React, and Drizzle project with your own project name.
+Create a full-stack Effect v4, React, and Drizzle project with your own project name.
 Requires Node.js 24+ and pnpm.
 
 After this package is published to npm:
@@ -21,7 +21,7 @@ database and install dependencies. It does not install dependencies or initializ
 From the repository root:
 
 ```sh
-pnpm scaffold /tmp/my-effect-app
+pnpm create:app /tmp/my-effect-app
 ```
 
 This builds the CLI's template from this repository and creates a separate

@@ -2,7 +2,7 @@ import { lstat, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-export async function scaffold(directory, cwd = process.cwd()) {
+export async function createProject(directory, cwd = process.cwd()) {
   const destination = resolve(cwd, directory);
   const name = basename(destination);
   if (!/^[a-z0-9][a-z0-9-]*$/.test(name) || name.length > 100) {

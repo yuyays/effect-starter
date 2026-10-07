@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { createInterface } from "node:readline/promises";
 import { stdin, stdout } from "node:process";
-import { scaffold } from "./scaffold.js";
+import { createProject } from "./create-project.js";
 
 const args = process.argv.slice(2);
 if (args.includes("--help") || args.includes("-h")) {
@@ -25,7 +25,7 @@ if (args.includes("--help") || args.includes("-h")) {
         prompt.close();
       }
     }
-    const project = await scaffold(directory);
+    const project = await createProject(directory);
     console.log(
       `\nCreated ${project.name} at ${project.destination}\n\nNext steps:\n  cd ${JSON.stringify(directory)}\n  pnpm install\n  # Set DATABASE_URL in apps/api/.env\n  pnpm --filter @${project.name}/api db:generate\n  pnpm --filter @${project.name}/api db:migrate\n  pnpm dev`,
     );

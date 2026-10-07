@@ -17,12 +17,12 @@ Requires Node.js 24+ and pnpm 11. From this repository, create a new project
 with your own name:
 
 ```sh
-pnpm scaffold ../my-app
+pnpm create:app ../my-app
 cd ../my-app
 pnpm install
 ```
 
-`pnpm scaffold` first builds a template from this repository, then creates a
+`pnpm create:app` first builds a template from this repository, then creates a
 separate project in a sibling directory named `my-app`. It renames the packages,
 imports, scripts, and page title. Choose another directory name for your app.
 The generator also copies the `.env.example` files to `.env` files; it does not

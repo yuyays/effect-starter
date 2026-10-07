@@ -5,10 +5,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
-import { scaffold } from "./scaffold.js";
+import { createProject } from "./create-project.js";
 
 async function temporary(t) {
-  const directory = await mkdtemp(join(tmpdir(), "effect-scaffold-"));
+  const directory = await mkdtemp(join(tmpdir(), "effect-create-"));
   t.after(() => rm(directory, { recursive: true, force: true }));
   return directory;
 }
@@ -28,6 +28,7 @@ test("CLI generates a renamed project without generator artifacts", async (t) =>
   const project = join(directory, "nested/my-app");
   const manifest = JSON.parse(await readFile(join(project, "package.json"), "utf8"));
   assert.equal(manifest.name, "my-app");
+  assert.ok(!("create:app" in manifest.scripts));
   assert.equal(manifest.scripts["dev:api"], "pnpm --filter @my-app/api dev");
   for (const [location, name] of [
     ["apps/api", "api"],
@@ -78,7 +79,7 @@ test("rejects nonempty destinations without changing their contents", async (t) 
   const destination = join(directory, "my-app");
   await mkdir(destination);
   await writeFile(join(destination, "keep.txt"), "keep me");
-  await assert.rejects(scaffold("my-app", directory), /not an empty directory/);
+  await assert.rejects(createProject("my-app", directory), /not an empty directory/);
   assert.deepEqual(await readdir(destination), ["keep.txt"]);
   assert.equal(await readFile(join(destination, "keep.txt"), "utf8"), "keep me");
 });
@@ -86,17 +87,17 @@ test("rejects nonempty destinations without changing their contents", async (t) 
 test("supports an existing empty directory and rejects symlinks", async (t) => {
   const directory = await temporary(t);
   await mkdir(join(directory, "empty-app"));
-  await scaffold("empty-app", directory);
+  await createProject("empty-app", directory);
   await mkdir(join(directory, "target"));
   await symlink(join(directory, "target"), join(directory, "linked-app"), "dir");
-  await assert.rejects(scaffold("linked-app", directory), /not an empty directory/);
+  await assert.rejects(createProject("linked-app", directory), /not an empty directory/);
   assert.deepEqual(await readdir(join(directory, "target")), []);
 });
 
 test("invalid names fail before creating files", async (t) => {
   const directory = await temporary(t);
   for (const name of ["My App", "@scope", "_app", "a".repeat(101)]) {
-    await assert.rejects(scaffold(name, directory), /Use a project name/);
+    await assert.rejects(createProject(name, directory), /Use a project name/);
   }
   assert.deepEqual(await readdir(directory), []);
 });

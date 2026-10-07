@@ -13,7 +13,7 @@
   },
   "files": [
     "cli.js",
-    "scaffold.js",
+    "create-project.js",
     "template",
     "README.md"
   ],
@@ -21,7 +21,7 @@
   "scripts": {
     "build": "node build-template.js",
     "prepack": "node build-template.js",
-    "test": "node build-template.js && node --test scaffold.test.js"
+    "test": "node build-template.js && node --test create-project.test.js"
   },
   "engines": {
     "node": ">=24"
