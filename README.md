@@ -1,65 +1,107 @@
 # effect-starter
 
+Full-stack TypeScript starter with React, TanStack Router/Query, Effect v4,
+Drizzle, PostgreSQL, and Vite+ (Vite, Vitest, Oxlint, and Oxfmt).
+
 Licensed under the [MIT License](LICENSE).
-
-Full-stack TypeScript starter with React, TanStack Router/Query, Effect v4, Drizzle, PostgreSQL, and Vite+ (Vite, Vitest, Oxlint, and Oxfmt).
-
-Effect and its Node/PostgreSQL adapters use v4. Drizzle ORM and Kit are pinned to
-`1.0.0-rc.5-5935859` because this build fixes compatibility with stable Effect v4.
-The API uses Drizzle’s native `effect-postgres` integration through the `Database` service.
-`@effect/tsgo` adds Effect diagnostics to `pnpm typecheck`. After installing
-dependencies, select the workspace TypeScript version in your editor to use its
-Effect diagnostics and refactors there too.
 
 ## Create your project
 
-Requires Node.js 24.11+. Choose pnpm 11 (default) or Bun 1.4.2 as the package
-manager. The API continues to run on Node.js. From this repository, create a new project
-with your own name:
+The generator is **not published to npm yet**. Use this repository to create a
+project; `pnpm create effect-starter` and `bunx create-effect-starter` currently
+return a registry error.
+
+You need:
+
+- Node.js 24.11+ (also required when using Bun).
+- pnpm 11 or Bun 1.4.2.
+- A running PostgreSQL database for database migrations and user queries.
+
+Clone the starter, or use your existing checkout:
 
 ```sh
-pnpm create:app ../my-app
+git clone https://github.com/yuyays/effect-starter.git
+cd effect-starter
+```
+
+Choose one of the following paths. Both create a separate project named `my-app`
+next to this repository. Replace `my-app` with your own lowercase name using
+letters, numbers, and hyphens.
+
+### With pnpm
+
+```sh
+pnpm create:app ../my-app --package-manager pnpm
 cd ../my-app
 pnpm install
 ```
 
-For a Bun project:
+### With Bun
 
 ```sh
-pnpm create:app ../my-app --package-manager bun
+bun run create:app ../my-app --package-manager bun
 cd ../my-app
 bun install
 ```
 
-Commit the generated `bun.lock` before pushing; Bun CI requires a frozen lockfile.
-Use `bun run <script>` in place of `pnpm <script>` for Bun projects.
+Bun installs dependencies and runs scripts; the API runs on Node.js.
 
-`pnpm create:app` first builds a template from this repository, then creates a
-separate project in a sibling directory named `my-app`. It renames the packages,
-imports, scripts, and page title. Choose another directory name for your app.
-The generator also copies the `.env.example` files to `.env` files; it does not
-install dependencies or create a database.
+The generator renames workspace packages, imports, scripts, and the page title.
+It creates `.env` files from the examples, but does not install dependencies,
+create a database, or initialize Git. Nonempty destination directories are
+never overwritten.
 
-Set `DATABASE_URL` in `apps/api/.env` to a running PostgreSQL database. The
-example URL points to a local database; a Supabase Postgres connection string
-also works. Create the example `users` table, then start the app:
+Omit `--package-manager` to choose interactively. Noninteractive creation
+defaults to pnpm. Omit the directory to prompt for the project name.
 
-```sh
-pnpm run db:generate
-pnpm run db:migrate
-pnpm dev
-```
+## Configure and run your generated app
 
-Web runs on `http://localhost:5173`. API runs on `http://localhost:3000`.
-API docs are at `http://localhost:3000/docs`.
+Run these commands from `my-app`, not from the starter checkout.
 
-Once the generator is published to npm, `pnpm create effect-starter my-app`
-will work without cloning this repository. See [the CLI README](packages/create-effect-starter/README.md)
-for packaging instructions.
+Set `DATABASE_URL` in `apps/api/.env` to your PostgreSQL connection string. The
+example points to a local database; editing the file does not create that
+database. A Supabase PostgreSQL connection string also works.
 
-## Work on this starter
+Create and apply the migration for the example `users` table, then start both
+servers with the commands for your chosen package manager:
 
-If you are developing the starter itself, stay in this repository:
+| Action             | pnpm                   | Bun                   |
+| ------------------ | ---------------------- | --------------------- |
+| Generate migration | `pnpm run db:generate` | `bun run db:generate` |
+| Apply migration    | `pnpm run db:migrate`  | `bun run db:migrate`  |
+| Start web and API  | `pnpm run dev`         | `bun run dev`         |
+
+Web runs at http://localhost:5173, API at http://localhost:3000, and API docs at
+http://localhost:3000/docs. The health endpoint is http://localhost:3000/api/health.
+Use `dev:web` or `dev:api` in place of `dev` to run only one server.
+
+pnpm projects include a tested `pnpm-lock.yaml`. Bun projects create `bun.lock`
+on their first install. **Commit the selected lockfile before pushing to your
+own repository**: generated CI uses frozen installs. Use one package manager
+per generated project.
+
+## Verify your generated app
+
+| Check            | pnpm                    | Bun                    |
+| ---------------- | ----------------------- | ---------------------- |
+| Lint             | `pnpm run lint`         | `bun run lint`         |
+| Formatting       | `pnpm run format:check` | `bun run format:check` |
+| Types            | `pnpm run typecheck`    | `bun run typecheck`    |
+| Tests            | `pnpm run test`         | `bun run test`         |
+| Production build | `pnpm run build`        | `bun run build`        |
+
+Vite+ is installed locally; a global `vp` installation is optional. Root scripts
+run the workspace tasks for you.
+
+`@effect/tsgo` adds Effect diagnostics to `typecheck`. Select the workspace
+TypeScript version in your editor to enable its diagnostics and refactors there.
+Effect and its Node/PostgreSQL adapters use v4. Drizzle ORM and Kit are pinned to
+`1.0.0-rc.5-5935859` for stable Effect v4 compatibility. The API uses Drizzle’s
+native `effect-postgres` integration through the `Database` service.
+
+## Develop the starter itself
+
+Stay in the `effect-starter` checkout and use pnpm:
 
 ```sh
 pnpm install
@@ -70,29 +112,14 @@ cp apps/web/.env.example apps/web/.env
 Set `DATABASE_URL` in `apps/api/.env`, then run:
 
 ```sh
-pnpm --filter @effect-starter/api db:generate
-pnpm --filter @effect-starter/api db:migrate
-pnpm dev
+pnpm run db:generate
+pnpm run db:migrate
+pnpm run dev
 ```
 
-This repository retains the `effect-starter` package name; generated projects
-get their own names.
-
-## Verify changes
-
-```sh
-pnpm lint
-pnpm format:check
-pnpm typecheck
-pnpm test
-pnpm build
-```
-
-Vite+ is installed locally; a global `vp` installation is optional. Workspace
-scripts use `vp run`, while `typecheck` retains Effect’s patched TypeScript.
-
-To check generated projects with both package managers, including dev startup,
-API proxying, and shutdown (requires pnpm 11 and Bun 1.4.2):
+Run the same verification scripts listed above. In this checkout, `pnpm test`
+also tests the generator. To verify fresh generated apps with both package
+managers, including startup, API proxying, and shutdown, install Bun 1.4.2 and run:
 
 ```sh
 pnpm test:generated
@@ -100,3 +127,6 @@ pnpm test:generated
 
 The API declares an esbuild peer explicitly so pnpm resolves one shared Vite+
 and Vitest instance across the workspaces. Keep it aligned when upgrading tooling.
+
+See [the CLI README](packages/create-effect-starter/README.md) for generator
+usage and local packaging instructions.

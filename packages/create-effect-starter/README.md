@@ -1,46 +1,54 @@
 # create-effect-starter
 
-Create a full-stack Effect v4, React, and Drizzle project with your own project name.
-Requires Node.js 24.11+ and pnpm 11 or Bun 1.4.2.
+Create a full-stack Effect v4, React, Drizzle, and Vite+ project with your own name.
+Requires Node.js 24.11+ and pnpm 11 or Bun 1.4.2. The API runs on Node.js with
+either package manager.
 
-After this package is published to npm:
+**This package is not published to npm yet.** Registry commands such as
+`pnpm create effect-starter` and `bunx create-effect-starter` currently fail.
+Use the local generator from a checkout of this repository.
+
+## Create a project locally
+
+From the repository root, choose one command:
 
 ```sh
-pnpm create effect-starter my-app --package-manager pnpm
-bunx create-effect-starter my-app --package-manager bun
+pnpm create:app ../my-app --package-manager pnpm
 ```
 
-Omit the directory for an interactive project-name prompt. Interactive creation
-also prompts for pnpm or Bun unless `--package-manager` is supplied.
-Noninteractive creation defaults to pnpm. Nested paths and existing
-empty directories are supported. Nonempty directories are never overwritten.
+```sh
+bun run create:app ../my-app --package-manager bun
+```
 
-The CLI renames workspace packages, imports, scripts, and the page title, and copies
-environment examples into `.env` files. Follow the printed steps to configure your
-database and install dependencies. It does not install dependencies or initialize Git. Bun projects generate their
-lockfile on the first install; commit `bun.lock` before pushing to CI.
-Bun manages packages and scripts; the API still uses Node.js.
+These commands build the template and create a separate sibling project. They
+do not start the app. Next, change into `../my-app` and follow its generated
+README to install dependencies, configure PostgreSQL, run migrations, and start
+the servers.
 
-## Local development
+Omit the directory for an interactive project-name prompt. Omit
+`--package-manager` to prompt for pnpm or Bun. Noninteractive creation defaults
+to pnpm. Nested paths and existing empty directories are supported; nonempty
+directories are never overwritten.
+
+The CLI renames workspace packages, imports, scripts, and the page title, and
+copies environment examples into `.env` files. It does not install dependencies,
+create a database, or initialize Git.
+
+pnpm projects include a lockfile. Bun projects generate `bun.lock` on their first
+install. Commit the selected lockfile before pushing to your own repository,
+because generated CI uses frozen installs.
+
+## Test or package the CLI
 
 From the repository root:
 
 ```sh
-pnpm create:app /tmp/my-effect-app
-```
-
-This builds the CLI's template from this repository and creates a separate
-project at `/tmp/my-effect-app`; it does not run that project. To use it, change
-into that directory, install dependencies, set its
-`apps/api/.env` `DATABASE_URL` to a PostgreSQL database, and run `pnpm dev`.
-
-To test or package the CLI itself:
-
-```sh
+pnpm install
 pnpm --filter create-effect-starter test
 pnpm --filter create-effect-starter pack --out /tmp/create-effect-starter.tgz
 ```
 
-The packaged template is built from the repository before packing. It contains
-only the apps, shared contracts, and project configuration; the generator itself,
-local secrets, dependencies, build output, and repository history are excluded.
+Packing builds the template from this repository. The generated app template
+contains only the apps, shared contracts, and project configuration. Local
+secrets, dependencies, build output, repository history, and the generator's
+source files are excluded from generated apps.
