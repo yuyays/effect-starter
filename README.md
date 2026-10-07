@@ -5,15 +5,18 @@ Drizzle, PostgreSQL, and Vite+ (Vite, Vitest, Oxlint, and Oxfmt).
 
 Licensed under the [MIT License](LICENSE).
 
-## Create your project
+## Start a new project
 
-The generator is **not published to npm yet**. Use this repository to create a
-project; `pnpm create effect-starter` and `bunx create-effect-starter` currently
-return a registry error.
+This path is for building your own app from the starter. The local generator
+creates a separate project; it does not change this repository. To work on the
+starter itself, skip to [Develop the starter](#develop-the-starter).
+
+The generator is **not published to npm yet**, so `pnpm create effect-starter`
+and `bunx create-effect-starter` currently return a registry error.
 
 You need:
 
-- Node.js 24.11+ (also required when using Bun).
+- Node.js 24.11+ for the generator, tooling, and API, even when using Bun.
 - pnpm 11 or Bun 1.4.2.
 - A running PostgreSQL database for database migrations and user queries.
 
@@ -44,8 +47,6 @@ cd ../my-app
 bun install
 ```
 
-Bun installs dependencies and runs scripts; the API runs on Node.js.
-
 The generator renames workspace packages, imports, scripts, and the page title.
 It creates `.env` files from the examples, but does not install dependencies,
 create a database, or initialize Git. Nonempty destination directories are
@@ -65,11 +66,11 @@ database. A Supabase PostgreSQL connection string also works.
 Create and apply the migration for the example `users` table, then start both
 servers with the commands for your chosen package manager:
 
-| Action             | pnpm                   | Bun                   |
-| ------------------ | ---------------------- | --------------------- |
-| Generate migration | `pnpm run db:generate` | `bun run db:generate` |
-| Apply migration    | `pnpm run db:migrate`  | `bun run db:migrate`  |
-| Start web and API  | `pnpm run dev`         | `bun run dev`         |
+| Action             | pnpm               | Bun                   |
+| ------------------ | ------------------ | --------------------- |
+| Generate migration | `pnpm db:generate` | `bun run db:generate` |
+| Apply migration    | `pnpm db:migrate`  | `bun run db:migrate`  |
+| Start web and API  | `pnpm dev`         | `bun run dev`         |
 
 Web runs at http://localhost:5173, API at http://localhost:3000, and API docs at
 http://localhost:3000/docs. The health endpoint is http://localhost:3000/api/health.
@@ -82,13 +83,13 @@ per generated project.
 
 ## Verify your generated app
 
-| Check            | pnpm                    | Bun                    |
-| ---------------- | ----------------------- | ---------------------- |
-| Lint             | `pnpm run lint`         | `bun run lint`         |
-| Formatting       | `pnpm run format:check` | `bun run format:check` |
-| Types            | `pnpm run typecheck`    | `bun run typecheck`    |
-| Tests            | `pnpm run test`         | `bun run test`         |
-| Production build | `pnpm run build`        | `bun run build`        |
+| Check            | pnpm                | Bun                    |
+| ---------------- | ------------------- | ---------------------- |
+| Lint             | `pnpm lint`         | `bun run lint`         |
+| Formatting       | `pnpm format:check` | `bun run format:check` |
+| Types            | `pnpm typecheck`    | `bun run typecheck`    |
+| Tests            | `pnpm test`         | `bun run test`         |
+| Production build | `pnpm build`        | `bun run build`        |
 
 Vite+ is installed locally; a global `vp` installation is optional. Root scripts
 run the workspace tasks for you.
@@ -99,9 +100,10 @@ Effect and its Node/PostgreSQL adapters use v4. Drizzle ORM and Kit are pinned t
 `1.0.0-rc.5-5935859` for stable Effect v4 compatibility. The API uses Drizzle’s
 native `effect-postgres` integration through the `Database` service.
 
-## Develop the starter itself
+## Develop the starter
 
-Stay in the `effect-starter` checkout and use pnpm:
+This path is for contributing to this repository. Stay in the `effect-starter`
+checkout and use pnpm:
 
 ```sh
 pnpm install
@@ -112,9 +114,9 @@ cp apps/web/.env.example apps/web/.env
 Set `DATABASE_URL` in `apps/api/.env`, then run:
 
 ```sh
-pnpm run db:generate
-pnpm run db:migrate
-pnpm run dev
+pnpm db:generate
+pnpm db:migrate
+pnpm dev
 ```
 
 Run the same verification scripts listed above. In this checkout, `pnpm test`
