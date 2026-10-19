@@ -5,7 +5,7 @@ const template = new URL("./template/", import.meta.url);
 const entries = [
   "apps",
   "packages/contracts",
-  ".github",
+  ".github/workflows/ci.yml",
   ".gitignore",
   "LICENSE",
   "package.json",
