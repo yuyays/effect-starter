@@ -41,6 +41,7 @@ void test("CLI generates a renamed project without generator artifacts", async (
     if (name !== "contracts") assert.equal(pkg.dependencies["@my-app/contracts"], "workspace:*");
   }
   assert.deepEqual(await readdir(join(project, "packages")), ["contracts"]);
+  assert.deepEqual(await readdir(join(project, ".github/workflows")), ["ci.yml"]);
   assert.match(await readFile(join(project, ".gitignore"), "utf8"), /^\.env$/m);
   assert.equal(
     await readFile(join(project, "LICENSE"), "utf8"),

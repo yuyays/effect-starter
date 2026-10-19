@@ -7,18 +7,39 @@ Licensed under the [MIT License](LICENSE).
 
 ## Start a new project
 
-This path is for building your own app from the starter. The local generator
+This path is for building your own app from the starter. The generator
 creates a separate project; it does not change this repository. To work on the
 starter itself, skip to [Develop the starter](#develop-the-starter).
 
-The generator is **not published to npm yet**, so `pnpm create effect-starter`
-and `bunx create-effect-starter` currently return a registry error.
+The generator is distributed as a GitHub Release download, without publishing to
+npm. Registry commands such as `pnpm create effect-starter` and
+`bunx create-effect-starter` are not supported.
 
 You need:
 
 - Node.js 24.11+ for the generator, tooling, and API, even when using Bun.
 - pnpm 11 or Bun 1.4.2.
 - A running PostgreSQL database for database migrations and user queries.
+
+### Download from GitHub Releases
+
+Once the first release is published, run the generator directly from its
+GitHub Release archive with `npx`. No npm account, global install, or starter
+checkout is required:
+
+```sh
+npx --yes https://github.com/yuyays/effect-starter/releases/latest/download/create-effect-starter.tgz my-app --package-manager pnpm
+cd my-app
+pnpm install
+```
+
+For Bun, use `--package-manager bun` and then `bun install`. To pin a release,
+replace `latest/download` in the URL with `download/<tag>`, for example
+`download/v0.1.0`. GitHub's automatic source archives do not include the built
+template; use the attached `.tgz` asset. You can also download that asset,
+extract it, and run `node package/cli.js my-app --package-manager pnpm`.
+
+### Generate from a checkout
 
 Clone the starter, or use your existing checkout:
 
@@ -31,7 +52,7 @@ Choose one of the following paths. Both create a separate project named `my-app`
 next to this repository. Replace `my-app` with your own lowercase name using
 letters, numbers, and hyphens.
 
-### With pnpm
+#### With pnpm
 
 ```sh
 pnpm create:app ../my-app --package-manager pnpm
@@ -39,7 +60,7 @@ cd ../my-app
 pnpm install
 ```
 
-### With Bun
+#### With Bun
 
 ```sh
 bun run create:app ../my-app --package-manager bun

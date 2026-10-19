@@ -1,0 +1,41 @@
+name: Release generator
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to package (for example v0.1.0)
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.tag }}
+      - uses: pnpm/action-setup@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter create-effect-starter test
+      - run: pnpm --filter create-effect-starter pack --out "$RUNNER_TEMP/create-effect-starter.tgz"
+      - name: Verify the archive runs through npx
+        working-directory: ${{ runner.temp }}
+        run: npx --yes "$RUNNER_TEMP/create-effect-starter.tgz" release-smoke-app --package-manager pnpm
+      - name: Create GitHub release with the packed CLI
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: gh release create "$RELEASE_TAG" "$RUNNER_TEMP/create-effect-starter.tgz" --verify-tag --generate-notes
