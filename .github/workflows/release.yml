@@ -32,7 +32,7 @@ jobs:
       - run: pnpm --filter create-effect-starter pack --out "$RUNNER_TEMP/create-effect-starter.tgz"
       - name: Verify the archive runs through npx
         working-directory: ${{ runner.temp }}
-        run: npx --yes "$RUNNER_TEMP/create-effect-starter.tgz" release-smoke-app --package-manager pnpm
+        run: npx --yes --package "$RUNNER_TEMP/create-effect-starter.tgz" -- create-effect-starter release-smoke-app --package-manager pnpm
       - name: Create GitHub release with the packed CLI
         env:
           GH_TOKEN: ${{ github.token }}
