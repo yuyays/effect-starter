@@ -1,0 +1,46 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 1
+    groups:
+      vite-toolchain:
+        patterns:
+          - vite-plus
+          - vite
+          - "@voidzero-dev/*"
+          - vitest
+          - "@vitest/*"
+          - esbuild
+      effect:
+        patterns:
+          - effect
+          - "@effect/*"
+      libraries:
+        patterns:
+          - "*"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+      # The Effect v4 Drizzle integration needs this paired release candidate.
+      - dependency-name: drizzle-orm
+      - dependency-name: drizzle-kit
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Tokyo
+    groups:
+      github-actions:
+        patterns:
+          - "*"

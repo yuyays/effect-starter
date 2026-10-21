@@ -33,7 +33,8 @@ Web runs on http://localhost:5173. API runs on http://localhost:3000.
 API docs are at http://localhost:3000/docs.
 The health endpoint is http://localhost:3000/api/health.
 Use `{{RUN}} dev:web` or `{{RUN}} dev:api` to run only one server.
-Vite+ is installed locally; a global `vp` installation is optional.
+Vite+ is included in the project and powers its scripts. No separate global
+`vp` installation is needed.
 
 Drizzle ORM and Kit are pinned to `1.0.0-rc.5-5935859` for stable Effect v4 compatibility.
 `@effect/tsgo` adds Effect diagnostics to `{{RUN}} typecheck`. Select the workspace

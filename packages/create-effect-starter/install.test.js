@@ -53,7 +53,10 @@ for (const packageManager of ["pnpm", "bun"]) {
           },
         );
         assert.match(result.stdout, /Packages to install/);
-        assert.match(result.stdout, /effect \^4\.0\.0/);
+        const apiManifest = JSON.parse(
+          await readFile(join(project, "apps/api/package.json"), "utf8"),
+        );
+        assert.ok(result.stdout.includes(`  effect ${apiManifest.dependencies.effect}`));
         const nextSteps = result.stdout.split("Next steps:")[1];
         assert.ok(nextSteps);
         assert.equal(nextSteps.includes(`${packageManager} install`), exitCode !== 0);

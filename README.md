@@ -138,8 +138,9 @@ per generated project.
 | Tests            | `pnpm test`         | `bun run test`         |
 | Production build | `pnpm build`        | `bun run build`        |
 
-Vite+ is installed locally; a global `vp` installation is optional. Root scripts
-run the workspace tasks for you.
+Vite+ is included in the project and powers these commands. The package-manager
+scripts use the installed project version of `vp`; no separate global installation
+is needed.
 
 `@effect/tsgo` adds Effect diagnostics to `typecheck`. Select the workspace
 TypeScript version in your editor to enable its diagnostics and refactors there.
@@ -180,3 +181,11 @@ and Vitest instance across the workspaces. Keep it aligned when upgrading toolin
 
 See [the CLI README](packages/create-effect-starter/README.md) for generator
 usage and local packaging instructions.
+
+## Dependency maintenance
+
+Dependabot opens weekly PRs for workspace dependencies and GitHub Actions,
+grouping related updates. Major upgrades and the paired Drizzle pins are handled
+manually. Each PR checks the repository and all three generated starters with
+pnpm and Bun; updates are reviewed before merging. See the
+[generator maintenance notes](packages/create-effect-starter/README.md#dependency-updates).
