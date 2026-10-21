@@ -31,9 +31,14 @@ export default defineConfig({
       "**/node_modules/**",
       "apps/web/src/routeTree.gen.ts",
       "packages/create-effect-starter/template/**",
+      "packages/create-effect-starter/frontends/**",
     ],
   },
   fmt: {
-    ignorePatterns: ["apps/web/src/routeTree.gen.ts", "packages/create-effect-starter/template/**"],
+    ignorePatterns: [
+      "apps/web/src/routeTree.gen.ts",
+      "packages/create-effect-starter/template/**",
+      "packages/create-effect-starter/frontends/**/pnpm-lock.yaml",
+    ],
   },
 });

@@ -2,9 +2,12 @@ import { lstat, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { getFramework } from "./frameworks.js";
 import { configurePackageManager, getPackageManager } from "./package-manager.js";
 
 export async function createProject(directory, cwd = process.cwd(), options = {}) {
+  const framework = options.framework ?? "react";
+  getFramework(framework);
   const packageManager = options.packageManager ?? "pnpm";
   getPackageManager(packageManager);
   const destination = resolve(cwd, directory);
@@ -28,7 +31,7 @@ export async function createProject(directory, cwd = process.cwd(), options = {}
     throw new Error(`Destination already exists and is not an empty directory: ${destination}`);
   }
 
-  const template = fileURLToPath(new URL("./template/", import.meta.url));
+  const template = fileURLToPath(new URL(`./template/${framework}/`, import.meta.url));
   // Check the packaged template before creating the destination.
   await readdir(template);
   await mkdir(destination, { recursive: true });
@@ -37,8 +40,8 @@ export async function createProject(directory, cwd = process.cwd(), options = {}
     const example = await readFile(join(destination, "apps", app, ".env.example"));
     await writeFile(join(destination, "apps", app, ".env"), example, { flag: "wx" });
   }
-  await configurePackageManager(destination, packageManager);
-  return { destination, name, packageManager };
+  await configurePackageManager(destination, packageManager, framework);
+  return { destination, name, packageManager, framework };
 }
 
 async function copy(source, destination, name) {

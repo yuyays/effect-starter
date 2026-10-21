@@ -172,3 +172,78 @@ void test("invalid package managers and CLI flags fail before creating files", a
   }
   assert.deepEqual(await readdir(directory), []);
 });
+
+for (const framework of ["react", "tanstack-start", "vue"]) {
+  for (const packageManager of ["pnpm", "bun"]) {
+    void test(`generates an isolated ${framework} frontend with ${packageManager}`, async (t) => {
+      const directory = await temporary(t);
+      const result = spawnSync(
+        process.execPath,
+        [
+          fileURLToPath(new URL("./cli.js", import.meta.url)),
+          "chosen-app",
+          "--framework",
+          framework,
+          "--package-manager",
+          packageManager,
+        ],
+        { cwd: directory, encoding: "utf8" },
+      );
+      assert.equal(result.status, 0, result.stderr);
+      assert.match(result.stdout, /Packages to install/);
+      assert.ok(!result.stdout.includes("Running "));
+      assert.equal(/^  react /m.test(result.stdout), framework !== "vue");
+      assert.equal(/^  vue /m.test(result.stdout), framework === "vue");
+      const project = join(directory, "chosen-app");
+      const web = JSON.parse(await readFile(join(project, "apps/web/package.json"), "utf8"));
+      const files = await readdir(join(project, "apps/web"), { recursive: true });
+      assert.equal(web.dependencies["@chosen-app/contracts"], "workspace:*");
+      assert.equal(Boolean(web.dependencies.vue), framework === "vue");
+      assert.equal(Boolean(web.dependencies.react), framework !== "vue");
+      assert.equal(
+        Boolean(web.dependencies["@tanstack/react-start"]),
+        framework === "tanstack-start",
+      );
+      assert.equal(files.includes("src/main.tsx"), framework === "react");
+      assert.equal(files.includes("src/router.tsx"), framework === "tanstack-start");
+      assert.equal(files.includes("src/pages/HomePage.vue"), framework === "vue");
+      const readme = await readFile(join(project, "README.md"), "utf8");
+      assert.ok(!readme.includes("{{"));
+      assert.match(
+        readme,
+        framework === "vue"
+          ? /Vue Router/
+          : framework === "tanstack-start"
+            ? /Server rendering/
+            : /React, TanStack Router/,
+      );
+      if (packageManager === "pnpm") {
+        const lock = await readFile(join(project, "pnpm-lock.yaml"), "utf8");
+        assert.ok(!lock.includes("packages/create-chosen-app:"));
+        assert.equal(lock.includes("'@tanstack/react-start':"), framework === "tanstack-start");
+        assert.equal(lock.includes("'@tanstack/vue-query':"), framework === "vue");
+      }
+    });
+  }
+}
+
+void test("invalid frameworks and duplicate or missing framework flags do not create files", async (t) => {
+  const directory = await temporary(t);
+  await assert.rejects(
+    createProject("my-app", directory, { framework: "angular" }),
+    /Unsupported framework/,
+  );
+  const cli = fileURLToPath(new URL("./cli.js", import.meta.url));
+  for (const flags of [
+    ["--framework", "angular"],
+    ["--framework"],
+    ["--framework", "vue", "--framework", "react"],
+  ]) {
+    const result = spawnSync(process.execPath, [cli, "my-app", ...flags], {
+      cwd: directory,
+      encoding: "utf8",
+    });
+    assert.equal(result.status, 1);
+  }
+  assert.deepEqual(await readdir(directory), []);
+});

@@ -8,7 +8,8 @@ and {{PACKAGE_MANAGER}}. The API runs on Node.js with either package manager.
 
 ## Setup
 
-Run these commands from this project’s root directory.
+Run these commands from this project’s root directory. If you accepted dependency
+installation in the generator and it succeeded, skip this install command.
 
 ```sh
 {{PACKAGE_MANAGER}} install
@@ -26,7 +27,7 @@ the migration for the example `users` table, then start both servers:
 ```
 
 The environment files have already been created from the included examples.
-The generator has not installed dependencies or initialized Git.
+The generator offered to install dependencies; it has not initialized Git.
 
 Web runs on http://localhost:5173. API runs on http://localhost:3000.
 API docs are at http://localhost:3000/docs.

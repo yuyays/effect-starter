@@ -15,7 +15,7 @@
     "dev:api": "vp run @effect-starter/api#dev",
     "build": "vp run --filter \"@effect-starter/*\" build",
     "typecheck": "vp run --filter \"@effect-starter/*\" typecheck",
-    "test": "vp run --filter \"@effect-starter/*\" test && node packages/create-effect-starter/build-template.js && node --test packages/create-effect-starter/create-project.test.js",
+    "test": "vp run --filter \"@effect-starter/*\" test && node packages/create-effect-starter/build-template.js && node --test packages/create-effect-starter/create-project.test.js packages/create-effect-starter/install.test.js",
     "lint": "vp lint .",
     "format:check": "vp fmt . --check",
     "prepare": "effect-tsgo patch --typescript",

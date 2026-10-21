@@ -26,10 +26,10 @@ export function getPackageManager(name) {
   return packageManagers[name];
 }
 
-export function nextSteps(packageManager) {
+export function nextSteps(packageManager, { installed = false } = {}) {
   const manager = getPackageManager(packageManager);
   return [
-    `${packageManager} install`,
+    ...(installed ? [] : [`${packageManager} install`]),
     "# Set DATABASE_URL in apps/api/.env",
     `${manager.run} db:generate`,
     `${manager.run} db:migrate`,
@@ -37,7 +37,7 @@ export function nextSteps(packageManager) {
   ];
 }
 
-export async function configurePackageManager(destination, packageManager) {
+export async function configurePackageManager(destination, packageManager, framework = "react") {
   const manager = getPackageManager(packageManager);
   const manifestPath = join(destination, "package.json");
   let manifest = JSON.parse(await readFile(manifestPath, "utf8"));
@@ -54,7 +54,12 @@ export async function configurePackageManager(destination, packageManager) {
       ...workspace,
       engines,
       packageManager: pin,
-      trustedDependencies: ["@parcel/watcher", "esbuild", "msgpackr-extract"],
+      trustedDependencies: [
+        "@parcel/watcher",
+        "esbuild",
+        "msgpackr-extract",
+        ...(framework === "vue" ? ["vue-demi"] : []),
+      ],
     };
     await rm(join(destination, "pnpm-workspace.yaml"));
     await rm(join(destination, "pnpm-lock.yaml"));

@@ -1,0 +1,28 @@
+{
+  "name": "@effect-starter/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vp dev",
+    "build": "vue-tsc --noEmit && vp build",
+    "typecheck": "vue-tsc --noEmit",
+    "test": "vp test run --passWithNoTests"
+  },
+  "dependencies": {
+    "@effect-starter/contracts": "workspace:*",
+    "@tailwindcss/vite": "^4.3.3",
+    "@tanstack/vue-query": "^5.104.5",
+    "effect": "^4.0.0",
+    "tailwindcss": "^4.3.3",
+    "vue": "^3.5.44",
+    "vue-router": "^5.4.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.10",
+    "typescript": "5.9.3",
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.0.0",
+    "vite-plus": "1.0.0",
+    "vue-tsc": "^3.3.13"
+  }
+}

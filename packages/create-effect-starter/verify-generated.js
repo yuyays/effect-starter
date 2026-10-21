@@ -5,6 +5,7 @@ import { createServer } from "node:net";
 import { setTimeout } from "node:timers/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { frameworks, getFramework } from "./frameworks.js";
 import { createProject } from "./create-project.js";
 
 function run(command, args, cwd) {
@@ -35,7 +36,7 @@ async function response(url) {
   }
 }
 
-async function smokeDev(packageManager, destination) {
+async function smokeDev(packageManager, destination, framework) {
   const apiPort = await freePort();
   const webPort = await freePort();
   // Match the IPv4 probes even when localhost resolves to IPv6 on CI.
@@ -45,6 +46,7 @@ async function smokeDev(packageManager, destination) {
   await writeFile(
     configPath,
     config
+      .replace(/^\s*port: 5173,\n/m, "")
       .replace("server: {", `server: { host: "127.0.0.1", port: ${webPort}, strictPort: true,`)
       .replaceAll("http://localhost:3000", `http://127.0.0.1:${apiPort}`),
   );
@@ -79,7 +81,12 @@ async function smokeDev(packageManager, destination) {
       const web = await response(webUrl);
       if (api?.ok && web?.ok) {
         assert.deepEqual(await api.json(), { ok: true, service: "api" });
-        assert.match(await web.text(), /<div id="root">/);
+        assert.match(
+          await web.text(),
+          framework === "tanstack-start"
+            ? /TanStack Start, Effect Platform API/
+            : /<div id="root">/,
+        );
         const proxy = await fetch(`${webUrl}/api/health`);
         assert.deepEqual(await proxy.json(), { ok: true, service: "api" });
         ready = true;
@@ -110,18 +117,27 @@ async function smokeDev(packageManager, destination) {
   }
 }
 
+const selectedFrameworks = process.argv.slice(2);
+const frameworkNames = selectedFrameworks.length ? selectedFrameworks : Object.keys(frameworks);
+for (const framework of frameworkNames) getFramework(framework);
+
 // Run outside the repository so generated apps cannot resolve its dependencies.
 const directory = await mkdtemp(join(tmpdir(), "effect-generated-check-"));
 try {
-  for (const packageManager of ["pnpm", "bun"]) {
-    const project = await createProject(`${packageManager}-app`, directory, { packageManager });
-    console.log(`\nVerifying ${packageManager} project: ${project.destination}`);
-    if (packageManager === "bun") run("bun", ["install"], project.destination);
-    run(packageManager, ["install", "--frozen-lockfile"], project.destination);
-    for (const script of ["lint", "format:check", "typecheck", "test", "build"]) {
-      run(packageManager, ["run", script], project.destination);
+  for (const framework of frameworkNames) {
+    for (const packageManager of ["pnpm", "bun"]) {
+      const project = await createProject(`${framework}-${packageManager}-app`, directory, {
+        packageManager,
+        framework,
+      });
+      console.log(`\nVerifying ${packageManager} project: ${project.destination}`);
+      if (packageManager === "bun") run("bun", ["install"], project.destination);
+      run(packageManager, ["install", "--frozen-lockfile"], project.destination);
+      for (const script of ["lint", "format:check", "typecheck", "test", "build"]) {
+        run(packageManager, ["run", script], project.destination);
+      }
+      await smokeDev(packageManager, project.destination, framework);
     }
-    await smokeDev(packageManager, project.destination);
   }
 } finally {
   await rm(directory, { recursive: true, force: true });
