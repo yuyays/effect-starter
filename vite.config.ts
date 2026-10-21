@@ -4,6 +4,7 @@ export default defineConfig({
   lint: {
     options: {
       typeAware: true,
+      reportUnusedDisableDirectives: "error",
     },
     categories: {
       correctness: "error",
