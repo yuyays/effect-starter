@@ -1,80 +1,106 @@
 # effect-starter
 
-Full-stack TypeScript starter with React, TanStack Router/Query, Effect v4,
+Full-stack TypeScript starter with your choice of React, TanStack Start, or Vue, Effect v4,
 Drizzle, PostgreSQL, and Vite+ (Vite, Vitest, Oxlint, and Oxfmt).
 
 Licensed under the [MIT License](LICENSE).
 
-## Start a new project
+## Start here
 
-This path is for building your own app from the starter. The generator
-creates a separate project; it does not change this repository. To work on the
-starter itself, skip to [Develop the starter](#develop-the-starter).
-
-The generator is distributed as a GitHub Release download, without publishing to
-npm. Registry commands such as `pnpm create effect-starter` and
-`bunx create-effect-starter` are not supported.
-
-You need:
-
-- Node.js 24.11+ for the generator, tooling, and API, even when using Bun.
-- pnpm 11 or Bun 1.4.2.
-- A running PostgreSQL database for database migrations and user queries.
-
-### Download from GitHub Releases
-
-Once the first release is published, run the generator directly from its
-GitHub Release archive with `npx`. No npm account, global install, or starter
-checkout is required:
+**Run the generator directly from a GitHub Release.** No clone or generator
+installation is needed:
 
 ```sh
-npx --yes https://github.com/yuyays/effect-starter/releases/latest/download/create-effect-starter.tgz my-app --package-manager pnpm
-cd my-app
-pnpm install
+npx --yes https://github.com/yuyays/effect-starter/releases/latest/download/create-effect-starter.tgz
 ```
 
-For Bun, use `--package-manager bun` and then `bun install`. To pin a release,
-replace `latest/download` in the URL with `download/<tag>`, for example
-`download/v0.1.0`. GitHub's automatic source archives do not include the built
-template; use the attached `.tgz` asset. You can also download that asset,
-extract it, and run `node package/cli.js my-app --package-manager pnpm`.
+You need Node.js 24.11+. The wizard asks you to:
 
-### Generate from a checkout
+1. Name your project, for example `my-app`.
+2. Pick **React**, **TanStack Start**, or **Vue** with arrow keys and Enter.
+3. Pick **pnpm** or **Bun** for your app.
+4. Review the dependency list and choose whether to run `pnpm install` or `bun install`.
 
-Clone the starter, or use your existing checkout:
+**Release status:** the existing `v0.1.0` release is React-only. The three-starter
+picker requires a new release built from this source. To try it before that
+release, use the checkout workflow below.
+
+React and Vue create single-page apps. TanStack Start adds React server rendering.
+Every choice includes the Effect API, Drizzle, PostgreSQL, and shared contracts.
+The API runs on Node.js with either package manager.
+
+`npx` only downloads and launches the generator. It does not select npm for your
+app. Choose pnpm 11 or Bun 1.4.2, then accept the install prompt to have the
+wizard install dependencies for you. After it finishes, enter your project:
+
+```sh
+cd my-app
+```
+
+If you skipped installation, run `pnpm install` or `bun install` inside your
+project first. Then continue with
+[Configure and run your generated app](#configure-and-run-your-generated-app).
+You will need a running PostgreSQL database for that step.
+
+The generator creates your project and `.env` files, shows its direct dependencies
+and development tools, then offers to install them. It does not create a database
+or initialize Git. Existing nonempty directories are never overwritten. Ctrl+C
+cancels the wizard; at the install prompt, it skips installation and keeps your project.
+
+<details>
+<summary>Prefer launching with pnpm or Bun?</summary>
+
+These launch the same release and wizard. Choose any one launcher; the package
+manager you pick inside the wizard is independent of how you launched it.
+
+With pnpm:
+
+```sh
+pnpm dlx https://github.com/yuyays/effect-starter/releases/latest/download/create-effect-starter.tgz
+```
+
+With Bun:
+
+```sh
+bunx --package https://github.com/yuyays/effect-starter/releases/latest/download/create-effect-starter.tgz create-effect-starter
+```
+
+The generator is distributed through GitHub Releases, without publishing to npm.
+`pnpm create effect-starter` is not available. See the
+[CLI README](packages/create-effect-starter/README.md) for version pinning,
+manual downloads, and automation flags.
+
+</details>
+
+<details>
+<summary>Develop the generator or try unreleased changes from a checkout</summary>
+
+Use this workflow when you need the source version instead of a published release:
 
 ```sh
 git clone https://github.com/yuyays/effect-starter.git
 cd effect-starter
-```
-
-Choose one of the following paths. Both create a separate project named `my-app`
-next to this repository. Replace `my-app` with your own lowercase name using
-letters, numbers, and hyphens.
-
-#### With pnpm
-
-```sh
-pnpm create:app ../my-app --package-manager pnpm
-cd ../my-app
 pnpm install
+pnpm create:app
 ```
 
-#### With Bun
+`pnpm create:app` runs the local generator and opens the same wizard. It only
+works inside this repository. Enter `../my-app` to create your app beside the
+checkout, review the dependency list, and accept or skip installation. Then run
+`cd ../my-app`.
 
-```sh
-bun run create:app ../my-app --package-manager bun
-cd ../my-app
-bun install
-```
+</details>
 
-The generator renames workspace packages, imports, scripts, and the page title.
-It creates `.env` files from the examples, but does not install dependencies,
-create a database, or initialize Git. Nonempty destination directories are
-never overwritten.
+## Where Vite+ fits
 
-Omit `--package-manager` to choose interactively. Noninteractive creation
-defaults to pnpm. Omit the directory to prompt for the project name.
+Vite+ is the app's development toolchain: it runs the dev servers, builds,
+tests, linting, formatting, and workspace tasks. The `dev`, `build`, `test`,
+`lint`, and `format:check` scripts call Vite+ through `vp`.
+
+pnpm or Bun handles dependencies and lockfiles. Vite+ is installed locally in
+both choices; neither choice opts out of Vite+. A global `vp` installation is
+optional. If you use it, `vp install` delegates to the package manager selected
+for your project. See the [Vite+ guide](https://viteplus.dev/guide/).
 
 ## Configure and run your generated app
 
@@ -142,7 +168,8 @@ pnpm dev
 
 Run the same verification scripts listed above. In this checkout, `pnpm test`
 also tests the generator. To verify fresh generated apps with both package
-managers, including startup, API proxying, and shutdown, install Bun 1.4.2 and run:
+managers for all three starters, including startup, API proxying, and shutdown,
+install Bun 1.4.2 and run:
 
 ```sh
 pnpm test:generated
