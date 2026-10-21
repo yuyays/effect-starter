@@ -1,0 +1,56 @@
+name: Generated projects
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "vite.config.ts"
+      - "tsconfig.base.json"
+      - "package.json"
+      - "LICENSE"
+      - ".gitignore"
+      - ".github/workflows/generated-projects.yml"
+      - "!**/*.md"
+  push:
+    branches: [main]
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "vite.config.ts"
+      - "tsconfig.base.json"
+      - "package.json"
+      - "LICENSE"
+      - ".gitignore"
+      - ".github/workflows/generated-projects.yml"
+      - "!**/*.md"
+
+concurrency:
+  group: generated-projects-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  generated-projects:
+    name: ${{ matrix.framework }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        framework: [react, tanstack-start, vue]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:generated ${{ matrix.framework }}

@@ -9,7 +9,7 @@ either package manager.
 No checkout is required. Run this from the directory where you want your app:
 
 ```sh
-npx --yes https://github.com/yuyays/effect-starter/releases/download/v0.2.0/create-effect-starter.tgz
+npx --yes https://github.com/yuyays/effect-starter/releases/latest/download/create-effect-starter.tgz
 ```
 
 The wizard asks for a project name, starter, and package manager. Use arrow keys
@@ -20,7 +20,9 @@ and Enter to choose:
 - **Vue**: a single-page app with Vue Router and TanStack Query.
 
 The React, TanStack Start, and Vue picker is available in **v0.2.0 and later**.
-Older releases, including v0.1.0, provide the React starter only.
+Older releases, including v0.1.0, provide the React starter only. The `latest`
+URL points at the newest GitHub release, so new versions do not require a new
+command.
 
 Enter `my-app` to create a project in the current directory. Choose pnpm or Bun,
 review the direct dependencies and development tools, then confirm whether to
@@ -34,11 +36,11 @@ prompt skips installation and keeps the generated project.
 Choose any one of these launchers; they run the same release and wizard.
 
 ```sh
-pnpm dlx https://github.com/yuyays/effect-starter/releases/download/v0.2.0/create-effect-starter.tgz
+pnpm dlx https://github.com/yuyays/effect-starter/releases/latest/download/create-effect-starter.tgz
 ```
 
 ```sh
-bunx --package https://github.com/yuyays/effect-starter/releases/download/v0.2.0/create-effect-starter.tgz create-effect-starter
+bunx --package https://github.com/yuyays/effect-starter/releases/latest/download/create-effect-starter.tgz create-effect-starter
 ```
 
 This package is not published to npm, so `pnpm create effect-starter` is not available.
@@ -64,13 +66,14 @@ repository. You can also launch the local wizard with `bun run create:app`.
 <details>
 <summary>Specific releases and manual downloads</summary>
 
-The download URL pins `v0.2.0` so package runners cannot reuse a cached older
-release from a mutable `latest` URL. To use another release, replace `v0.2.0`
-with its tag. Use the attached `.tgz`; automatic source archives do not contain
+Use the `latest` URL for the current release, or replace `latest` with an
+exact tag such as `v0.2.0` to pin one. Each release attaches
+`create-effect-starter.tgz` to [GitHub
+Releases](https://github.com/yuyays/effect-starter/releases) for offline or
+manual use. Use the attached `.tgz`; automatic source archives do not contain
 the built templates.
 
-You can also download `create-effect-starter.tgz` from
-[Releases](https://github.com/yuyays/effect-starter/releases) and extract it.
+You can download `create-effect-starter.tgz` from Releases and extract it.
 On macOS/Linux:
 
 ```sh
@@ -144,13 +147,31 @@ contains only the apps, shared contracts, and project configuration. Local
 secrets, dependencies, build output, repository history, and the generator's
 source files are excluded from generated apps.
 
+Repository CI runs the workspace checks on every pull request. Generated-app
+checks run in a separate workflow, only when generator-relevant files change,
+and each framework runs in its own job. Inside a generated app, CI runs only
+that app's lint, format, type, test, and build steps.
+
+### `vp check` and type checking
+
+`vp check` combines formatting and linting, but it only runs TypeScript type
+checks when `lint.options.typeCheck` is enabled. The Vue starter needs
+`vue-tsc` for single-file components, and enabling `typeCheck` makes `vp check`
+fail on `.vue` imports. The check also needs a prebuilt contracts package.
+Keep separate `lint`, `format:check`, and `typecheck` steps rather than
+replacing them with `vp check` in CI.
+
 ## Publish a GitHub Release
 
 Commit the changes and push a version tag, such as `v0.2.0`, pointing at that
-commit. In GitHub Actions, run **Release generator** and enter the existing tag.
-The workflow tests and packs the generator, then creates a release with
-`create-effect-starter.tgz` attached. It does not publish to npm. The workflow
-must be on the default branch before it can be run manually.
+commit. The package version in
+`packages/create-effect-starter/package.json` must match the tag.
+
+In GitHub Actions, run **Release generator** and enter the existing tag. The
+workflow tests and packs the generator, smoke-tests all three starters, then
+creates a GitHub release with `create-effect-starter.tgz` attached. It does not
+publish to npm. The workflow must be on the default branch before it can be run
+manually.
 
 For a manual release from a checkout of the tagged commit, use the test and
 pack commands above, then:
