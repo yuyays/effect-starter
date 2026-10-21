@@ -180,3 +180,15 @@ and Vitest instance across the workspaces. Keep it aligned when upgrading toolin
 
 See [the CLI README](packages/create-effect-starter/README.md) for generator
 usage and local packaging instructions.
+
+## API production build
+
+The API and shared contracts compile with `tsc`; Node.js runs the emitted JavaScript.
+Root development, typecheck, and test commands build contracts first. Development
+watches the API and contracts with `tsc --watch`; `node --watch` restarts the API
+when the emitted JavaScript changes.
+
+After building the workspace, start the API with `node apps/api/dist/main.js`
+from the project root. Set `DATABASE_URL` and `PORT` in the process environment.
+Keep `packages/contracts/dist`, the workspace package manifests, and production
+dependencies alongside `apps/api/dist`; the API is not bundled.

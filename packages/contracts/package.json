@@ -4,14 +4,24 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./http": "./src/http/index.ts",
-    "./schemas/user": "./src/schemas/user.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./http": {
+      "types": "./dist/http/index.d.ts",
+      "default": "./dist/http/index.js"
+    },
+    "./schemas/user": {
+      "types": "./dist/schemas/user.d.ts",
+      "default": "./dist/schemas/user.js"
+    }
   },
   "scripts": {
-    "build": "tsc --noEmit",
+    "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
-    "test": "vp test run"
+    "test": "vp test run",
+    "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput"
   },
   "dependencies": {
     "effect": "^4.0.0"

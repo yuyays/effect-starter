@@ -3,9 +3,8 @@
   "compilerOptions": {
     "noEmit": true,
     "types": ["node"],
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext"
   },
   "include": ["src", "drizzle.config.ts"]
 }

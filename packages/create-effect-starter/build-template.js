@@ -103,7 +103,9 @@ for (const framework of Object.keys(frameworks)) {
   const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
   delete manifest.scripts["create:app"];
   delete manifest.scripts["test:generated"];
-  manifest.scripts.test = 'vp run --filter "@effect-starter/*" test';
+  manifest.scripts.test = manifest.scripts.test.split(
+    " && node packages/create-effect-starter/",
+  )[0];
   await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
   const lockfilePath =
     framework === "react"

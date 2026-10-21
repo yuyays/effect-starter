@@ -31,7 +31,8 @@ void test("CLI generates a renamed project without generator artifacts", async (
   const manifest = JSON.parse(await readFile(join(project, "package.json"), "utf8"));
   assert.equal(manifest.name, "my-app");
   assert.ok(!("create:app" in manifest.scripts));
-  assert.equal(manifest.scripts["dev:api"], "vp run @my-app/api#dev");
+  assert.match(manifest.scripts["dev:api"], /@my-app\/contracts#build/);
+  assert.match(manifest.scripts["dev:api"], /--filter @my-app\/api/);
   for (const [location, name] of [
     ["apps/api", "api"],
     ["apps/web", "web"],
@@ -71,10 +72,10 @@ void test("CLI generates a renamed project without generator artifacts", async (
     await readFile(join(project, "apps/web/index.html"), "utf8"),
     /<title>my-app<\/title>/,
   );
-  assert.match(
-    await readFile(join(project, "apps/api/tsup.config.ts"), "utf8"),
-    /@my-app\/contracts/,
-  );
+  const api = JSON.parse(await readFile(join(project, "apps/api/package.json"), "utf8"));
+  assert.match(api.scripts.build, /@my-app\/contracts#build/);
+  assert.ok(!("tsup" in api.devDependencies));
+  assert.ok(!("tsx" in api.devDependencies));
 });
 
 void test("rejects nonempty destinations without changing their contents", async (t) => {

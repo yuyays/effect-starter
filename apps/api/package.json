@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/main.ts",
-    "build": "tsup src/main.ts --format esm --target node24 --out-dir dist --clean",
+    "dev": "vp run build && node dev.js",
+    "build": "vp run @effect-starter/contracts#build && tsc -p tsconfig.build.json",
     "start": "node dist/main.js",
     "typecheck": "tsc --noEmit",
     "test": "vp test run --passWithNoTests",
@@ -26,8 +26,6 @@
     "@types/pg": "^8.15.5",
     "drizzle-kit": "1.0.0-rc.5-5935859",
     "esbuild": "0.28.1",
-    "tsup": "^8.5.1",
-    "tsx": "^4.23.15",
     "vite-plus": "1.0.0"
   }
 }
