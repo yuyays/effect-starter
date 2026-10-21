@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import { versions } from "vite-plus/versions";
 import { format } from "vite-plus/fmt";
+import { parse } from "yaml";
 import { createProject } from "./create-project.js";
 
 async function temporary(t) {
@@ -30,6 +31,10 @@ void test("CLI generates a renamed project without generator artifacts", async (
   const project = join(directory, "nested/my-app");
   const manifest = JSON.parse(await readFile(join(project, "package.json"), "utf8"));
   assert.equal(manifest.name, "my-app");
+  const sourceManifest = JSON.parse(
+    await readFile(new URL("../../package.json", import.meta.url), "utf8"),
+  );
+  assert.equal(manifest.packageManager, sourceManifest.packageManager);
   assert.ok(!("create:app" in manifest.scripts));
   assert.match(manifest.scripts["dev:api"], /@my-app\/contracts#build/);
   assert.match(manifest.scripts["dev:api"], /--filter @my-app\/api/);
@@ -222,8 +227,25 @@ for (const framework of ["react", "tanstack-start", "vue"]) {
       if (packageManager === "pnpm") {
         const lock = await readFile(join(project, "pnpm-lock.yaml"), "utf8");
         assert.ok(!lock.includes("packages/create-chosen-app:"));
-        assert.equal(lock.includes("'@tanstack/react-start':"), framework === "tanstack-start");
-        assert.equal(lock.includes("'@tanstack/vue-query':"), framework === "vue");
+        const parsed = parse(lock);
+        const dependencies = parsed.importers["apps/web"].dependencies;
+        assert.equal(
+          Boolean(dependencies["@tanstack/react-start"]),
+          framework === "tanstack-start",
+        );
+        assert.equal(Boolean(dependencies["@tanstack/vue-query"]), framework === "vue");
+        assert.deepEqual(Object.keys(parsed.importers).sort(), [
+          ".",
+          "apps/api",
+          "apps/web",
+          "packages/contracts",
+        ]);
+        assert.equal(
+          parsed.importers["apps/web"].dependencies["@chosen-app/contracts"].version,
+          "link:../../packages/contracts",
+        );
+        const workspace = await readFile(join(project, "pnpm-workspace.yaml"), "utf8");
+        assert.ok(!workspace.includes("frontends"));
       }
     });
   }

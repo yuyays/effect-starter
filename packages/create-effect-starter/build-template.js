@@ -1,6 +1,7 @@
 import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { format } from "vite-plus/fmt";
 import { frameworks } from "./frameworks.js";
+import { templateLockfile } from "./template-lockfile.js";
 
 const root = new URL("../../", import.meta.url);
 const template = new URL("./template/", import.meta.url);
@@ -33,6 +34,7 @@ const copyOptions = {
 };
 
 await rm(template, { recursive: true, force: true });
+const lockfile = await readFile(new URL("pnpm-lock.yaml", root), "utf8");
 for (const framework of Object.keys(frameworks)) {
   const destination = new URL(`${framework}/`, template);
   await mkdir(destination, { recursive: true });
@@ -46,23 +48,22 @@ for (const framework of Object.keys(frameworks)) {
     await cp(new URL("apps/web/", root), web, copyOptions);
   }
   if (framework !== "react") {
-    await cp(new URL(`./frontends/${framework}/`, import.meta.url), web, {
-      ...copyOptions,
-      filter: (source) => copyOptions.filter(source) && !source.endsWith("pnpm-lock.yaml"),
-    });
+    await cp(new URL(`./frontends/${framework}/`, import.meta.url), web, copyOptions);
   }
+  const webManifestPath = new URL("package.json", web);
+  const webManifest = JSON.parse(await readFile(webManifestPath, "utf8"));
+  webManifest.name = "@effect-starter/web";
+  await writeFile(webManifestPath, `${JSON.stringify(webManifest, null, 2)}\n`);
+  const workspacePath = new URL("pnpm-workspace.yaml", destination);
+  const workspace = await readFile(workspacePath, "utf8");
+  await writeFile(
+    workspacePath,
+    workspace.replace('  - "packages/create-effect-starter/frontends/*"\n', ""),
+  );
   if (framework === "tanstack-start") {
     for (const entry of ["index.html", "src/main.tsx", "src/lib/query-client.ts"]) {
       await rm(new URL(entry, web));
     }
-  }
-  if (framework === "vue") {
-    const workspacePath = new URL("pnpm-workspace.yaml", destination);
-    const workspace = await readFile(workspacePath, "utf8");
-    await writeFile(
-      workspacePath,
-      workspace.replace("allowBuilds:\n", 'allowBuilds:\n  "vue-demi": true\n'),
-    );
   }
   const configPath = new URL("vite.config.ts", destination);
   let config = await readFile(configPath, "utf8");
@@ -101,26 +102,12 @@ for (const framework of Object.keys(frameworks)) {
   await writeFile(new URL("README.md", destination), readme);
   const manifestPath = new URL("package.json", destination);
   const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+  manifest.workspaces = ["apps/*", "packages/*"];
   delete manifest.scripts["create:app"];
   delete manifest.scripts["test:generated"];
   manifest.scripts.test = manifest.scripts.test.split(
     " && node packages/create-effect-starter/",
   )[0];
   await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
-  const lockfilePath =
-    framework === "react"
-      ? new URL("pnpm-lock.yaml", root)
-      : new URL(`./frontends/${framework}/pnpm-lock.yaml`, import.meta.url);
-  // Variant lockfiles are maintained with the generated workspace, not the source overlay.
-  try {
-    const lockfile = await readFile(lockfilePath, "utf8");
-    await writeFile(
-      new URL("pnpm-lock.yaml", destination),
-      lockfile.replace(/\n  packages\/create-effect-starter:[\s\S]*?(?=\n  \S|\npackages:)/, "\n"),
-    );
-  } catch (error) {
-    if (error.code !== "ENOENT" || framework === "react") throw error;
-    // Only used when bootstrapping a new template's checked-in lockfile.
-    if (process.env.UPDATE_TEMPLATE_LOCKFILES !== "1") throw error;
-  }
+  await writeFile(new URL("pnpm-lock.yaml", destination), templateLockfile(lockfile, framework));
 }
