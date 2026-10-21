@@ -8,11 +8,13 @@ Effect v4, Drizzle, PostgreSQL, and Vite+.
 Run the generator—no clone needed:
 
 ```sh
-npx --yes https://github.com/yuyays/effect-starter/releases/download/v0.2.0/create-effect-starter.tgz
+npx --yes https://github.com/yuyays/effect-starter/releases/latest/download/create-effect-starter.tgz
 ```
 
-Use arrow keys and Enter to choose your project name, starter, and package manager.
-Review the dependency list, then accept or skip installation.
+The `latest` URL points at the newest GitHub release; replace `latest` with a
+release tag to pin a version. Use arrow keys and Enter to choose your project
+name, starter, and package manager. Review the dependency list, then accept or
+skip installation.
 
 - **React:** single-page app with TanStack Router and Query.
 - **TanStack Start:** React with server rendering.
