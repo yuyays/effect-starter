@@ -29,8 +29,7 @@ and follow its README. If you decline, the CLI shows the manual install command.
 The launcher does not choose your app's package manager. Ctrl+C at the install
 prompt skips installation and keeps the generated project.
 
-<details>
-<summary>Launch with pnpm or Bun instead of npx</summary>
+## Launch with pnpm or Bun
 
 Choose any one of these launchers; they run the same release and wizard.
 
@@ -43,8 +42,6 @@ bunx --package https://github.com/yuyays/effect-starter/releases/latest/download
 ```
 
 This package is not published to npm, so `pnpm create effect-starter` is not available.
-
-</details>
 
 ## From a checkout: development and unreleased changes
 
@@ -109,6 +106,27 @@ after showing the package list. It does not create a database or initialize Git.
 pnpm projects include a lockfile. Bun projects generate `bun.lock` on their first
 install. Commit the selected lockfile before pushing to your own repository,
 because generated CI uses frozen installs.
+
+## Develop the source apps
+
+To work on the starter apps themselves, stay in the repository checkout:
+
+```sh
+pnpm install
+cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.example apps/web/.env
+```
+
+Set `DATABASE_URL` in `apps/api/.env` to a running PostgreSQL database, then run
+`pnpm db:generate`, `pnpm db:migrate`, and `pnpm dev`.
+Use `pnpm dev:web` or `pnpm dev:api` to run one server. The API health endpoint
+is http://localhost:3000/api/health.
+
+The API and shared contracts compile with TypeScript and run on Node.js; the
+[generated README](PROJECT_README.md#api-production-build) describes production
+files and environment variables. `@effect/tsgo` adds Effect diagnostics to the
+workspace type checks. Drizzle ORM and Kit retain their paired Effect v4 release
+candidate pins. Keep the API's esbuild peer aligned with the Vite+ toolchain.
 
 ## Test or package the CLI
 
