@@ -19,9 +19,8 @@ and Enter to choose:
 - **TanStack Start**: React with server rendering and a separate Effect API.
 - **Vue**: a single-page app with Vue Router and TanStack Query.
 
-**Release status:** the existing `v0.1.0` release is React-only. The three-starter
-picker needs a new release built from this source. Use the checkout workflow
-below to try it before that release.
+The React, TanStack Start, and Vue picker is available in **v0.2.0 and later**.
+Older releases, including v0.1.0, provide the React starter only.
 
 Enter `my-app` to create a project in the current directory. Choose pnpm or Bun,
 review the direct dependencies and development tools, then confirm whether to
@@ -30,8 +29,7 @@ and follow its README. If you decline, the CLI shows the manual install command.
 The launcher does not choose your app's package manager. Ctrl+C at the install
 prompt skips installation and keeps the generated project.
 
-<details>
-<summary>Launch with pnpm or Bun instead of npx</summary>
+## Launch with pnpm or Bun
 
 Choose any one of these launchers; they run the same release and wizard.
 
@@ -44,8 +42,6 @@ bunx --package https://github.com/yuyays/effect-starter/releases/latest/download
 ```
 
 This package is not published to npm, so `pnpm create effect-starter` is not available.
-
-</details>
 
 ## From a checkout: development and unreleased changes
 
@@ -111,6 +107,27 @@ pnpm projects include a lockfile. Bun projects generate `bun.lock` on their firs
 install. Commit the selected lockfile before pushing to your own repository,
 because generated CI uses frozen installs.
 
+## Develop the source apps
+
+To work on the starter apps themselves, stay in the repository checkout:
+
+```sh
+pnpm install
+cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.example apps/web/.env
+```
+
+Set `DATABASE_URL` in `apps/api/.env` to a running PostgreSQL database, then run
+`pnpm db:generate`, `pnpm db:migrate`, and `pnpm dev`.
+Use `pnpm dev:web` or `pnpm dev:api` to run one server. The API health endpoint
+is http://localhost:3000/api/health.
+
+The API and shared contracts compile with TypeScript and run on Node.js; the
+[generated README](PROJECT_README.md#api-production-build) describes production
+files and environment variables. `@effect/tsgo` adds Effect diagnostics to the
+workspace type checks. Drizzle ORM and Kit retain their paired Effect v4 release
+candidate pins. Keep the API's esbuild peer aligned with the Vite+ toolchain.
+
 ## Test or package the CLI
 
 From the repository root:
@@ -128,7 +145,7 @@ source files are excluded from generated apps.
 
 ## Publish a GitHub Release
 
-Commit the changes and push a version tag, such as `v0.1.0`, pointing at that
+Commit the changes and push a version tag, such as `v0.2.0`, pointing at that
 commit. In GitHub Actions, run **Release generator** and enter the existing tag.
 The workflow tests and packs the generator, then creates a release with
 `create-effect-starter.tgz` attached. It does not publish to npm. The workflow
@@ -138,7 +155,7 @@ For a manual release from a checkout of the tagged commit, use the test and
 pack commands above, then:
 
 ```sh
-gh release create v0.1.0 /tmp/create-effect-starter.tgz --verify-tag --generate-notes
+gh release create v0.2.0 /tmp/create-effect-starter.tgz --verify-tag --generate-notes
 ```
 
 Choose the tag for the version being released. Generated apps include their own

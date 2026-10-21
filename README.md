@@ -1,117 +1,40 @@
 # effect-starter
 
-Full-stack TypeScript starter with your choice of React, TanStack Start, or Vue, Effect v4,
-Drizzle, PostgreSQL, and Vite+ (Vite, Vitest, Oxlint, and Oxfmt).
-
-Licensed under the [MIT License](LICENSE).
+Full-stack TypeScript starter with **React**, **TanStack Start**, or **Vue**, plus
+Effect v4, Drizzle, PostgreSQL, and Vite+.
 
 ## Start here
 
-**Run the generator directly from a GitHub Release.** No clone or generator
-installation is needed:
+Run the generator—no clone needed:
 
 ```sh
 npx --yes https://github.com/yuyays/effect-starter/releases/latest/download/create-effect-starter.tgz
 ```
 
-You need Node.js 24.11+. The wizard asks you to:
+Use arrow keys and Enter to choose your project name, starter, and package manager.
+Review the dependency list, then accept or skip installation.
 
-1. Name your project, for example `my-app`.
-2. Pick **React**, **TanStack Start**, or **Vue** with arrow keys and Enter.
-3. Pick **pnpm** or **Bun** for your app.
-4. Review the dependency list and choose whether to run `pnpm install` or `bun install`.
+- **React:** single-page app with TanStack Router and Query.
+- **TanStack Start:** React with server rendering.
+- **Vue:** single-page app with Vue Router and TanStack Query.
 
-**Release status:** the existing `v0.1.0` release is React-only. The three-starter
-picker requires a new release built from this source. To try it before that
-release, use the checkout workflow below.
+Requires Node.js 24.11+ and pnpm 11 or Bun 1.4.2. All starters include the same
+Effect API and shared contracts. The framework picker requires **v0.2.0+**.
 
-React and Vue create single-page apps. TanStack Start adds React server rendering.
-Every choice includes the Effect API, Drizzle, PostgreSQL, and shared contracts.
-The API runs on Node.js with either package manager.
+Prefer pnpm or Bun to launch the generator? See the
+[CLI guide](packages/create-effect-starter/README.md#launch-with-pnpm-or-bun).
+The launcher does not determine your app's package manager.
 
-`npx` only downloads and launches the generator. It does not select npm for your
-app. Choose pnpm 11 or Bun 1.4.2, then accept the install prompt to have the
-wizard install dependencies for you. After it finishes, enter your project:
+## Run your app
+
+For a project named `my-app`:
 
 ```sh
 cd my-app
 ```
 
-If you skipped installation, run `pnpm install` or `bun install` inside your
-project first. Then continue with
-[Configure and run your generated app](#configure-and-run-your-generated-app).
-You will need a running PostgreSQL database for that step.
-
-The generator creates your project and `.env` files, shows its direct dependencies
-and development tools, then offers to install them. It does not create a database
-or initialize Git. Existing nonempty directories are never overwritten. Ctrl+C
-cancels the wizard; at the install prompt, it skips installation and keeps your project.
-
-<details>
-<summary>Prefer launching with pnpm or Bun?</summary>
-
-These launch the same release and wizard. Choose any one launcher; the package
-manager you pick inside the wizard is independent of how you launched it.
-
-With pnpm:
-
-```sh
-pnpm dlx https://github.com/yuyays/effect-starter/releases/latest/download/create-effect-starter.tgz
-```
-
-With Bun:
-
-```sh
-bunx --package https://github.com/yuyays/effect-starter/releases/latest/download/create-effect-starter.tgz create-effect-starter
-```
-
-The generator is distributed through GitHub Releases, without publishing to npm.
-`pnpm create effect-starter` is not available. See the
-[CLI README](packages/create-effect-starter/README.md) for version pinning,
-manual downloads, and automation flags.
-
-</details>
-
-<details>
-<summary>Develop the generator or try unreleased changes from a checkout</summary>
-
-Use this workflow when you need the source version instead of a published release:
-
-```sh
-git clone https://github.com/yuyays/effect-starter.git
-cd effect-starter
-pnpm install
-pnpm create:app
-```
-
-`pnpm create:app` runs the local generator and opens the same wizard. It only
-works inside this repository. Enter `../my-app` to create your app beside the
-checkout, review the dependency list, and accept or skip installation. Then run
-`cd ../my-app`.
-
-</details>
-
-## Where Vite+ fits
-
-Vite+ is the app's development toolchain: it runs the dev servers, builds,
-tests, linting, formatting, and workspace tasks. The `dev`, `build`, `test`,
-`lint`, and `format:check` scripts call Vite+ through `vp`.
-
-pnpm or Bun handles dependencies and lockfiles. Vite+ is installed locally in
-both choices; neither choice opts out of Vite+. A global `vp` installation is
-optional. If you use it, `vp install` delegates to the package manager selected
-for your project. See the [Vite+ guide](https://viteplus.dev/guide/).
-
-## Configure and run your generated app
-
-Run these commands from `my-app`, not from the starter checkout.
-
-Set `DATABASE_URL` in `apps/api/.env` to your PostgreSQL connection string. The
-example points to a local database; editing the file does not create that
-database. A Supabase PostgreSQL connection string also works.
-
-Create and apply the migration for the example `users` table, then start both
-servers with the commands for your chosen package manager:
+If you skipped installation, run `pnpm install` or `bun install` now.
+Set `DATABASE_URL` in `apps/api/.env` to a running PostgreSQL database, then:
 
 | Action             | pnpm               | Bun                   |
 | ------------------ | ------------------ | --------------------- |
@@ -119,14 +42,11 @@ servers with the commands for your chosen package manager:
 | Apply migration    | `pnpm db:migrate`  | `bun run db:migrate`  |
 | Start web and API  | `pnpm dev`         | `bun run dev`         |
 
-Web runs at http://localhost:5173, API at http://localhost:3000, and API docs at
-http://localhost:3000/docs. The health endpoint is http://localhost:3000/api/health.
-Use `dev:web` or `dev:api` in place of `dev` to run only one server.
+Web: http://localhost:5173 · API: http://localhost:3000 · API docs:
+http://localhost:3000/docs.
 
-pnpm projects include a tested `pnpm-lock.yaml`. Bun projects create `bun.lock`
-on their first install. **Commit the selected lockfile before pushing to your
-own repository**: generated CI uses frozen installs. Use one package manager
-per generated project.
+The generator creates `.env` files; it does not create a database or initialize
+Git. Commit your chosen lockfile before pushing—generated CI uses frozen installs.
 
 ## Verify your generated app
 
@@ -138,66 +58,25 @@ per generated project.
 | Tests            | `pnpm test`         | `bun run test`         |
 | Production build | `pnpm build`        | `bun run build`        |
 
-Vite+ is included in the project and powers these commands. The package-manager
-scripts use the installed project version of `vp`; no separate global installation
-is needed.
-
-`@effect/tsgo` adds Effect diagnostics to `typecheck`. Select the workspace
-TypeScript version in your editor to enable its diagnostics and refactors there.
-Effect and its Node/PostgreSQL adapters use v4. Drizzle ORM and Kit are pinned to
-`1.0.0-rc.5-5935859` for stable Effect v4 compatibility. The API uses Drizzle’s
-native `effect-postgres` integration through the `Database` service.
+pnpm or Bun manages dependencies; these scripts run the included Vite+ toolchain.
+No global `vp` installation is needed. Follow your generated README for API production deployment and
+framework-specific notes.
 
 ## Develop the starter
 
-This path is for contributing to this repository. Stay in the `effect-starter`
-checkout and use pnpm:
+For source changes or an unreleased generator, clone this repository:
 
 ```sh
+git clone https://github.com/yuyays/effect-starter.git
+cd effect-starter
 pnpm install
-cp apps/api/.env.example apps/api/.env
-cp apps/web/.env.example apps/web/.env
+pnpm create:app
 ```
 
-Set `DATABASE_URL` in `apps/api/.env`, then run:
+Enter `../my-app` to generate a separate app beside the checkout.
+`pnpm create:app` only works inside this repository.
 
-```sh
-pnpm db:generate
-pnpm db:migrate
-pnpm dev
-```
+See the [CLI and maintenance guide](packages/create-effect-starter/README.md) for
+automation flags, source-app development, testing, dependency updates, and releases.
 
-Run the same verification scripts listed above. In this checkout, `pnpm test`
-also tests the generator. To verify fresh generated apps with both package
-managers for all three starters, including startup, API proxying, and shutdown,
-install Bun 1.4.2 and run:
-
-```sh
-pnpm test:generated
-```
-
-The API declares an esbuild peer explicitly so pnpm resolves one shared Vite+
-and Vitest instance across the workspaces. Keep it aligned when upgrading tooling.
-
-See [the CLI README](packages/create-effect-starter/README.md) for generator
-usage and local packaging instructions.
-
-## API production build
-
-The API and shared contracts compile with `tsc`; Node.js runs the emitted JavaScript.
-Root development, typecheck, and test commands build contracts first. Development
-watches the API and contracts with `tsc --watch`; `node --watch` restarts the API
-when the emitted JavaScript changes.
-
-After building the workspace, start the API with `node apps/api/dist/main.js`
-from the project root. Set `DATABASE_URL` and `PORT` in the process environment.
-Keep `packages/contracts/dist`, the workspace package manifests, and production
-dependencies alongside `apps/api/dist`; the API is not bundled.
-
-## Dependency maintenance
-
-Dependabot opens weekly PRs for workspace dependencies and GitHub Actions,
-grouping related updates. Major upgrades and the paired Drizzle pins are handled
-manually. Each PR checks the repository and all three generated starters with
-pnpm and Bun; updates are reviewed before merging. See the
-[generator maintenance notes](packages/create-effect-starter/README.md#dependency-updates).
+[MIT License](LICENSE)
