@@ -9,7 +9,7 @@ either package manager.
 No checkout is required. Run this from the directory where you want your app:
 
 ```sh
-npx --yes https://github.com/yuyays/effect-starter/releases/latest/download/create-effect-starter.tgz
+npx --yes https://github.com/yuyays/effect-starter/releases/download/v0.2.0/create-effect-starter.tgz
 ```
 
 The wizard asks for a project name, starter, and package manager. Use arrow keys
@@ -34,11 +34,11 @@ prompt skips installation and keeps the generated project.
 Choose any one of these launchers; they run the same release and wizard.
 
 ```sh
-pnpm dlx https://github.com/yuyays/effect-starter/releases/latest/download/create-effect-starter.tgz
+pnpm dlx https://github.com/yuyays/effect-starter/releases/download/v0.2.0/create-effect-starter.tgz
 ```
 
 ```sh
-bunx --package https://github.com/yuyays/effect-starter/releases/latest/download/create-effect-starter.tgz create-effect-starter
+bunx --package https://github.com/yuyays/effect-starter/releases/download/v0.2.0/create-effect-starter.tgz create-effect-starter
 ```
 
 This package is not published to npm, so `pnpm create effect-starter` is not available.
@@ -64,9 +64,10 @@ repository. You can also launch the local wizard with `bun run create:app`.
 <details>
 <summary>Specific releases and manual downloads</summary>
 
-For a specific version, replace `latest/download` with `download/<tag>` in the
-URL. Use the attached `.tgz`, since GitHub's automatic source archives do not
-contain the built templates.
+The download URL pins `v0.2.0` so package runners cannot reuse a cached older
+release from a mutable `latest` URL. To use another release, replace `v0.2.0`
+with its tag. Use the attached `.tgz`; automatic source archives do not contain
+the built templates.
 
 You can also download `create-effect-starter.tgz` from
 [Releases](https://github.com/yuyays/effect-starter/releases) and extract it.

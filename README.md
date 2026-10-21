@@ -8,7 +8,7 @@ Effect v4, Drizzle, PostgreSQL, and Vite+.
 Run the generator—no clone needed:
 
 ```sh
-npx --yes https://github.com/yuyays/effect-starter/releases/latest/download/create-effect-starter.tgz
+npx --yes https://github.com/yuyays/effect-starter/releases/download/v0.2.0/create-effect-starter.tgz
 ```
 
 Use arrow keys and Enter to choose your project name, starter, and package manager.
