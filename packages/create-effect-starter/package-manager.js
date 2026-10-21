@@ -1,9 +1,9 @@
+import { parse } from "yaml";
 import { readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 export const packageManagers = {
   pnpm: {
-    version: "11.7.0",
     run: "pnpm run",
     setup: "      - uses: pnpm/action-setup@v5\n",
     cache: "          cache: pnpm\n",
@@ -41,11 +41,13 @@ export async function configurePackageManager(destination, packageManager, frame
   const manager = getPackageManager(packageManager);
   const manifestPath = join(destination, "package.json");
   let manifest = JSON.parse(await readFile(manifestPath, "utf8"));
-  manifest.packageManager = `${packageManager}@${manager.version}`;
+  // pnpm inherits the source workspace pin; Bun declares its selected manager.
+  if (packageManager === "bun") manifest.packageManager = `bun@${manager.version}`;
   if (packageManager === "bun") {
+    const workspaceConfig = parse(await readFile(join(destination, "pnpm-workspace.yaml"), "utf8"));
     manifest.overrides = {
-      vite: "npm:@voidzero-dev/vite-plus-core@1.0.0",
-      vitest: "5.0.1",
+      vite: workspaceConfig.overrides["vite@*"],
+      vitest: workspaceConfig.overrides["vitest@*"],
     };
     // An explicit list replaces Bun's built-in trusted dependency list.
     manifest.devDependencies.vite = manifest.overrides.vite;

@@ -150,10 +150,26 @@ The React frontend comes from `apps/web`. `frontends/tanstack-start` overlays it
 `frontends/vue` contains the Vue frontend. The API and contracts remain shared.
 `build-template.js` assembles each complete project into `template/<framework>`.
 
-After changing template dependencies or shared workspace configuration, rebuild,
-run `pnpm install --lockfile-only --ignore-scripts` in each assembled variant,
-and copy its lockfile back to `frontends/<framework>/pnpm-lock.yaml` for Vue and
-TanStack Start. For a new variant without a lockfile, bootstrap the build with
-`UPDATE_TEMPLATE_LOCKFILES=1 node packages/create-effect-starter/build-template.js`.
-Run `pnpm test:generated` to verify all three starters with pnpm and Bun.
-Pass a framework name (for example `pnpm test:generated vue`) to check only that starter.
+All frontend manifests are part of the source pnpm workspace. Their source-only
+package names keep them out of the app task filters; generated apps rename the
+selected frontend to `@effect-starter/web`. Update dependencies with pnpm from
+the repository root. Commit the manifests and root `pnpm-lock.yaml` together.
+
+The builder selects the API, contracts, and chosen frontend importers from that
+single lockfile and rebases workspace links. There are no separately maintained
+template lockfiles. Run `pnpm test:generated` to verify all three starters with
+pnpm and Bun. Pass a framework name (for example `pnpm test:generated vue`) to
+check only that starter.
+
+## Dependency updates
+
+Dependabot checks the workspace and GitHub Actions every Monday. Related
+Vite+/Vitest packages and Effect packages are grouped into reviewable PRs;
+other minor and patch updates are grouped separately. Releases must be at least
+one day old. Major migrations and the paired Drizzle release-candidate pins
+require manual review. Vue's frontend stays on TypeScript 5.9 until its native
+TypeScript integration is adopted.
+
+Every dependency PR runs the repository checks and all six generated-app checks.
+Dependabot configuration takes effect after it is merged into the default branch.
+It does not merge PRs or publish releases automatically.
