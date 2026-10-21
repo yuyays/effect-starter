@@ -52,3 +52,15 @@ TypeScript version in your editor to use its Effect diagnostics and refactors th
 
 {{LOCKFILE_NOTE}}
 Use {{PACKAGE_MANAGER}} for this project so installs and CI use the same lockfile.
+
+## API production build
+
+The API and shared contracts compile with `tsc`; Node.js runs the emitted JavaScript.
+Root development, typecheck, and test commands build contracts first. Development
+watches the API and contracts with `tsc --watch`; `node --watch` restarts the API
+when the emitted JavaScript changes.
+
+After building the workspace, start the API with `node apps/api/dist/main.js`
+from the project root. Set `DATABASE_URL` and `PORT` in the process environment.
+Keep `packages/contracts/dist`, the workspace package manifests, and production
+dependencies alongside `apps/api/dist`; the API is not bundled.

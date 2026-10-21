@@ -105,7 +105,9 @@ for (const framework of Object.keys(frameworks)) {
   manifest.workspaces = ["apps/*", "packages/*"];
   delete manifest.scripts["create:app"];
   delete manifest.scripts["test:generated"];
-  manifest.scripts.test = 'vp run --filter "@effect-starter/*" test';
+  manifest.scripts.test = manifest.scripts.test.split(
+    " && node packages/create-effect-starter/",
+  )[0];
   await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
   await writeFile(new URL("pnpm-lock.yaml", destination), templateLockfile(lockfile, framework));
 }
