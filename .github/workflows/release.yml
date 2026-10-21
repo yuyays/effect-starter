@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing tag to package (for example v0.1.0)
+        description: Existing tag to package (for example v0.2.0)
         required: true
         type: string
 
@@ -30,9 +30,14 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter create-effect-starter test
       - run: pnpm --filter create-effect-starter pack --out "$RUNNER_TEMP/create-effect-starter.tgz"
-      - name: Verify the archive runs through npx
+      - name: Verify all starters in the archive run through npx
         working-directory: ${{ runner.temp }}
-        run: npx --yes --package "$RUNNER_TEMP/create-effect-starter.tgz" -- create-effect-starter release-smoke-app --package-manager pnpm
+        run: |
+          for framework in react tanstack-start vue; do
+            npx --yes --package "$RUNNER_TEMP/create-effect-starter.tgz" -- \
+              create-effect-starter "release-smoke-$framework" \
+              --framework "$framework" --package-manager pnpm --no-install
+          done
       - name: Create GitHub release with the packed CLI
         env:
           GH_TOKEN: ${{ github.token }}

@@ -19,9 +19,8 @@ and Enter to choose:
 - **TanStack Start**: React with server rendering and a separate Effect API.
 - **Vue**: a single-page app with Vue Router and TanStack Query.
 
-**Release status:** the existing `v0.1.0` release is React-only. The three-starter
-picker needs a new release built from this source. Use the checkout workflow
-below to try it before that release.
+The React, TanStack Start, and Vue picker is available in **v0.2.0 and later**.
+Older releases, including v0.1.0, provide the React starter only.
 
 Enter `my-app` to create a project in the current directory. Choose pnpm or Bun,
 review the direct dependencies and development tools, then confirm whether to
@@ -128,7 +127,7 @@ source files are excluded from generated apps.
 
 ## Publish a GitHub Release
 
-Commit the changes and push a version tag, such as `v0.1.0`, pointing at that
+Commit the changes and push a version tag, such as `v0.2.0`, pointing at that
 commit. In GitHub Actions, run **Release generator** and enter the existing tag.
 The workflow tests and packs the generator, then creates a release with
 `create-effect-starter.tgz` attached. It does not publish to npm. The workflow
@@ -138,7 +137,7 @@ For a manual release from a checkout of the tagged commit, use the test and
 pack commands above, then:
 
 ```sh
-gh release create v0.1.0 /tmp/create-effect-starter.tgz --verify-tag --generate-notes
+gh release create v0.2.0 /tmp/create-effect-starter.tgz --verify-tag --generate-notes
 ```
 
 Choose the tag for the version being released. Generated apps include their own

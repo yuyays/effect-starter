@@ -1,6 +1,6 @@
 {
   "name": "create-effect-starter",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Create an Effect v4, Drizzle, and Vite+ project with React, TanStack Start, or Vue",
   "license": "MIT",
   "repository": {

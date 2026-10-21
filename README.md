@@ -21,9 +21,8 @@ You need Node.js 24.11+. The wizard asks you to:
 3. Pick **pnpm** or **Bun** for your app.
 4. Review the dependency list and choose whether to run `pnpm install` or `bun install`.
 
-**Release status:** the existing `v0.1.0` release is React-only. The three-starter
-picker requires a new release built from this source. To try it before that
-release, use the checkout workflow below.
+The React, TanStack Start, and Vue picker is available in **v0.2.0 and later**.
+Older releases, including v0.1.0, provide the React starter only.
 
 React and Vue create single-page apps. TanStack Start adds React server rendering.
 Every choice includes the Effect API, Drizzle, PostgreSQL, and shared contracts.
