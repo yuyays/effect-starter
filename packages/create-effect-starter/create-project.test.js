@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import { versions } from "vite-plus/versions";
+import { format } from "vite-plus/fmt";
 import { createProject } from "./create-project.js";
 
 async function temporary(t) {
@@ -247,3 +248,18 @@ void test("invalid frameworks and duplicate or missing framework flags do not cr
   }
   assert.deepEqual(await readdir(directory), []);
 });
+
+for (const framework of ["react", "tanstack-start", "vue"]) {
+  void test(`generated root configs are formatted for ${framework}`, async (t) => {
+    const directory = await temporary(t);
+    const project = await createProject("my-app", directory, { framework });
+    const config = await readFile(join(project.destination, "vite.config.ts"), "utf8");
+    const formatted = await format("vite.config.ts", config);
+    assert.deepEqual(formatted.errors, []);
+    assert.equal(
+      config,
+      formatted.code,
+      "Framework customization must preserve formatter-clean output",
+    );
+  });
+}

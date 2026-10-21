@@ -1,4 +1,5 @@
 import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { format } from "vite-plus/fmt";
 import { frameworks } from "./frameworks.js";
 
 const root = new URL("../../", import.meta.url);
@@ -75,7 +76,12 @@ for (const framework of Object.keys(frameworks)) {
       )
       .replace(/^      "react\/.*\n/gm, "");
   }
-  await writeFile(configPath, config);
+  // Removing source-only ignore paths can change how arrays should wrap.
+  const formatted = await format("vite.config.ts", config);
+  if (formatted.errors.length) {
+    throw new Error(`Cannot format ${framework} config: ${JSON.stringify(formatted.errors)}`);
+  }
+  await writeFile(configPath, formatted.code);
   let readme = await readFile(new URL("./PROJECT_README.md", import.meta.url), "utf8");
   const stack =
     framework === "react"
