@@ -3,6 +3,19 @@
 Full-stack TypeScript starter with **React**, **TanStack Start**, or **Vue**, plus
 Effect v4, Drizzle, PostgreSQL, and Vite+.
 
+Deployment is provider-agnostic: no hosting provider is preconfigured. Choose
+your own platform—AWS, Azure, GCP, Cloudflare, Railway, or another host. The API
+targets Node.js; Bun is supported as a package manager, not as the API runtime
+for now.
+Non-Node runtimes may require platform-specific adaptation.
+
+## Why I built this
+
+I kept rebuilding the same foundation for new projects—and repeating the same
+instructions to coding agents: React, TanStack Start, or Vue; Effect; a strict
+TypeScript monorepo; and the OXC/Vite+ toolchain. This generator packages that
+setup so I can spend less time bootstrapping and more time building.
+
 ## Start here
 
 Run the generator—no clone needed:
@@ -11,8 +24,7 @@ Run the generator—no clone needed:
 npx --yes https://github.com/yuyays/effect-starter/releases/latest/download/create-effect-starter.tgz
 ```
 
-The `latest` URL points at the newest GitHub release; replace `latest` with a
-release tag to pin a version. Use arrow keys and Enter to choose your project
+Use arrow keys and Enter to choose your project
 name, starter, and package manager. Review the dependency list, then accept or
 skip installation.
 
@@ -21,10 +33,11 @@ skip installation.
 - **Vue:** single-page app with Vue Router and TanStack Query.
 
 Requires Node.js 24.11+ and pnpm 11 or Bun 1.4.2. All starters include the same
-Effect API and shared contracts. The framework picker requires **v0.2.0+**.
+Effect API and shared contracts.
 
-Prefer pnpm or Bun to launch the generator? See the
-[CLI guide](packages/create-effect-starter/README.md#launch-with-pnpm-or-bun).
+`pnx` (pnpm 11+) and `bunx` can launch it too; see the
+[CLI guide](packages/create-effect-starter/README.md#launch-with-pnpm-or-bun) for
+the exact commands.
 The launcher does not determine your app's package manager.
 
 ## Run your app
