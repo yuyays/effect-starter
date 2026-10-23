@@ -6,7 +6,14 @@ either package manager.
 
 ## Recommended: run a GitHub Release
 
-No checkout is required. Run this from the directory where you want your app:
+No checkout is required. With [Vite+ installed globally](https://viteplus.dev/guide/),
+run this from the directory where you want your app:
+
+```sh
+vp dlx https://github.com/yuyays/effect-starter/releases/latest/download/create-effect-starter.tgz
+```
+
+Without global Vite+, use:
 
 ```sh
 npx --yes https://github.com/yuyays/effect-starter/releases/latest/download/create-effect-starter.tgz

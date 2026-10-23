@@ -75,10 +75,10 @@ if (args.includes("--help") || args.includes("-h")) {
       );
       packageManager ??= await answer(
         select({
-          message: "Package manager",
+          message: "Package manager for dependency installation (Vite+ provides the dev tools)",
           initialValue: "pnpm",
           options: [
-            { value: "pnpm", label: "pnpm" },
+            { value: "pnpm", label: "pnpm", hint: "recommended" },
             { value: "bun", label: "Bun" },
           ],
         }),
@@ -122,6 +122,9 @@ if (args.includes("--help") || args.includes("-h")) {
         process.exitCode = 1;
       }
     }
+    console.log(
+      "\nWith global Vite+, use vp install if needed, then vp run db:generate, vp run db:migrate, and vp run dev. Set DATABASE_URL in apps/api/.env first.\nWithout global Vite+, use the package-manager commands below.",
+    );
     console.log(
       `\nNext steps:\n  cd ${JSON.stringify(directory)}\n  ${nextSteps(packageManager, { installed }).join("\n  ")}${packageManager === "bun" ? "\n  # Commit bun.lock before pushing to CI" : ""}`,
     );
