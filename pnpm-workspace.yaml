@@ -9,10 +9,10 @@ allowBuilds:
   esbuild: true
   msgpackr-extract: true
 overrides:
-  "vite@*": npm:@voidzero-dev/vite-plus-core@1.3.0
+  "vite@*": npm:@voidzero-dev/vite-plus-core@1.4.0
   "vitest@*": 5.0.5
 
 # Vite+ core uses the toolchain version for its Vite 8-compatible alias.
 peerDependencyRules:
   allowedVersions:
-    vite: "1.3.0"
+    vite: "1.4.0"
