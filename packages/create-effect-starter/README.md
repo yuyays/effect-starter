@@ -6,7 +6,14 @@ either package manager.
 
 ## Recommended: run a GitHub Release
 
-No checkout is required. Run this from the directory where you want your app:
+No checkout is required. With [Vite+ installed globally](https://viteplus.dev/guide/),
+run this from the directory where you want your app:
+
+```sh
+vp dlx https://github.com/yuyays/effect-starter/releases/latest/download/create-effect-starter.tgz
+```
+
+Without global Vite+, use:
 
 ```sh
 npx --yes https://github.com/yuyays/effect-starter/releases/latest/download/create-effect-starter.tgz
@@ -110,6 +117,12 @@ after showing the package list. It does not create a database or initialize Git.
 pnpm projects include a lockfile. Bun projects generate `bun.lock` on their first
 install. Commit the selected lockfile before pushing to your own repository,
 because generated CI uses frozen installs.
+
+## Database access
+
+The starter uses Drizzle over Effect SQL's PostgreSQL client. Drizzle provides
+typed query building and migration generation; Effect SQL manages connections
+and transactions. You can also use Effect SQL directly if you prefer writing SQL.
 
 ## Develop the source apps
 
