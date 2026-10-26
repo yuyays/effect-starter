@@ -118,6 +118,12 @@ pnpm projects include a lockfile. Bun projects generate `bun.lock` on their firs
 install. Commit the selected lockfile before pushing to your own repository,
 because generated CI uses frozen installs.
 
+## Database access
+
+The starter uses Drizzle over Effect SQL's PostgreSQL client. Drizzle provides
+typed query building and migration generation; Effect SQL manages connections
+and transactions. You can also use Effect SQL directly if you prefer writing SQL.
+
 ## Develop the source apps
 
 To work on the starter apps themselves, stay in the repository checkout:
