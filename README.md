@@ -18,7 +18,13 @@ setup so I can spend less time bootstrapping and more time building.
 
 ## Start here
 
-Run the generator—no clone needed:
+With [Vite+ installed globally](https://viteplus.dev/guide/), run the generator—no clone needed:
+
+```sh
+vp dlx https://github.com/yuyays/effect-starter/releases/latest/download/create-effect-starter.tgz
+```
+
+Without global Vite+, use:
 
 ```sh
 npx --yes https://github.com/yuyays/effect-starter/releases/latest/download/create-effect-starter.tgz
@@ -48,7 +54,8 @@ For a project named `my-app`:
 cd my-app
 ```
 
-If you skipped installation, run `pnpm install` or `bun install` now.
+With global Vite+, run `vp install` if you skipped installation. Otherwise, use
+`pnpm install` or `bun install`.
 Set `DATABASE_URL` in `apps/api/.env` to a running PostgreSQL database, then:
 
 | Action             | pnpm               | Bun                   |
@@ -56,6 +63,8 @@ Set `DATABASE_URL` in `apps/api/.env` to a running PostgreSQL database, then:
 | Generate migration | `pnpm db:generate` | `bun run db:generate` |
 | Apply migration    | `pnpm db:migrate`  | `bun run db:migrate`  |
 | Start web and API  | `pnpm dev`         | `bun run dev`         |
+
+With global Vite+, use `vp run <script>` for these tasks and verification checks.
 
 Web: http://localhost:5173 · API: http://localhost:3000 · API docs:
 http://localhost:3000/docs.
@@ -73,7 +82,7 @@ Git. Commit your chosen lockfile before pushing—generated CI uses frozen insta
 | Tests            | `pnpm test`         | `bun run test`         |
 | Production build | `pnpm build`        | `bun run build`        |
 
-pnpm or Bun manages dependencies; these scripts run the included Vite+ toolchain.
+pnpm (the default) or Bun manages dependencies; these scripts run the included Vite+ toolchain.
 No global `vp` installation is needed. Follow your generated README for API production deployment and
 framework-specific notes.
 

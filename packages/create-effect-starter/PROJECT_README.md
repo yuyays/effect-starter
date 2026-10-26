@@ -34,7 +34,8 @@ API docs are at http://localhost:3000/docs.
 The health endpoint is http://localhost:3000/api/health.
 Use `{{RUN}} dev:web` or `{{RUN}} dev:api` to run only one server.
 Vite+ is included in the project and powers its scripts. No separate global
-`vp` installation is needed.
+`vp` installation is needed. With global Vite+, use `vp install` and
+`vp run <script>` instead.
 
 Drizzle ORM and Kit are pinned to `1.0.0-rc.5-5935859` for stable Effect v4 compatibility.
 `@effect/tsgo` adds Effect diagnostics to `{{RUN}} typecheck`. Select the workspace
@@ -51,7 +52,7 @@ TypeScript version in your editor to use its Effect diagnostics and refactors th
 ```
 
 {{LOCKFILE_NOTE}}
-Use {{PACKAGE_MANAGER}} for this project so installs and CI use the same lockfile.
+Use {{PACKAGE_MANAGER}} directly or through `vp install` so installs and CI use the same lockfile.
 
 ## API production build
 
