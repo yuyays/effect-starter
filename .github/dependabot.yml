@@ -26,13 +26,6 @@ updates:
       libraries:
         patterns:
           - "*"
-    ignore:
-      - dependency-name: "*"
-        update-types:
-          - version-update:semver-major
-      # The Effect v4 Drizzle integration needs this paired release candidate.
-      - dependency-name: drizzle-orm
-      - dependency-name: drizzle-kit
   - package-ecosystem: github-actions
     directory: /
     schedule:
