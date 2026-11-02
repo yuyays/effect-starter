@@ -15,10 +15,10 @@
   },
   "dependencies": {
     "@effect-starter/contracts": "workspace:*",
-    "@effect/platform-node": "^4.1.0",
-    "@effect/sql-pg": "^4.1.0",
+    "@effect/platform-node": "^4.1.1",
+    "@effect/sql-pg": "^4.1.1",
     "drizzle-orm": "1.0.0-rc.5",
-    "effect": "^4.1.0",
+    "effect": "^4.1.1",
     "pg": "^8.23.1"
   },
   "devDependencies": {

@@ -24,7 +24,7 @@
     "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput"
   },
   "dependencies": {
-    "effect": "^4.1.0"
+    "effect": "^4.1.1"
   },
   "devDependencies": {
     "vite-plus": "1.4.0"
