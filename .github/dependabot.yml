@@ -26,6 +26,12 @@ updates:
       libraries:
         patterns:
           - "*"
+    ignore:
+      # The Vue starter stays on TypeScript 5.9 until vue-tsc supports
+      # TypeScript 7's package layout. Major upgrades need manual review.
+      - dependency-name: typescript
+        update-types:
+          - version-update:semver-major
   - package-ecosystem: github-actions
     directory: /
     schedule:
