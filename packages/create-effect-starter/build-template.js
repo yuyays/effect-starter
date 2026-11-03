@@ -10,6 +10,7 @@ const entries = [
   "packages/contracts",
   ".github/workflows/ci.yml",
   ".gitignore",
+  "AGENTS.md",
   "LICENSE",
   "package.json",
   "pnpm-workspace.yaml",

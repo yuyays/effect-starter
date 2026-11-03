@@ -202,6 +202,13 @@ for (const framework of ["react", "tanstack-start", "vue"]) {
       assert.equal(/^  react /m.test(result.stdout), framework !== "vue");
       assert.equal(/^  vue /m.test(result.stdout), framework === "vue");
       const project = join(directory, "chosen-app");
+      const instructions = await readFile(join(project, "AGENTS.md"), "utf8");
+      assert.match(instructions, /^# Effect architecture/m);
+      const examplePaths = [...instructions.matchAll(/\]\(((?:apps|packages)\/[^)#]+)\)/g)];
+      assert.ok(examplePaths.length > 0, "Effect instructions link to working examples");
+      for (const [, path] of examplePaths) {
+        await readFile(join(project, path), "utf8");
+      }
       const web = JSON.parse(await readFile(join(project, "apps/web/package.json"), "utf8"));
       const files = await readdir(join(project, "apps/web"), { recursive: true });
       assert.equal(web.dependencies["@chosen-app/contracts"], "workspace:*");
