@@ -11,11 +11,11 @@ const ServerLive = Effect.gen(function* () {
   const port = yield* Port;
   yield* Effect.logInfo("API server starting", { port });
 
-  return HttpRouter.serve(HttpLive).pipe(
+  return yield* HttpRouter.serve(HttpLive).pipe(
     Layer.provide(DrizzleLive),
     Layer.provide(NodeHttpServer.layer(createServer, { port })),
     Layer.launch,
   );
-}).pipe(Effect.flatten, Effect.withSpan("api.server"));
+}).pipe(Effect.withSpan("api.server"));
 
 NodeRuntime.runMain(ServerLive);

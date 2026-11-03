@@ -18,10 +18,10 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "typecheck": "tsc --noEmit",
+    "build": "effect-tsgo tsc -p tsconfig.build.json",
+    "typecheck": "effect-tsgo tsc --noEmit",
     "test": "vp test run",
-    "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput"
+    "dev": "effect-tsgo tsc -p tsconfig.build.json --watch --preserveWatchOutput"
   },
   "dependencies": {
     "effect": "^4.1.1"

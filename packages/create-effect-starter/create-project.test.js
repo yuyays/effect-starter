@@ -283,6 +283,17 @@ for (const framework of ["react", "tanstack-start", "vue"]) {
   void test(`generated root configs are formatted for ${framework}`, async (t) => {
     const directory = await temporary(t);
     const project = await createProject("my-app", directory, { framework });
+    for (const path of [
+      "tools/oxlint/index.js",
+      "tools/effect-policy.test.js",
+      "apps/api/tsconfig.json",
+    ]) {
+      assert.equal(
+        await readFile(join(project.destination, path), "utf8"),
+        await readFile(new URL(`../../${path}`, import.meta.url), "utf8"),
+        `${framework} must ship the current Effect policy`,
+      );
+    }
     const config = await readFile(join(project.destination, "vite.config.ts"), "utf8");
     const formatted = await format("vite.config.ts", config);
     assert.deepEqual(formatted.errors, []);

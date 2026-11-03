@@ -223,6 +223,8 @@ try {
       console.log(`\nVerifying ${packageManager} project: ${project.destination}`);
       if (packageManager === "bun") run("bun", ["install"], project.destination);
       run(packageManager, ["install", "--frozen-lockfile"], project.destination);
+      // Enforcement must survive consumers replacing the agent instructions.
+      await rm(join(project.destination, "AGENTS.md"));
       for (const script of ["lint", "format:check", "typecheck", "test", "build"]) {
         run(packageManager, ["run", script], project.destination);
       }

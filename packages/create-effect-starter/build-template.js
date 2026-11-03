@@ -16,6 +16,7 @@ const entries = [
   "pnpm-workspace.yaml",
   "tsconfig.base.json",
   "vite.config.ts",
+  "tools",
 ];
 const excluded = new Set([
   "node_modules",

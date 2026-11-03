@@ -25,3 +25,11 @@ Before adding a backend workflow, read [the users workflow](apps/api/src/service
 and [its database layer](apps/api/src/db/client.ts). Follow their composition and
 dependency patterns; add abstractions only for capabilities the workflow needs.
 See also [the HTTP adapter](apps/api/src/http.ts) and [the entrypoint](apps/api/src/main.ts).
+
+The API's compiler profile enforces Effect correctness and recommends named
+`Effect.fn` operations. Run `pnpm typecheck` (or `bun run typecheck`) to check it;
+the scripts invoke the Effect compiler directly, independently of install hooks.
+Lint restricts runtime execution to `main.ts`, `http.ts`, and test files. Add an
+explicit override in `vite.config.ts` when introducing a framework adapter.
+Diagnostic suppressions require a `-- reason` suffix. `pnpm test` also verifies
+that deliberate compiler and lint violations fail, even without this document.

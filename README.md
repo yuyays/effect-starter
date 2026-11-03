@@ -104,3 +104,17 @@ See the [CLI and maintenance guide](packages/create-effect-starter/README.md) fo
 automation flags, source-app development, testing, dependency updates, and releases.
 
 [MIT License](LICENSE)
+
+## Effect conventions
+
+API and contract scripts run `effect-tsgo tsc` directly. The API compiler profile
+rejects unexecuted Effects, incorrect Promise composition, and other Effect
+correctness mistakes, and recommends named `Effect.fn` operations. Frontend
+callbacks keep their required Promise interfaces.
+
+Lint restricts runtime execution in API source to `main.ts`, `http.ts`, and test
+files. Add an explicit override in `vite.config.ts` for a new framework adapter.
+Lint, TypeScript, and Effect suppressions need a `-- reason` suffix.
+
+Generated projects include these checks and their regression fixtures. Their
+`test` command verifies that invalid code fails even if `AGENTS.md` is removed.

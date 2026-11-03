@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vp run build && node dev.js",
-    "build": "vp run @effect-starter/contracts#build && tsc -p tsconfig.build.json",
+    "build": "vp run @effect-starter/contracts#build && effect-tsgo tsc -p tsconfig.build.json",
     "start": "node dist/main.js",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "effect-tsgo tsc --noEmit",
     "test": "vp test run --passWithNoTests",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
@@ -22,6 +22,7 @@
     "pg": "^8.23.1"
   },
   "devDependencies": {
+    "@effect/vitest": "4.1.1",
     "@types/node": "^26.6.6",
     "@types/pg": "^8.23.1",
     "drizzle-kit": "1.0.0-rc.5",

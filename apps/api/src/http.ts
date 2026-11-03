@@ -9,7 +9,7 @@ const HealthLive = HttpApiBuilder.group(StarterApi, "health", (handlers) =>
 );
 
 const UsersLive = HttpApiBuilder.group(StarterApi, "users", (handlers) =>
-  handlers.handle("list", () => listUsers),
+  handlers.handle("list", () => listUsers()),
 );
 
 const ApiRoutes = HttpApiBuilder.layer(StarterApi, {

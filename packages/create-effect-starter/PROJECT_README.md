@@ -38,8 +38,13 @@ Vite+ is included in the project and powers its scripts. No separate global
 `vp run <script>` instead.
 
 Drizzle ORM and Kit are pinned to `1.0.0-rc.5-5935859` for stable Effect v4 compatibility.
-`@effect/tsgo` adds Effect diagnostics to `{{RUN}} typecheck`. Select the workspace
-TypeScript version in your editor to use its Effect diagnostics and refactors there too.
+API and contract checks invoke `@effect/tsgo` directly, so Effect diagnostics work
+without install-time compiler patching. The API profile makes Effect composition
+mistakes fail typechecking. Lint restricts runtime execution to entrypoints,
+framework adapters, and tests; suppressions need a `-- reason` suffix.
+These checks work independently of `AGENTS.md`, and `{{RUN}} test` verifies that
+invalid examples are rejected. Select the workspace TypeScript version in your
+editor to use the patched compiler's Effect diagnostics and refactors there too.
 
 ## Verify changes
 
@@ -56,9 +61,9 @@ Use {{PACKAGE_MANAGER}} directly or through `vp install` so installs and CI use 
 
 ## API production build
 
-The API and shared contracts compile with `tsc`; Node.js runs the emitted JavaScript.
+The API and shared contracts compile with `effect-tsgo tsc`; Node.js runs the emitted JavaScript.
 Root development, typecheck, and test commands build contracts first. Development
-watches the API and contracts with `tsc --watch`; `node --watch` restarts the API
+watches the API and contracts with `effect-tsgo tsc --watch`; `node --watch` restarts the API
 when the emitted JavaScript changes.
 
 After building the workspace, start the API with `node apps/api/dist/main.js`

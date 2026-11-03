@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 
 const cwd = fileURLToPath(new URL("./", import.meta.url));
 const compiler = fileURLToPath(
-  new URL("./bin/tsc", import.meta.resolve("typescript/package.json")),
+  new URL("./dist/effect-tsgo.cjs", import.meta.resolve("@effect/tsgo/package.json")),
 );
 const children = new Set();
 let stopping = false;
@@ -37,5 +37,5 @@ function watch(args) {
 process.on("SIGINT", () => stop(0, "SIGINT"));
 process.on("SIGTERM", () => stop(0));
 
-watch([compiler, "-p", "tsconfig.build.json", "--watch", "--preserveWatchOutput"]);
+watch([compiler, "tsc", "-p", "tsconfig.build.json", "--watch", "--preserveWatchOutput"]);
 watch(["--watch", "--watch-preserve-output", "--enable-source-maps", "dist/main.js"]);
