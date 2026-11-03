@@ -2,6 +2,8 @@
 
 - Backend application workflows return `Effect<A, E, R>`: describe work lazily
   and compose it until an entrypoint or framework adapter executes it.
+- Prefer named `Effect.fn("Service.operation")` for reusable backend operations;
+  use `Effect.gen` for inline composition and layer construction.
 - Represent expected failures in `E` with tagged errors; keep unexpected defects
   distinct. Declare public errors and HTTP statuses in
   [the HttpApi contract](packages/contracts/src/http/index.ts).
