@@ -33,10 +33,19 @@ void test("API compiler rejects Effect mistakes independently of the TypeScript 
   await writeFile(config, JSON.stringify({ extends: "../tsconfig.json", include: ["*.ts"] }));
   await writeFile(
     join(directory, "valid.ts"),
-    `import { Effect } from "effect";
+    `import { Clock, Effect, Schema } from "effect";
+class Failure extends Schema.TaggedError<Failure>()("Failure", { cause: Schema.Defect() }) {}
 export const operation = Effect.fn("Example.operation")(function* (value: string) {
+  const now = yield* Clock.currentTimeMillis;
+  const signal = yield* Effect.abortSignal;
+  yield* Effect.sleep(1);
   yield* Effect.log(value);
-  return value;
+  return { value, now, signal };
+});
+export const expectedFailure = Effect.fail(new Failure({ cause: "expected" }));
+export const sdkCall = Effect.tryPromise({
+  try: () => Promise.resolve(1),
+  catch: (cause) => new Failure({ cause }),
 });
 `,
   );
@@ -51,11 +60,31 @@ export const operation = (value: string) => Effect.gen(function* () {
   return value;
 });
 export const nestedPromise = Effect.succeed(Promise.resolve(1));
+export const untypedFailure = Effect.fail(new Error("untyped failure"));
+export const manualGlobals = Effect.gen(function* () {
+  setTimeout(() => {}, 1);
+  const now = Date.now();
+  const signal = new AbortController().signal;
+  return { now, signal };
+});
+export const untypedSdkCall = Effect.tryPromise({
+  try: () => Promise.resolve(1),
+  catch: (cause) => cause,
+});
 `,
   );
   const invalid = run(compiler, ["tsc", "--noEmit", "-p", config]);
   assert.notEqual(invalid.status, 0, invalid.output);
-  for (const diagnostic of ["floatingEffect", "effectFnOpportunity", "promiseInEffectSuccess"]) {
+  for (const diagnostic of [
+    "floatingEffect",
+    "effectFnOpportunity",
+    "promiseInEffectSuccess",
+    "globalErrorInEffectFailure",
+    "globalTimersInEffect",
+    "unknownInEffectCatch",
+    "globalDateInEffect",
+    "abortControllerInEffect",
+  ]) {
     assert.match(invalid.output, new RegExp(`error TS\\d+:.*effect\\(${diagnostic}\\)`));
   }
 });

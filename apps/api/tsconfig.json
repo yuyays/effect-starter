@@ -31,7 +31,12 @@
           "returnEffectInGen": "error",
           "scopeInLayerEffect": "error",
           "leakingRequirements": "error",
-          "unsafeEffectTypeAssertion": "error"
+          "unsafeEffectTypeAssertion": "error",
+          "globalErrorInEffectFailure": "error",
+          "globalTimersInEffect": "error",
+          "unknownInEffectCatch": "error",
+          "globalDateInEffect": "error",
+          "abortControllerInEffect": "error"
         },
         "overrides": [
           {
