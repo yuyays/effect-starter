@@ -24,7 +24,7 @@
   "scripts": {
     "build": "node build-template.js",
     "prepack": "node build-template.js",
-    "test": "node build-template.js && node --test create-project.test.js install.test.js"
+    "test": "node build-template.js && node --test create-project.test.js install.test.js dev-servers.test.js"
   },
   "dependencies": {
     "@clack/prompts": "1.8.1",

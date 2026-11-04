@@ -7,6 +7,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { frameworks, getFramework } from "./frameworks.js";
 import { createProject } from "./create-project.js";
+import { waitForDevServers } from "./dev-servers.js";
 
 function run(command, args, cwd) {
   const result = spawnSync(command, args, { cwd, stdio: "inherit" });
@@ -78,27 +79,32 @@ async function smokeDev(packageManager, destination, framework) {
   const webUrl = `http://127.0.0.1:${webPort}`;
   const apiUrl = `http://127.0.0.1:${apiPort}/api/health`;
   try {
-    let ready = false;
-    for (let attempt = 0; attempt < 300; attempt++) {
-      const api = await response(apiUrl);
-      const web = await response(webUrl);
-      if (api?.ok && web?.ok) {
-        assert.deepEqual(await api.json(), { ok: true, service: "api" });
-        assert.match(
-          await web.text(),
-          framework === "tanstack-start"
-            ? /TanStack Start, Effect Platform API/
-            : /<div id="root">/,
-        );
-        const proxy = await fetch(`${webUrl}/api/health`);
-        assert.deepEqual(await proxy.json(), { ok: true, service: "api" });
-        ready = true;
-        break;
-      }
-      if (child.exitCode !== null) break;
-      await setTimeout(100);
-    }
-    assert.ok(ready, `Dev servers did not become ready:\n${output}`);
+    const {
+      ready,
+      api: apiHealth,
+      web: webHealth,
+      proxy: proxyHealth,
+      reason,
+      proxyStatus,
+    } = await waitForDevServers({
+      response,
+      apiUrl,
+      webUrl,
+      shouldStop: () => child.exitCode !== null,
+      delay: () => setTimeout(100),
+    });
+    assert.ok(
+      ready,
+      reason === "exited"
+        ? `Dev servers exited before becoming ready (code ${child.exitCode}):\n${output}`
+        : `Dev servers did not become ready (proxy ${proxyStatus ?? "unreachable"}):\n${output}`,
+    );
+    assert.deepEqual(await apiHealth.json(), { ok: true, service: "api" });
+    assert.match(
+      await webHealth.text(),
+      framework === "tanstack-start" ? /TanStack Start, Effect Platform API/ : /<div id="root">/,
+    );
+    assert.deepEqual(await proxyHealth.json(), { ok: true, service: "api" });
     // Change a contract route to verify compilation and Node dependency watching.
     const contractsPath = join(destination, "packages/contracts/src/http/index.ts");
     const contracts = await readFile(contractsPath, "utf8");
