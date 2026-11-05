@@ -26,19 +26,10 @@ and [its database layer](apps/api/src/db/client.ts). Follow their composition an
 dependency patterns; add abstractions only for capabilities the workflow needs.
 See also [the HTTP adapter](apps/api/src/http.ts) and [the entrypoint](apps/api/src/main.ts).
 
-The API's compiler profile enforces Effect correctness and recommends named
-`Effect.fn` operations. Run `pnpm typecheck` (or `bun typecheck`) to check it;
-the scripts invoke the Effect compiler directly, independently of install hooks.
-Lint restricts runtime execution to `main.ts` and `http.ts`; API tests run Effects with
-`it.effect` from `@effect/vitest`. Add an explicit override in `vite.config.ts` when
-introducing a framework adapter. `pnpm lint` and `pnpm test` apply the Effect Oxlint patch
-themselves, so they also work without install hooks.
+Run `pnpm lint`, `pnpm typecheck`, and `pnpm test` (or the `bun` equivalents) before
+finishing. The Effect compiler profile and lint enforce these rules independently of install
+hooks, and each message says how to fix the violation. Running Effects is limited to
+entrypoints: add an override in `vite.config.ts` when introducing a framework adapter.
 Diagnostic suppressions require a `-- reason` suffix.
 Shared versions (Effect, Vite+) come from the workspace catalog in `pnpm-workspace.yaml`,
 or `workspaces.catalog` in `package.json` for Bun; declare those packages as `catalog:`.
-Lint also runs the type-aware `effecttsgo` rules and a vendored anti-slop subset (see
-[its provenance](tools/oxlint/anti-slop/UPSTREAM.md)): recover with `Effect.catchTag(s)`,
-construct tagged values through their Schema or error class, hoist Schema decoders to module
-scope, replace dependencies through Layers rather than module mocks, and run test Effects with
-`it.effect` and `TestClock`. The web app imports the API only through the contracts package. `pnpm test` also verifies
-that deliberate compiler and lint violations fail, even without this document.
