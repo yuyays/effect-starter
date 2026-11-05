@@ -1,15 +1,17 @@
 import { posix } from "node:path";
 import { parse, stringify } from "yaml";
+import { hasFrontend } from "./frameworks.js";
 
 // Select only the generated workspaces from the shared, bot-maintained lockfile.
 export function templateLockfile(source, framework) {
   const lockfile = parse(source);
   const web =
     framework === "react" ? "apps/web" : `packages/create-effect-starter/frontends/${framework}`;
+  // Keep pnpm's sorted importer order so generated lockfiles stay stable.
   const workspaces = new Map([
     [".", "."],
     ["apps/api", "apps/api"],
-    [web, "apps/web"],
+    ...(hasFrontend(framework) ? [[web, "apps/web"]] : []),
     ["packages/contracts", "packages/contracts"],
   ]);
   const importers = {};

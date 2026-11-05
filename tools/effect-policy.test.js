@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,6 +11,8 @@ const compiler = fileURLToPath(
   new URL("./dist/effect-tsgo.cjs", import.meta.resolve("@effect/tsgo/package.json")),
 );
 const vp = fileURLToPath(new URL("../bin/vp", import.meta.resolve("vite-plus")));
+// Projects generated without a frontend skip the web rules until one is added.
+const skipWithoutWeb = existsSync(join(root, "apps/web")) ? false : "no apps/web frontend";
 
 function run(binary, args) {
   const result = spawnSync(process.execPath, [binary, ...args], {
@@ -295,34 +298,41 @@ void test("lint keeps tests on real seams, Effect test runners, and controlled c
   }
 });
 
-void test("lint lets web tests run Effects and tooling tests read the clock", async (t) => {
+void test("lint lets web tests run Effects", { skip: skipWithoutWeb }, async (t) => {
   const source =
     'import { Effect } from "effect";\nexport const value = Effect.runSync(Effect.succeed(1));\n';
   assertRules(await lintFixtures(t, "apps/web/src", { "client.test.ts": source }), {
     "client.test.ts": [],
   });
+});
+
+void test("lint lets tooling tests read the clock", async (t) => {
   assertRules(
     await lintFixtures(t, "tools", { "timing.test.js": "export const started = Date.now();\n" }),
     { "timing.test.js": [] },
   );
 });
 
-void test("lint keeps the web app on the shared contracts instead of API internals", async (t) => {
-  const codes = await lintFixtures(t, "apps/web/src", {
-    "relative.ts": 'export { listUsers } from "../../../api/src/services/users.js";\n',
-    "root.ts": 'export { listUsers } from "../../../../apps/api/src/services/users.js";\n',
-    "alias.ts": 'export { listUsers } from "@/../../api/src/services/users.js";\n',
-    "package.ts": `export * from "${await packageName("apps/api")}";\n`,
-    "contracts.ts": `export { StarterApi } from "${await packageName("packages/contracts")}/http";\n`,
-  });
-  assertRules(codes, {
-    "relative.ts": ["eslint(no-restricted-imports)"],
-    "root.ts": ["eslint(no-restricted-imports)"],
-    "alias.ts": ["eslint(no-restricted-imports)"],
-    "package.ts": ["eslint(no-restricted-imports)"],
-    "contracts.ts": [],
-  });
-});
+void test(
+  "lint keeps the web app on the shared contracts instead of API internals",
+  { skip: skipWithoutWeb },
+  async (t) => {
+    const codes = await lintFixtures(t, "apps/web/src", {
+      "relative.ts": 'export { listUsers } from "../../../api/src/services/users.js";\n',
+      "root.ts": 'export { listUsers } from "../../../../apps/api/src/services/users.js";\n',
+      "alias.ts": 'export { listUsers } from "@/../../api/src/services/users.js";\n',
+      "package.ts": `export * from "${await packageName("apps/api")}";\n`,
+      "contracts.ts": `export { StarterApi } from "${await packageName("packages/contracts")}/http";\n`,
+    });
+    assertRules(codes, {
+      "relative.ts": ["eslint(no-restricted-imports)"],
+      "root.ts": ["eslint(no-restricted-imports)"],
+      "alias.ts": ["eslint(no-restricted-imports)"],
+      "package.ts": ["eslint(no-restricted-imports)"],
+      "contracts.ts": [],
+    });
+  },
+);
 
 void test("lint requires explanations for lint, TypeScript, and Effect suppressions", async (t) => {
   const directory = await fixture(t);

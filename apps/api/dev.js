@@ -57,7 +57,16 @@ process.on("SIGTERM", () => stop(0));
 
 const tsc = watch(
   process.execPath,
-  [compiler, "tsc", "-p", "tsconfig.build.json", "--watch", "--preserveWatchOutput"],
+  [
+    compiler,
+    "tsc",
+    "-p",
+    "tsconfig.build.json",
+    "--watch",
+    "--preserveWatchOutput",
+    // Piped output turns off colored diagnostics, so keep them for terminals.
+    ...(process.stdout.isTTY ? ["--pretty"] : []),
+  ],
   ["inherit", "pipe", "inherit"],
 );
 // Edits saved before the compiler's first watch pass are lost, so the API starts
@@ -66,9 +75,10 @@ let pending = "";
 tsc.stdout.on("data", (chunk) => {
   process.stdout.write(chunk);
   if (apiStarted) return;
-  // Keep a short tail so a message split across chunks still matches.
-  pending = (pending + chunk).slice(-watchingMessage.length * 2);
-  if (pending.includes(watchingMessage)) startApi();
+  // Check before trimming, then keep a tail so a message split across chunks matches.
+  const text = pending + chunk;
+  if (text.includes(watchingMessage)) return startApi();
+  pending = text.slice(-watchingMessage.length);
 });
 // Start anyway if the compiler's wording changes, rather than never serving.
 const fallback = setTimeout(() => {

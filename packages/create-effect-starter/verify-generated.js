@@ -5,7 +5,7 @@ import { createServer } from "node:net";
 import { setTimeout } from "node:timers/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { frameworks, getFramework } from "./frameworks.js";
+import { frameworks, getFramework, hasFrontend } from "./frameworks.js";
 import { createProject } from "./create-project.js";
 import { waitForDevServers } from "./dev-servers.js";
 
@@ -45,15 +45,18 @@ async function smokeDev(packageManager, destination, framework, runtime) {
   const webPort = await freePort();
   // Match the IPv4 probes even when localhost resolves to IPv6 on CI.
   // Use private ports only in this disposable fixture, including its API proxy.
-  const configPath = join(destination, "apps/web/vite.config.ts");
-  const config = await readFile(configPath, "utf8");
-  await writeFile(
-    configPath,
-    config
-      .replace(/^\s*port: 5173,\n/m, "")
-      .replace("server: {", `server: { host: "127.0.0.1", port: ${webPort}, strictPort: true,`)
-      .replaceAll("http://localhost:3000", `http://127.0.0.1:${apiPort}`),
-  );
+  const frontend = hasFrontend(framework);
+  if (frontend) {
+    const configPath = join(destination, "apps/web/vite.config.ts");
+    const config = await readFile(configPath, "utf8");
+    await writeFile(
+      configPath,
+      config
+        .replace(/^\s*port: 5173,\n/m, "")
+        .replace("server: {", `server: { host: "127.0.0.1", port: ${webPort}, strictPort: true,`)
+        .replaceAll("http://localhost:3000", `http://127.0.0.1:${apiPort}`),
+    );
+  }
   const child = spawn(packageManager, ["run", "dev"], {
     cwd: destination,
     detached: true,
@@ -76,7 +79,7 @@ async function smokeDev(packageManager, destination, framework, runtime) {
   child.on("error", (error) => {
     output += error.message;
   });
-  const webUrl = `http://127.0.0.1:${webPort}`;
+  const webUrl = frontend ? `http://127.0.0.1:${webPort}` : undefined;
   const apiUrl = `http://127.0.0.1:${apiPort}/api/health`;
   try {
     const {
@@ -97,14 +100,18 @@ async function smokeDev(packageManager, destination, framework, runtime) {
       ready,
       reason === "exited"
         ? `Dev servers exited before becoming ready (code ${child.exitCode}):\n${output}`
-        : `Dev servers did not become ready (proxy ${proxyStatus ?? "unreachable"}):\n${output}`,
+        : frontend
+          ? `Dev servers did not become ready (proxy ${proxyStatus ?? "unreachable"}):\n${output}`
+          : `The API did not become ready:\n${output}`,
     );
     assert.deepEqual(await apiHealth.json(), { ok: true, service: "api" });
-    assert.match(
-      await webHealth.text(),
-      framework === "tanstack-start" ? /TanStack Start, Effect Platform API/ : /<div id="root">/,
-    );
-    assert.deepEqual(await proxyHealth.json(), { ok: true, service: "api" });
+    if (frontend) {
+      assert.match(
+        await webHealth.text(),
+        framework === "tanstack-start" ? /TanStack Start, Effect Platform API/ : /<div id="root">/,
+      );
+      assert.deepEqual(await proxyHealth.json(), { ok: true, service: "api" });
+    }
     // Change a contract route to verify compilation and runtime dependency watching.
     const contractsPath = join(destination, "packages/contracts/src/http/index.ts");
     const contracts = await readFile(contractsPath, "utf8");
@@ -153,7 +160,7 @@ async function smokeDev(packageManager, destination, framework, runtime) {
     process.kill(-pid, "SIGINT");
     let stopped = false;
     for (let attempt = 0; attempt < 50; attempt++) {
-      if (!(await response(apiUrl)) && !(await response(webUrl))) {
+      if (!(await response(apiUrl)) && !(webUrl && (await response(webUrl)))) {
         stopped = true;
         break;
       }
@@ -167,7 +174,7 @@ async function smokeDev(packageManager, destination, framework, runtime) {
     }
     assert.ok(exited(), `The dev command kept running after Ctrl+C:\n${output}`);
     console.log(
-      `${packageManager} (${runtime} API): web, API, proxy, API/contract reload, and Ctrl+C verified`,
+      `${packageManager} (${runtime} API): ${frontend ? "web, API, proxy" : "API"}, API/contract reload, and Ctrl+C verified`,
     );
   } finally {
     try {
@@ -252,11 +259,17 @@ try {
       console.log(
         `\nVerifying ${packageManager} project with ${runtime} API: ${project.destination}`,
       );
+      // The Bun runtime only changes the API `dev`/`start` scripts and README text,
+      // so lint, typecheck, tests, and the lockfile check would repeat Bun + Node.
+      const runtimeOnly = runtime !== "node";
       if (packageManager === "bun") run("bun", ["install"], project.destination);
-      run(packageManager, ["install", "--frozen-lockfile"], project.destination);
+      if (!runtimeOnly) run(packageManager, ["install", "--frozen-lockfile"], project.destination);
       // Enforcement must survive consumers replacing the agent instructions.
       await rm(join(project.destination, "AGENTS.md"));
-      for (const script of ["lint", "format:check", "typecheck", "test", "build"]) {
+      const scripts = runtimeOnly
+        ? ["format:check", "build"]
+        : ["lint", "format:check", "typecheck", "test", "build"];
+      for (const script of scripts) {
         run(packageManager, ["run", script], project.destination);
       }
       await smokeProduction(project.destination, runtime);

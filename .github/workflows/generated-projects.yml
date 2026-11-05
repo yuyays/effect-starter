@@ -6,6 +6,7 @@ on:
     paths:
       - "apps/**"
       - "packages/**"
+      - "tools/**"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
       - "vite.config.ts"
@@ -20,6 +21,7 @@ on:
     paths:
       - "apps/**"
       - "packages/**"
+      - "tools/**"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
       - "vite.config.ts"
@@ -45,7 +47,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        framework: [react, tanstack-start, vue]
+        framework: [react, tanstack-start, vue, none]
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6

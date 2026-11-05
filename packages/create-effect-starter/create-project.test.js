@@ -369,11 +369,55 @@ for (const framework of ["react", "tanstack-start", "vue"]) {
   }
 }
 
+for (const packageManager of ["pnpm", "bun"]) {
+  void test(`generates an API-only project without a frontend with ${packageManager}`, async (t) => {
+    const directory = await temporary(t);
+    const result = spawnSync(
+      process.execPath,
+      [
+        fileURLToPath(new URL("./cli.js", import.meta.url)),
+        "api-app",
+        "--framework",
+        "none",
+        "--package-manager",
+        packageManager,
+      ],
+      { cwd: directory, encoding: "utf8" },
+    );
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /Created api-app \(No frontend, Node\.js API\)/);
+    assert.ok(!/^Web:/m.test(result.stdout), "The dependency summary has no web section");
+    const project = join(directory, "api-app");
+    assert.deepEqual((await readdir(join(project, "apps"))).sort(), ["api"]);
+    const manifest = JSON.parse(await readFile(join(project, "package.json"), "utf8"));
+    assert.ok(!("dev:web" in manifest.scripts));
+    assert.match(manifest.scripts["dev:api"], /--filter @api-app\/api/);
+    const config = await readFile(join(project, "vite.config.ts"), "utf8");
+    assert.ok(!/"react/.test(config), "API-only lint has no React plugin or rules");
+    assert.match(config, /effecttsgo/);
+    const formatted = await format("vite.config.ts", config);
+    assert.equal(config, formatted.code);
+    const agents = await readFile(join(project, "AGENTS.md"), "utf8");
+    assert.match(agents, /Clients import the API only through the contracts package/);
+    assert.ok(!agents.includes("web app"));
+    const readme = await readFile(join(project, "README.md"), "utf8");
+    assert.match(readme, /^TypeScript API with Effect v4/m);
+    assert.ok(!/web|React|5173/.test(readme), "The README describes no frontend");
+    assert.ok(!readme.includes("{{"));
+    const paths = await readdir(project, { recursive: true });
+    assert.ok(!paths.some((path) => path.startsWith("apps/web")));
+    if (packageManager === "pnpm") {
+      const lock = parse(await readFile(join(project, "pnpm-lock.yaml"), "utf8"));
+      assert.deepEqual(Object.keys(lock.importers).sort(), [".", "apps/api", "packages/contracts"]);
+    }
+  });
+}
+
 void test("invalid frameworks and duplicate or missing framework flags do not create files", async (t) => {
   const directory = await temporary(t);
   await assert.rejects(
     createProject("my-app", directory, { framework: "angular" }),
-    /Unsupported framework/,
+    /Unsupported framework: angular\. Choose react, tanstack-start, vue, none\./,
   );
   const cli = fileURLToPath(new URL("./cli.js", import.meta.url));
   for (const flags of [
@@ -390,7 +434,7 @@ void test("invalid frameworks and duplicate or missing framework flags do not cr
   assert.deepEqual(await readdir(directory), []);
 });
 
-for (const framework of ["react", "tanstack-start", "vue"]) {
+for (const framework of ["react", "tanstack-start", "vue", "none"]) {
   void test(`generated root configs are formatted for ${framework}`, async (t) => {
     const directory = await temporary(t);
     const project = await createProject(

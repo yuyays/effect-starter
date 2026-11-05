@@ -110,3 +110,11 @@ void test("reports an exited dev process instead of a timeout", async () => {
   );
   assert.deepEqual(calls, [apiUrl, webUrl]);
 });
+
+void test("without a frontend only waits for the API", async () => {
+  const api = fakeResponse(200, '{"ok":true,"service":"api"}');
+  const { response, calls } = scriptedResponse([undefined, api]);
+
+  assert.deepEqual(await waitForDevServers({ response, apiUrl }), { ready: true, api });
+  assert.deepEqual(calls, [apiUrl, apiUrl]);
+});
