@@ -41,6 +41,7 @@ see Effect diagnostics there.
 `{{RUN}} build` compiles the API and contracts; {{RUNTIME}} runs the emitted JavaScript.
 In development, `{{RUNTIME_BIN}} --watch` restarts the API when it is recompiled.
 
-Start the API with `{{RUNTIME_BIN}} apps/api/dist/main.js` from the project root, with
-`DATABASE_URL` and `PORT` set. The API is not bundled: deploy it with
-`packages/contracts/dist`, the workspace manifests, and production dependencies.
+Start the API with `{{RUN}} start:api` from the project root, with `DATABASE_URL` and
+`PORT` set. It runs `{{RUNTIME_BIN}} dist/main.js` with `apps/api` as the working directory.
+The API is not bundled: deploy it with `packages/contracts/dist`, the workspace
+manifests, and production dependencies.
