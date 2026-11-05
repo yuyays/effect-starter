@@ -7,12 +7,12 @@ export const bunVersion = "1.4.2";
 
 export const packageManagers = {
   pnpm: {
-    run: "pnpm run",
     lockfileNote: "The included pnpm lockfile keeps dependencies on the starter's tested versions.",
   },
   bun: {
     version: bunVersion,
-    run: "bun run",
+    checksNote:
+      "`bun test` and `bun build` start Bun's own test runner and bundler, so keep `run` for\nthose two. `bun check` is Bun's type checker and skips the Effect rules; use `bun typecheck`.\n\n",
     lockfileNote:
       "The first `bun install` creates `bun.lock`. Commit it before pushing so CI can use frozen installs.",
   },
@@ -45,6 +45,16 @@ function bunWorkflow(workflow, version) {
   return result;
 }
 
+// Bun runs package scripts without `run`, except where a built-in command
+// (its test runner and bundler) takes precedence over the script.
+const bunBuiltins = new Set(["test", "build"]);
+
+export function scriptCommand(packageManager, script) {
+  return packageManager === "bun" && bunBuiltins.has(script)
+    ? `bun run ${script}`
+    : `${packageManager} ${script}`;
+}
+
 export function getPackageManager(name) {
   if (!Object.hasOwn(packageManagers, name)) {
     throw new Error(`Unsupported package manager: ${name}. Choose pnpm or bun.`);
@@ -53,13 +63,11 @@ export function getPackageManager(name) {
 }
 
 export function nextSteps(packageManager, { installed = false } = {}) {
-  const manager = getPackageManager(packageManager);
+  getPackageManager(packageManager);
   return [
     ...(installed ? [] : [`${packageManager} install`]),
     "# Set DATABASE_URL in apps/api/.env",
-    `${manager.run} db:generate`,
-    `${manager.run} db:migrate`,
-    `${manager.run} dev`,
+    ...["db:generate", "db:migrate", "dev"].map((script) => scriptCommand(packageManager, script)),
   ];
 }
 
@@ -103,7 +111,8 @@ export async function configurePackageManager(destination, packageManager, frame
     readmePath,
     readme
       .replaceAll("{{PACKAGE_MANAGER}}", packageManager)
-      .replaceAll("{{RUN}}", manager.run)
+      .replace(/\{\{RUN\}\} ([\w:-]+)/g, (_, script) => scriptCommand(packageManager, script))
+      .replaceAll("{{BUN_CHECKS_NOTE}}", manager.checksNote ?? "")
       .replaceAll("{{LOCKFILE_NOTE}}", manager.lockfileNote),
   );
   // pnpm projects keep the copied repository workflow, which Dependabot maintains.

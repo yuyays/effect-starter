@@ -1,94 +1,63 @@
 # effect-starter
 
 Full-stack TypeScript starter with **React**, **TanStack Start**, or **Vue**, plus
-Effect v4, Drizzle, PostgreSQL, and Vite+.
-
-Deployment is provider-agnostic: no hosting provider is preconfigured. Choose
-your own platform—AWS, Azure, GCP, Cloudflare, Railway, or another host. The API
-runs on Node.js by default. Bun is supported as a package manager and, optionally,
-as the API runtime (`--runtime bun`); Vite+ and the project checks always run on Node.js.
-Other runtimes may require platform-specific adaptation.
+Effect v4, Drizzle, PostgreSQL, and Vite+. No hosting provider is preconfigured.
 
 ## Why I built this
 
-I kept rebuilding the same foundation for new projects—and repeating the same
-instructions to coding agents: React, TanStack Start, or Vue; Effect; a strict
-TypeScript monorepo; and the OXC/Vite+ toolchain. This generator packages that
-setup so I can spend less time bootstrapping and more time building.
+More and more code is written by agents. I wanted a codebase whose shape keeps
+them on track as it grows, so that anyone, including people who don't write code,
+can start a project and keep building on it.
+
+Effect gives code a direction to grow in: workflows are typed values, failures
+are explicit, and dependencies come through layers, so new code follows the same
+pattern as existing code. The Effect compiler profile and the VoidZero toolchain
+(Vite+, Oxlint, Oxfmt) enforce that shape. An unexecuted Effect fails typecheck,
+running Effects outside entrypoints fails lint, and `test` proves those rules
+still reject bad code even without `AGENTS.md`.
+
+The guardrails take over the routine review and platform upkeep that used to
+take people's time, so they can spend it on the product instead.
 
 ## Start here
-
-With [Vite+ installed globally](https://viteplus.dev/guide/), run the generator—no clone needed:
-
-```sh
-vp dlx https://github.com/yuyays/effect-starter/releases/latest/download/create-effect-starter.tgz
-```
-
-Without global Vite+, use:
 
 ```sh
 npx --yes https://github.com/yuyays/effect-starter/releases/latest/download/create-effect-starter.tgz
 ```
 
-Use arrow keys and Enter to choose your project
-name, starter, package manager, and API runtime (Node.js by default, or Bun). Review the dependency list, then accept or
-skip installation.
+With [Vite+ installed globally](https://viteplus.dev/guide/), `vp dlx <same URL>` works too;
+the [CLI guide](packages/create-effect-starter/README.md#launch-with-pnpm-or-bun) covers
+`pnx` and `bunx`.
 
-- **React:** single-page app with TanStack Router and Query.
-- **TanStack Start:** React with server rendering.
-- **Vue:** single-page app with Vue Router and TanStack Query.
+The wizard asks for:
 
-Requires Node.js 24.11+ and pnpm 11 or Bun 1.4.2. All starters include the same
-Effect API and shared contracts.
+- **Starter:** React (TanStack Router and Query), TanStack Start (server rendering), or
+  Vue (Vue Router and TanStack Query). All share the same Effect API and contracts.
+- **Package manager:** pnpm or Bun.
+- **API runtime:** Node.js or Bun. Vite+ and the checks always run on Node.js.
 
-`pnx` (pnpm 11+) and `bunx` can launch it too; see the
-[CLI guide](packages/create-effect-starter/README.md#launch-with-pnpm-or-bun) for
-the exact commands.
-The launcher does not determine your app's package manager.
+## Run and verify your app
 
-## Run your app
+Set `DATABASE_URL` in `apps/api/.env`, then:
 
-For a project named `my-app`:
+| Task               | pnpm                | Bun                |
+| ------------------ | ------------------- | ------------------ |
+| Generate migration | `pnpm db:generate`  | `bun db:generate`  |
+| Apply migration    | `pnpm db:migrate`   | `bun db:migrate`   |
+| Start web and API  | `pnpm dev`          | `bun dev`          |
+| Lint               | `pnpm lint`         | `bun lint`         |
+| Formatting         | `pnpm format:check` | `bun format:check` |
+| Types              | `pnpm typecheck`    | `bun typecheck`    |
+| Tests              | `pnpm test`         | `bun run test`     |
+| Production build   | `pnpm build`        | `bun run build`    |
 
-```sh
-cd my-app
-```
-
-With global Vite+, run `vp install` if you skipped installation. Otherwise, use
-`pnpm install` or `bun install`.
-Set `DATABASE_URL` in `apps/api/.env` to a running PostgreSQL database, then:
-
-| Action             | pnpm               | Bun                   |
-| ------------------ | ------------------ | --------------------- |
-| Generate migration | `pnpm db:generate` | `bun run db:generate` |
-| Apply migration    | `pnpm db:migrate`  | `bun run db:migrate`  |
-| Start web and API  | `pnpm dev`         | `bun run dev`         |
-
-With global Vite+, use `vp run <script>` for these tasks and verification checks.
-
-Web: http://localhost:5173 · API: http://localhost:3000 · API docs:
-http://localhost:3000/docs.
-
-The generator creates `.env` files; it does not create a database or initialize
-Git. Commit your chosen lockfile before pushing—generated CI uses frozen installs.
-
-## Verify your generated app
-
-| Check            | pnpm                | Bun                    |
-| ---------------- | ------------------- | ---------------------- |
-| Lint             | `pnpm lint`         | `bun run lint`         |
-| Formatting       | `pnpm format:check` | `bun run format:check` |
-| Types            | `pnpm typecheck`    | `bun run typecheck`    |
-| Tests            | `pnpm test`         | `bun run test`         |
-| Production build | `pnpm build`        | `bun run build`        |
-
-pnpm (the default) or Bun manages dependencies; these scripts run the included Vite+ toolchain.
-No global `vp` installation is needed. Follow your generated README for API production deployment and
-framework-specific notes.
+Bun keeps `run` for `test` and `build`, whose built-in commands would otherwise
+replace the scripts. With Vite+ installed globally, `vp run <script>` runs the
+same scripts. Plain `vp lint` or `vp check` doesn't prepare the Effect rules
+first, so it can miss them. Your generated README covers deployment and
+framework notes.
 
 ## Develop the starter
-
-For source changes or an unreleased generator, clone this repository:
 
 ```sh
 git clone https://github.com/yuyays/effect-starter.git
@@ -97,24 +66,9 @@ pnpm install
 pnpm create:app
 ```
 
-Enter `../my-app` to generate a separate app beside the checkout.
-`pnpm create:app` only works inside this repository.
-
-See the [CLI and maintenance guide](packages/create-effect-starter/README.md) for
-automation flags, source-app development, testing, dependency updates, and releases.
+Enter `../my-app` to generate an app beside the checkout. See the
+[CLI and maintenance guide](packages/create-effect-starter/README.md) for flags,
+testing, dependency updates, and releases. Effect conventions are in
+[AGENTS.md](AGENTS.md).
 
 [MIT License](LICENSE)
-
-## Effect conventions
-
-API and contract scripts run `effect-tsgo tsc` directly. The API compiler profile
-rejects unexecuted Effects, incorrect Promise composition, and other Effect
-correctness mistakes, and recommends named `Effect.fn` operations. Frontend
-callbacks keep their required Promise interfaces.
-
-Lint restricts runtime execution in API source to `main.ts`, `http.ts`, and test
-files. Add an explicit override in `vite.config.ts` for a new framework adapter.
-Lint, TypeScript, and Effect suppressions need a `-- reason` suffix.
-
-Generated projects include these checks and their regression fixtures. Their
-`test` command verifies that invalid code fails even if `AGENTS.md` is removed.

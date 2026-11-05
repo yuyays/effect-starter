@@ -14,7 +14,7 @@ export const runtimes = {
     label: "Bun",
     bin: "bun",
     version: bunVersion,
-    readme: `The API runs on Bun ${bunVersion}+; Vite+ and the project checks still run on Node.js.\nThe API keeps \`@effect/platform-node\`, which Bun supports: only the API \`dev\`\nand \`start\` scripts differ from a Node.js project.`,
+    readme: `The API runs on Bun ${bunVersion}+; Vite+ and the checks run on Node.js.`,
   },
 };
 
@@ -25,12 +25,7 @@ export function getRuntime(name) {
   return runtimes[name];
 }
 
-// Bun's built-in `bun lint` and `bun check` do not load the Effect compiler
-// profile or the patched Oxlint rules, so they would silently skip them.
-const bunChecksNote =
-  "\nRun checks through these scripts. Bun's built-in `bun lint` and `bun check` do not\nload the Effect compiler profile or the Effect lint rules, so they miss Effect mistakes.\n";
-
-export async function configureRuntime(destination, runtime, packageManager = "pnpm") {
+export async function configureRuntime(destination, runtime) {
   const selected = getRuntime(runtime);
   if (runtime === "bun") {
     const manifestPath = join(destination, "apps/api/package.json");
@@ -52,10 +47,6 @@ export async function configureRuntime(destination, runtime, packageManager = "p
   await writeFile(
     readmePath,
     readme
-      .replaceAll(
-        "{{BUN_CHECKS_NOTE}}",
-        runtime === "bun" || packageManager === "bun" ? bunChecksNote : "",
-      )
       .replaceAll("{{RUNTIME_NOTE}}", selected.readme)
       .replaceAll("{{RUNTIME_BIN}}", selected.bin)
       .replaceAll("{{RUNTIME}}", selected.label),
