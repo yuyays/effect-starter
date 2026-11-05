@@ -38,6 +38,12 @@ void test("CLI generates a renamed project without generator artifacts", async (
   assert.ok(!("create:app" in manifest.scripts));
   assert.match(manifest.scripts["dev:api"], /@my-app\/contracts#build/);
   assert.match(manifest.scripts["dev:api"], /--filter @my-app\/api/);
+  assert.equal(manifest.scripts["start:api"], "vp run @my-app/api#start");
+  // Repeat typechecks replay unchanged packages; Vite+ tracks the files each check reads.
+  assert.match(
+    manifest.scripts.typecheck,
+    /vp run --cache --concurrency-limit 4 --filter "@my-app\/\*" typecheck/,
+  );
   for (const [location, name] of [
     ["apps/api", "api"],
     ["apps/web", "web"],
@@ -206,7 +212,7 @@ void test("API runtime defaults to Node.js and Bun only changes the API process"
     await readFile(new URL("../../apps/api/dev.js", import.meta.url), "utf8"),
   );
   const nodeReadme = await readFile(join(node.destination, "README.md"), "utf8");
-  assert.match(nodeReadme, /`node apps\/api\/dist\/main\.js`/);
+  assert.match(nodeReadme, /`node dist\/main\.js` with `apps\/api` as the working directory/);
   assert.match(nodeReadme, /`node --watch` restarts the API/);
   assert.ok(!nodeReadme.includes("bun check"), "pnpm + Node projects skip the Bun note");
   assert.ok(!nodeReadme.includes("{{"));
@@ -234,7 +240,7 @@ void test("API runtime defaults to Node.js and Bun only changes the API process"
   assert.match(manifest.engines.node, /24\.11/);
   const readme = await readFile(join(project, "README.md"), "utf8");
   assert.match(readme, /runs on Bun 1\.4\.2\+/);
-  assert.match(readme, /`bun apps\/api\/dist\/main\.js`/);
+  assert.match(readme, /`bun dist\/main\.js` with `apps\/api` as the working directory/);
   assert.match(readme, /`bun --watch` restarts the API/);
   // The Bun command notes belong to the package manager, not the runtime.
   assert.ok(!readme.includes("bun check"));
