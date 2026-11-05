@@ -1,0 +1,12 @@
+# Keeps the CI workflow's actions current. Dependency updates are left to the
+# project; add an npm (or bun) entry here to have Dependabot manage them too.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns:
+          - "*"

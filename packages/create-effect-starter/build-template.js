@@ -1,4 +1,4 @@
-import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { copyFile, cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { format } from "vite-plus/fmt";
 import { frameworks, hasFrontend } from "./frameworks.js";
 import { templateLockfile } from "./template-lockfile.js";
@@ -141,17 +141,10 @@ for (const framework of Object.keys(frameworks)) {
     " && node packages/create-effect-starter/",
   )[0];
   await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
-  if (!frontend) {
-    const agentsPath = new URL("AGENTS.md", destination);
-    const agents = await readFile(agentsPath, "utf8");
-    await writeFile(
-      agentsPath,
-      replaceRequired(
-        agents,
-        " The web app imports the API only through the contracts package.",
-        " Clients import the API only through the contracts package.",
-      ),
-    );
-  }
+  // Generated projects get their own Dependabot config, not this repository's.
+  await copyFile(
+    new URL("./project-dependabot.yml", import.meta.url),
+    new URL(".github/dependabot.yml", destination),
+  );
   await writeFile(new URL("pnpm-lock.yaml", destination), templateLockfile(lockfile, framework));
 }

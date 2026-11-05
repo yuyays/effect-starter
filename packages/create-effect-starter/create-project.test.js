@@ -78,6 +78,12 @@ void test("CLI generates a renamed project without generator artifacts", async (
     }
   }
   assert.deepEqual(await readdir(join(project, ".github/workflows")), ["ci.yml"]);
+  // Generated projects keep their CI actions current; npm updates stay the owner's call.
+  const dependabot = parse(await readFile(join(project, ".github/dependabot.yml"), "utf8"));
+  assert.deepEqual(
+    dependabot.updates.map((update) => update["package-ecosystem"]),
+    ["github-actions"],
+  );
   // Generated pnpm CI is the repository workflow, so Dependabot updates reach new projects.
   assert.equal(
     await readFile(join(project, ".github/workflows/ci.yml"), "utf8"),
@@ -342,6 +348,11 @@ for (const framework of ["react", "tanstack-start", "vue"]) {
       const project = join(directory, "chosen-app");
       const instructions = await readFile(join(project, "AGENTS.md"), "utf8");
       assert.match(instructions, /^# Effect architecture/m);
+      // Lint explains its own rules; the instructions keep what no error message says.
+      assert.match(instructions, /override in `vite\.config\.ts`/);
+      assert.match(instructions, /`-- reason` suffix/);
+      assert.match(instructions, /`catalog:`/);
+      assert.ok(!instructions.includes("Effect.catchTag"), "lint enforces typed recovery");
       const examplePaths = [...instructions.matchAll(/\]\(((?:apps|packages)\/[^)#]+)\)/g)];
       assert.ok(examplePaths.length > 0, "Effect instructions link to working examples");
       for (const [, path] of examplePaths) {
@@ -425,7 +436,6 @@ for (const packageManager of ["pnpm", "bun"]) {
     const formatted = await format("vite.config.ts", config);
     assert.equal(config, formatted.code);
     const agents = await readFile(join(project, "AGENTS.md"), "utf8");
-    assert.match(agents, /Clients import the API only through the contracts package/);
     assert.ok(!agents.includes("web app"));
     const readme = await readFile(join(project, "README.md"), "utf8");
     assert.match(readme, /^TypeScript API with Effect v4/m);
