@@ -143,7 +143,7 @@ void test("Bun CLI emits Bun configuration, instructions, and CI", async (t) => 
   );
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /bun install/);
-  assert.match(result.stdout, /bun run db:migrate/);
+  assert.match(result.stdout, /^  bun db:migrate$/m);
   const project = join(directory, "bun-app");
   const manifest = JSON.parse(await readFile(join(project, "package.json"), "utf8"));
   assert.equal(manifest.packageManager, "bun@1.4.2");
@@ -159,9 +159,13 @@ void test("Bun CLI emits Bun configuration, instructions, and CI", async (t) => 
   assert.ok(!files.some((file) => file.startsWith("pnpm")));
   assert.match(await readFile(join(project, "bunfig.toml"), "utf8"), /minimumReleaseAge = 86400/);
   const readme = await readFile(join(project, "README.md"), "utf8");
-  assert.match(readme, /bun run typecheck/);
+  // Bun runs scripts without `run`, except where its test runner and bundler win.
+  assert.match(readme, /^bun typecheck$/m);
+  assert.match(readme, /^bun run test$/m);
+  assert.match(readme, /^bun run build$/m);
+  assert.ok(!/^bun (test|build)$/m.test(readme));
+  assert.match(readme, /`bun check` is Bun's type checker/);
   assert.match(readme, /Commit it before pushing/);
-  assert.match(readme, /`bun lint` and `bun check` do not/);
   assert.ok(!readme.includes("{{"));
   const ci = await readFile(join(project, ".github/workflows/ci.yml"), "utf8");
   assert.match(ci, /bun install --frozen-lockfile/);
@@ -238,7 +242,8 @@ void test("API runtime defaults to Node.js and Bun only changes the API process"
   assert.match(readme, /runs on Bun 1\.4\.2\+/);
   assert.match(readme, /`bun dist\/main\.js` with `apps\/api` as the working directory/);
   assert.match(readme, /`bun --watch` restarts the API/);
-  assert.match(readme, /`bun lint` and `bun check` do not/);
+  // The Bun command notes belong to the package manager, not the runtime.
+  assert.ok(!readme.includes("bun check"));
   assert.ok(!readme.includes("{{"));
   assert.ok(!readme.includes("{{"));
 });

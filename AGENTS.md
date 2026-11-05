@@ -27,7 +27,7 @@ dependency patterns; add abstractions only for capabilities the workflow needs.
 See also [the HTTP adapter](apps/api/src/http.ts) and [the entrypoint](apps/api/src/main.ts).
 
 The API's compiler profile enforces Effect correctness and recommends named
-`Effect.fn` operations. Run `pnpm typecheck` (or `bun run typecheck`) to check it;
+`Effect.fn` operations. Run `pnpm typecheck` (or `bun typecheck`) to check it;
 the scripts invoke the Effect compiler directly, independently of install hooks.
 Lint restricts runtime execution to `main.ts` and `http.ts`; API tests run Effects with
 `it.effect` from `@effect/vitest`. Add an explicit override in `vite.config.ts` when

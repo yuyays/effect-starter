@@ -69,7 +69,7 @@ Once dependencies are installed, you only need `pnpm create:app`.
 
 Enter `../my-app` to create your project beside the checkout. Change into the
 new project and follow its README. `pnpm create:app` only works inside this
-repository. You can also launch the local wizard with `bun run create:app`.
+repository. You can also launch the local wizard with `bun create:app`.
 
 <details>
 <summary>Specific releases and manual downloads</summary>
