@@ -2,7 +2,8 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-**React**、**TanStack Start**、**Vue** から選べるフルスタック TypeScript スターターです。
+Effect を基盤とした TypeScript アプリケーションのスターターです。
+フロントエンドは任意で、**React**、**TanStack Start**、**Vue** から選べます。
 Effect v4、Drizzle、Effect SQL、PostgreSQL、Vite+ を採用しています。ホスティング先はあらかじめ設定していません。
 
 ## 作った理由

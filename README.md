@@ -2,8 +2,9 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-Full-stack TypeScript starter with **React**, **TanStack Start**, or **Vue**, plus
-Effect v4, Drizzle, Effect SQL, PostgreSQL, and Vite+. No hosting provider is preconfigured.
+An Effect-based TypeScript application starter, with an optional **React**,
+**TanStack Start**, or **Vue** frontend. Built on Effect v4, Drizzle, Effect SQL,
+PostgreSQL, and Vite+. No hosting provider is preconfigured.
 
 ## Why I built this
 
