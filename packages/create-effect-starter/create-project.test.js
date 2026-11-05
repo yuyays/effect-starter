@@ -150,6 +150,7 @@ void test("Bun CLI emits Bun configuration, instructions, and CI", async (t) => 
   const readme = await readFile(join(project, "README.md"), "utf8");
   assert.match(readme, /bun run typecheck/);
   assert.match(readme, /Commit it before pushing/);
+  assert.match(readme, /`bun lint` and `bun check` do not/);
   assert.ok(!readme.includes("{{"));
   const ci = await readFile(join(project, ".github/workflows/ci.yml"), "utf8");
   assert.match(ci, /bun install --frozen-lockfile/);
@@ -174,6 +175,7 @@ void test("API runtime defaults to Node.js and Bun only changes the API process"
   const nodeReadme = await readFile(join(node.destination, "README.md"), "utf8");
   assert.match(nodeReadme, /`node apps\/api\/dist\/main\.js`/);
   assert.match(nodeReadme, /`node --watch` restarts the API/);
+  assert.ok(!nodeReadme.includes("bun check"), "pnpm + Node projects skip the Bun note");
   assert.ok(!nodeReadme.includes("{{"));
 
   const result = spawnSync(process.execPath, [cli, "bun-api", "--runtime", "bun"], {
@@ -201,6 +203,7 @@ void test("API runtime defaults to Node.js and Bun only changes the API process"
   assert.match(readme, /runs on Bun 1\.4\.2\+/);
   assert.match(readme, /`bun apps\/api\/dist\/main\.js`/);
   assert.match(readme, /`bun --watch` restarts the API/);
+  assert.match(readme, /`bun lint` and `bun check` do not/);
   assert.ok(!readme.includes("{{"));
   assert.ok(!readme.includes("{{"));
 });

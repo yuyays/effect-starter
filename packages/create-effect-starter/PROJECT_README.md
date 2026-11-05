@@ -55,7 +55,7 @@ editor to use the patched compiler's Effect diagnostics and refactors there too.
 {{RUN}} test
 {{RUN}} build
 ```
-
+{{BUN_CHECKS_NOTE}}
 {{LOCKFILE_NOTE}}
 Use {{PACKAGE_MANAGER}} directly or through `vp install` so installs and CI use the same lockfile.
 
