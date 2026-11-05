@@ -66,7 +66,7 @@ Root development, typecheck, and test commands build contracts first. Developmen
 watches the API and contracts with `effect-tsgo tsc --watch`; `{{RUNTIME_BIN}} --watch` restarts the API
 when the emitted JavaScript changes.
 
-After building the workspace, start the API with `{{RUNTIME_BIN}} apps/api/dist/main.js`
-from the project root. Set `DATABASE_URL` and `PORT` in the process environment.
+After building the workspace, start the API with `{{RUN}} start:api` (it runs
+`{{RUNTIME_BIN}} apps/api/dist/main.js`) from the project root. Set `DATABASE_URL` and `PORT` in the process environment.
 Keep `packages/contracts/dist`, the workspace package manifests, and production
 dependencies alongside `apps/api/dist`; the API is not bundled.

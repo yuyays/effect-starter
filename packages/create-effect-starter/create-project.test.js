@@ -38,6 +38,12 @@ void test("CLI generates a renamed project without generator artifacts", async (
   assert.ok(!("create:app" in manifest.scripts));
   assert.match(manifest.scripts["dev:api"], /@my-app\/contracts#build/);
   assert.match(manifest.scripts["dev:api"], /--filter @my-app\/api/);
+  assert.equal(manifest.scripts["start:api"], "vp run @my-app/api#start");
+  // Repeat typechecks replay unchanged packages; Vite+ tracks the files each check reads.
+  assert.match(
+    manifest.scripts.typecheck,
+    /vp run --cache --concurrency-limit 4 --filter "@my-app\/\*" typecheck/,
+  );
   for (const [location, name] of [
     ["apps/api", "api"],
     ["apps/web", "web"],
