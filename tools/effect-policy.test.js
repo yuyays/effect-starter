@@ -13,6 +13,12 @@ const compiler = fileURLToPath(
 const vp = fileURLToPath(new URL("../bin/vp", import.meta.resolve("vite-plus")));
 // Projects generated without a frontend skip the web rules until one is added.
 const skipWithoutWeb = existsSync(join(root, "apps/web")) ? false : "no apps/web frontend";
+// React Compiler and JSX accessibility rules apply only to the React frontends.
+const skipWithoutReact =
+  existsSync(join(root, "apps/web/src/main.tsx")) ||
+  existsSync(join(root, "apps/web/src/router.tsx"))
+    ? false
+    : "no React frontend";
 
 function run(binary, args) {
   const result = spawnSync(process.execPath, [binary, ...args], {
@@ -305,6 +311,35 @@ void test("lint lets web tests run Effects", { skip: skipWithoutWeb }, async (t)
     "client.test.ts": [],
   });
 });
+
+void test(
+  "lint enforces the React Compiler rules and JSX accessibility",
+  { skip: skipWithoutReact },
+  async (t) => {
+    const codes = await lintFixtures(t, "apps/web/src", {
+      "render.tsx": `import { useState } from "react";
+export function Counter() {
+  const [count, setCount] = useState(0);
+  setCount(count + 1);
+  return <p>{count}</p>;
+}
+`,
+      "mutate.tsx": `export function Total(props: { count: number }) {
+  props.count = 0;
+  return <p>{props.count}</p>;
+}
+`,
+      "image.tsx": `export const Logo = () => <img src="/logo.svg" />;\n`,
+      "clean.tsx": `export const Logo = () => <img src="/logo.svg" alt="Effect starter" />;\n`,
+    });
+    assertRules(codes, {
+      "render.tsx": ["react(set-state-in-render)"],
+      "mutate.tsx": ["react(immutability)"],
+      "image.tsx": ["jsx-a11y(alt-text)"],
+      "clean.tsx": [],
+    });
+  },
+);
 
 void test("lint lets tooling tests read the clock", async (t) => {
   assertRules(

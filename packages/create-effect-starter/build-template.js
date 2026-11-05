@@ -83,7 +83,7 @@ for (const framework of Object.keys(frameworks)) {
   if (framework === "vue") {
     config = replaceRequired(
       config,
-      '["react", "typescript", "import", "vitest", "effecttsgo"]',
+      '["react", "jsx-a11y", "typescript", "import", "vitest", "effecttsgo"]',
       '["vue", "typescript", "import", "vitest", "effecttsgo"]',
     ).replace(/^      "react\/.*\n/gm, "");
   }
@@ -91,7 +91,7 @@ for (const framework of Object.keys(frameworks)) {
     // `apps/web/**` overrides stay: they are inert until someone adds a frontend.
     config = replaceRequired(
       config,
-      '["react", "typescript", "import", "vitest", "effecttsgo"]',
+      '["react", "jsx-a11y", "typescript", "import", "vitest", "effecttsgo"]',
       '["typescript", "import", "vitest", "effecttsgo"]',
     ).replace(/^      "react\/.*\n/gm, "");
   }
