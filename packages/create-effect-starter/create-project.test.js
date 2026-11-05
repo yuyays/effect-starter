@@ -49,6 +49,11 @@ void test("CLI generates a renamed project without generator artifacts", async (
   }
   assert.deepEqual(await readdir(join(project, "packages")), ["contracts"]);
   assert.deepEqual(await readdir(join(project, ".github/workflows")), ["ci.yml"]);
+  // Generated pnpm CI is the repository workflow, so Dependabot updates reach new projects.
+  assert.equal(
+    await readFile(join(project, ".github/workflows/ci.yml"), "utf8"),
+    await readFile(new URL("../../.github/workflows/ci.yml", import.meta.url), "utf8"),
+  );
   assert.match(await readFile(join(project, ".gitignore"), "utf8"), /^\.env$/m);
   assert.equal(
     await readFile(join(project, "LICENSE"), "utf8"),
@@ -156,6 +161,30 @@ void test("Bun CLI emits Bun configuration, instructions, and CI", async (t) => 
   assert.match(ci, /bun install --frozen-lockfile/);
   assert.match(ci, /bun run test/);
   assert.ok(!ci.includes("pnpm"));
+  const workflow = parse(ci);
+  const source = parse(
+    await readFile(new URL("../../.github/workflows/ci.yml", import.meta.url), "utf8"),
+  );
+  assert.deepEqual(workflow.concurrency, source.concurrency);
+  assert.deepEqual(workflow.permissions, source.permissions);
+  assert.equal(workflow.jobs.checks["timeout-minutes"], source.jobs.checks["timeout-minutes"]);
+  const steps = workflow.jobs.checks.steps;
+  assert.equal(
+    steps.find((step) => step.uses?.startsWith("oven-sh/setup-bun@")).with["bun-version"],
+    "1.4.2",
+  );
+  const cache = steps.find((step) => step.uses?.startsWith("actions/cache@"));
+  assert.equal(cache.with.path, "~/.bun/install/cache");
+  assert.match(cache.with.key, /hashFiles\('bun\.lock'\)/);
+  assert.ok(steps.indexOf(cache) < steps.findIndex((step) => step.run?.startsWith("bun install")));
+  // Bun-only actions track the versions Dependabot maintains in this repository's workflows.
+  const workflows = new URL("../../.github/workflows/", import.meta.url);
+  const pinned = new Set();
+  for (const file of await readdir(workflows)) {
+    for (const match of (await readFile(new URL(file, workflows), "utf8")).matchAll(/uses: (\S+)/g))
+      pinned.add(match[1]);
+  }
+  for (const step of steps) if (step.uses) assert.ok(pinned.has(step.uses), step.uses);
   assert.ok(!manifest.scripts.test.includes("create-effect-starter"));
 });
 

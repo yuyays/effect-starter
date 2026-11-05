@@ -172,7 +172,11 @@ source files are excluded from generated apps.
 Repository CI runs the workspace checks on every pull request. Generated-app
 checks run in a separate workflow, only when generator-relevant files change,
 and each framework runs in its own job. Inside a generated app, CI runs only
-that app's lint, format, type, test, and build steps.
+that app's lint, format, type, test, and build steps. Generated workflows are
+derived from this repository's `ci.yml`, so action updates and job settings
+(dependency caching, superseded-run cancellation, read-only token, timeout)
+reach new projects. Bun projects swap in `setup-bun` and cache Bun's install
+directory keyed on `bun.lock`.
 
 ### `vp check` and type checking
 
