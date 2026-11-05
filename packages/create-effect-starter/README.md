@@ -186,7 +186,7 @@ directory keyed on `bun.lock`.
 `vp check` combines formatting and linting, but it only runs TypeScript type
 checks when `lint.options.typeCheck` is enabled. The Vue starter needs
 `vue-tsc` for single-file components, and enabling `typeCheck` makes `vp check`
-fail on `.vue` imports. The check also needs a prebuilt contracts package.
+fail on `.vue` imports.
 Keep separate `lint`, `format:check`, and `typecheck` steps rather than
 replacing them with `vp check` in CI.
 

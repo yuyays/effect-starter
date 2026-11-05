@@ -111,7 +111,7 @@ async function smokeDev(packageManager, destination, framework, runtime) {
       );
       assert.deepEqual(await proxyHealth.json(), { ok: true, service: "api" });
     }
-    // Change a contract route to verify compilation and runtime dependency watching.
+    // Change a contract route to verify the watcher reloads the API when a workspace package changes.
     const contractsPath = join(destination, "packages/contracts/src/http/index.ts");
     const contracts = await readFile(contractsPath, "utf8");
     try {
@@ -185,7 +185,7 @@ async function smokeDev(packageManager, destination, framework, runtime) {
 }
 
 async function smokeProduction(destination, runtime) {
-  // Node with TypeScript support disabled proves production only loads emitted
+  // Node with TypeScript support disabled proves production only loads bundled
   // JavaScript. Bun runs TypeScript natively, so it cannot prove that itself.
   await smokeApi(destination, process.execPath, ["--no-strip-types", "apps/api/dist/main.js"]);
   console.log("Node production API verified with TypeScript support disabled");
