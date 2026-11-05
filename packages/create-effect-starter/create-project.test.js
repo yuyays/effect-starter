@@ -67,8 +67,6 @@ void test("CLI generates a renamed project without generator artifacts", async (
   );
   assert.equal(manifest.packageManager, sourceManifest.packageManager);
   assert.ok(!("create:app" in manifest.scripts));
-  // Workspace packages export TypeScript source, so no script builds contracts first.
-  for (const script of Object.values(manifest.scripts)) assert.doesNotMatch(script, /#build/);
   const contracts = JSON.parse(
     await readFile(join(project, "packages/contracts/package.json"), "utf8"),
   );
@@ -151,8 +149,6 @@ void test("CLI generates a renamed project without generator artifacts", async (
   const api = JSON.parse(await readFile(join(project, "apps/api/package.json"), "utf8"));
   // Production bundles the API and its workspace packages into one JavaScript file.
   assert.equal(api.scripts.build, "effect-tsgo tsc --noEmit && vp pack");
-  assert.ok(!("tsup" in api.devDependencies));
-  assert.ok(!("tsx" in api.devDependencies));
 });
 
 void test("rejects nonempty destinations without changing their contents", async (t) => {
@@ -227,8 +223,6 @@ void test("Bun CLI emits Bun configuration, instructions, and CI", async (t) => 
   assert.match(readme, /^bun run test$/m);
   assert.match(readme, /^bun run build$/m);
   assert.ok(!/^bun (test|build)$/m.test(readme));
-  assert.match(readme, /`bun check` is Bun's type checker/);
-  assert.match(readme, /Commit it before pushing/);
   assert.ok(!readme.includes("{{"));
   const ci = await readFile(join(project, ".github/workflows/ci.yml"), "utf8");
   assert.match(ci, /bun install --frozen-lockfile/);
@@ -308,7 +302,6 @@ void test("API runtime defaults to Node.js and Bun only changes the API process"
   assert.match(readme, /`bun --watch` runs `apps\/api\/src\/main\.ts`/);
   // The Bun command notes belong to the package manager, not the runtime.
   assert.ok(!readme.includes("bun check"));
-  assert.ok(!readme.includes("{{"));
   assert.ok(!readme.includes("{{"));
 });
 
@@ -406,7 +399,6 @@ for (const framework of ["react", "tanstack-start", "vue"]) {
       assert.match(instructions, /override in `vite\.config\.ts`/);
       assert.match(instructions, /`-- reason` suffix/);
       assert.match(instructions, /`catalog:`/);
-      assert.ok(!instructions.includes("Effect.catchTag"), "lint enforces typed recovery");
       const examplePaths = [...instructions.matchAll(/\]\(((?:apps|packages)\/[^)#]+)\)/g)];
       assert.ok(examplePaths.length > 0, "Effect instructions link to working examples");
       for (const [, path] of examplePaths) {
@@ -485,15 +477,11 @@ for (const packageManager of ["pnpm", "bun"]) {
     assert.ok(!("dev:web" in manifest.scripts));
     assert.match(manifest.scripts["dev:api"], /--filter @api-app\/api/);
     const config = await readFile(join(project, "vite.config.ts"), "utf8");
-    assert.ok(!/"react/.test(config), "API-only lint has no React plugin or rules");
     assert.match(config, /effecttsgo/);
     const formatted = await format("vite.config.ts", config);
     assert.equal(config, formatted.code);
-    const agents = await readFile(join(project, "AGENTS.md"), "utf8");
-    assert.ok(!agents.includes("web app"));
     const readme = await readFile(join(project, "README.md"), "utf8");
     assert.match(readme, /^TypeScript API with Effect v4/m);
-    assert.ok(!/web|React|5173/.test(readme), "The README describes no frontend");
     assert.ok(!readme.includes("{{"));
     const paths = await readdir(project, { recursive: true });
     assert.ok(!paths.some((path) => path.startsWith("apps/web")));

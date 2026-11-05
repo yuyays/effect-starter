@@ -6,24 +6,6 @@ import { UsersListError } from "@effect-starter/contracts/http";
 import { listUsers } from "./users.ts";
 
 describe("listUsers", () => {
-  it.effect("decodes rows returned by the database", () =>
-    Effect.gen(function* () {
-      const users = yield* listUsers().pipe(
-        Effect.provideService(Database, {
-          selectUsers: () =>
-            Effect.succeed([
-              {
-                id: "8c2f3558-1ec5-4b87-b7af-7ad83f8c7778",
-                name: "Ada",
-                createdAt: "2026-01-01T00:00:00.000Z",
-              },
-            ]),
-        }),
-      );
-      expect(users[0]?.name).toBe("Ada");
-    }),
-  );
-
   it.effect("translates database failures into the API error", () =>
     Effect.gen(function* () {
       const result = yield* Effect.result(

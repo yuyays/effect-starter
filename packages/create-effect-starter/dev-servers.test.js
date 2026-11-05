@@ -35,7 +35,7 @@ void test("returns all three responses once the proxy is healthy", async () => {
   const api = fakeResponse(200, '{"ok":true,"service":"api"}');
   const web = fakeResponse(200, '<div id="root">');
   const proxy = fakeResponse(200, '{"ok":true,"service":"api"}');
-  const { response, calls } = scriptedResponse([api, web, proxy]);
+  const { response } = scriptedResponse([api, web, proxy]);
 
   assert.deepEqual(await waitForDevServers({ response, apiUrl, webUrl }), {
     ready: true,
@@ -43,7 +43,6 @@ void test("returns all three responses once the proxy is healthy", async () => {
     web,
     proxy,
   });
-  assert.deepEqual(calls, [apiUrl, webUrl, proxyUrl]);
 });
 
 void test("retries while the proxy returns the empty 502 emitted during an API restart", async () => {
@@ -62,15 +61,36 @@ void test("retries while the proxy returns the empty 502 emitted during an API r
   assert.deepEqual(await result.api.json(), { ok: true, service: "api" });
 });
 
-void test("does not request the proxy before the API and web server respond", async () => {
-  const api = fakeResponse(200, '{"ok":true,"service":"api"}');
-  const web = fakeResponse(200, '<div id="root">');
-  const proxy = fakeResponse(200, '{"ok":true,"service":"api"}');
-  const { response, calls } = scriptedResponse([undefined, fakeResponse(200), api, web, proxy]);
+for (const [upstream, unavailableUrl] of [
+  ["API", apiUrl],
+  ["web server", webUrl],
+]) {
+  void test(`does not request the proxy before the ${upstream} responds`, async () => {
+    let serversReady = false;
+    const api = fakeResponse(200, '{"ok":true,"service":"api"}');
+    const web = fakeResponse(200, '<div id="root">');
+    const proxy = fakeResponse(200, '{"ok":true,"service":"api"}');
 
-  await waitForDevServers({ response, apiUrl, webUrl });
-  assert.deepEqual(calls, [apiUrl, webUrl, apiUrl, webUrl, proxyUrl]);
-});
+    const result = await waitForDevServers({
+      apiUrl,
+      webUrl,
+      response: async (url) => {
+        if (!serversReady && url === unavailableUrl) return undefined;
+        if (url === apiUrl) return api;
+        if (url === webUrl) return web;
+        assert.equal(url, proxyUrl);
+        // Probing the proxy before either upstream is ready violates the readiness contract.
+        assert.ok(serversReady, "the proxy must wait for healthy upstream servers");
+        return proxy;
+      },
+      delay: async () => {
+        serversReady = true;
+      },
+    });
+    assert.equal(result.ready, true);
+    assert.deepEqual(await result.proxy.json(), { ok: true, service: "api" });
+  });
+}
 
 void test("does not report a proxy status when the proxy was never probed", async () => {
   // Only a healthy API and web server justify probing the proxy.
@@ -81,6 +101,7 @@ void test("does not report a proxy status when the proxy was never probed", asyn
     reason: "timeout",
     proxyStatus: undefined,
   });
+  // The requested URLs are the contract: an unready upstream must prevent a proxy probe.
   assert.deepEqual(calls, [apiUrl, webUrl]);
 });
 
@@ -108,6 +129,7 @@ void test("reports an exited dev process instead of a timeout", async () => {
     }),
     { ready: false, reason: "exited", proxyStatus: undefined },
   );
+  // Once the process exits, no retry or proxy request should be sent.
   assert.deepEqual(calls, [apiUrl, webUrl]);
 });
 
@@ -116,5 +138,6 @@ void test("without a frontend only waits for the API", async () => {
   const { response, calls } = scriptedResponse([undefined, api]);
 
   assert.deepEqual(await waitForDevServers({ response, apiUrl }), { ready: true, api });
+  // One unavailable response followed by success requires a retry and no frontend requests.
   assert.deepEqual(calls, [apiUrl, apiUrl]);
 });

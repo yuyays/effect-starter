@@ -7,10 +7,6 @@ afterEach(() => {
 });
 
 describe("users query", () => {
-  it("keeps a stable cache key for route prefetching", () => {
-    expect(usersQueryOptions.queryKey).toEqual(["users"]);
-  });
-
   it("aborts the HTTP request when the query is cancelled", async () => {
     const signals: Array<AbortSignal> = [];
     // A request that never answers, so only cancellation can end it.

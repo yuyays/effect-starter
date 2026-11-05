@@ -98,7 +98,16 @@ describe("HTTP API", () => {
             cause: "database unavailable",
           }),
         ),
-        Effect.succeed([{ id: "invalid", name: "Ada", createdAt: "not a date" }]),
+        ...[{ id: "invalid" }, { createdAt: "not a date" }, { name: "" }].map((invalidField) =>
+          Effect.succeed([
+            {
+              id: "8c2f3558-1ec5-4b87-b7af-7ad83f8c7778",
+              name: "Ada",
+              createdAt: "2026-01-01T00:00:00.000Z",
+              ...invalidField,
+            },
+          ]),
+        ),
       ]) {
         yield* Effect.scoped(
           Effect.gen(function* () {
