@@ -184,18 +184,21 @@ async function smokeDev(packageManager, destination, framework, runtime) {
   }
 }
 
-// React's runtime holds one memo cache marker per bundle; every component the React
-// Compiler transforms adds another, so more than one proves the compiler ran.
+// Compiled components reference React's memo cache sentinel, which React's own runtime
+// also defines. A client chunk without the runtime (React's production build links its
+// errors to react.dev/errors) that references it proves the app's code was compiled.
 async function assertReactCompiled(destination) {
   const output = join(destination, "apps/web/dist");
-  let markers = 0;
+  const compiled = [];
   for (const file of await readdir(output, { recursive: true })) {
     if (!file.endsWith(".js") || file.split(sep).includes("server")) continue;
-    markers +=
-      (await readFile(join(output, file), "utf8")).split("react.memo_cache_sentinel").length - 1;
+    const code = await readFile(join(output, file), "utf8");
+    if (!code.includes("react.dev/errors") && code.includes("react.memo_cache_sentinel")) {
+      compiled.push(file);
+    }
   }
-  assert.ok(markers > 1, `The React Compiler did not transform the web app (${markers} markers)`);
-  console.log(`React Compiler verified (${markers} memo cache markers in the client bundle)`);
+  assert.ok(compiled.length > 0, "The React Compiler did not transform the web app's chunks");
+  console.log(`React Compiler verified in ${compiled.join(", ")}`);
 }
 
 async function smokeProduction(destination, runtime) {

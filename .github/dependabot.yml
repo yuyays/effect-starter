@@ -23,6 +23,12 @@ updates:
         patterns:
           - effect
           - "@effect/*"
+      # @vitejs/plugin-react accepts one 0.x minor of the native React Compiler, so
+      # the two update together; the generator test checks the pair is compatible.
+      react-compiler:
+        patterns:
+          - "@vitejs/plugin-react"
+          - oxc-transform-react
       libraries:
         patterns:
           - "*"
@@ -31,12 +37,6 @@ updates:
       # TypeScript 7's package layout. Major upgrades need manual review.
       - dependency-name: typescript
         update-types:
-          - version-update:semver-major
-      # @vitejs/plugin-react accepts one 0.x minor of the native React Compiler
-      # (^0.152.0 today); bump it together with the plugin's peer range.
-      - dependency-name: oxc-transform-react
-        update-types:
-          - version-update:semver-minor
           - version-update:semver-major
   - package-ecosystem: github-actions
     directory: /
