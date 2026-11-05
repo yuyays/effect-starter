@@ -36,7 +36,12 @@ void test("CLI generates a renamed project without generator artifacts", async (
   );
   assert.equal(manifest.packageManager, sourceManifest.packageManager);
   assert.ok(!("create:app" in manifest.scripts));
-  assert.match(manifest.scripts["dev:api"], /@my-app\/contracts#build/);
+  // Workspace packages export TypeScript source, so no script builds contracts first.
+  for (const script of Object.values(manifest.scripts)) assert.doesNotMatch(script, /#build/);
+  const contracts = JSON.parse(
+    await readFile(join(project, "packages/contracts/package.json"), "utf8"),
+  );
+  assert.equal(contracts.exports["./http"], "./src/http/index.ts");
   assert.match(manifest.scripts["dev:api"], /--filter @my-app\/api/);
   assert.equal(manifest.scripts["start:api"], "vp run @my-app/api#start");
   // Repeat typechecks replay unchanged packages; Vite+ tracks the files each check reads.
@@ -89,7 +94,8 @@ void test("CLI generates a renamed project without generator artifacts", async (
     /<title>my-app<\/title>/,
   );
   const api = JSON.parse(await readFile(join(project, "apps/api/package.json"), "utf8"));
-  assert.match(api.scripts.build, /@my-app\/contracts#build/);
+  // Production bundles the API and its workspace packages into one JavaScript file.
+  assert.equal(api.scripts.build, "effect-tsgo tsc --noEmit && vp pack");
   assert.ok(!("tsup" in api.devDependencies));
   assert.ok(!("tsx" in api.devDependencies));
 });
@@ -207,13 +213,11 @@ void test("API runtime defaults to Node.js and Bun only changes the API process"
     await readFile(join(node.destination, "apps/api/package.json"), "utf8"),
   );
   assert.equal(nodeApi.scripts.start, "node dist/main.js");
-  assert.equal(
-    await readFile(join(node.destination, "apps/api/dev.js"), "utf8"),
-    await readFile(new URL("../../apps/api/dev.js", import.meta.url), "utf8"),
-  );
+  assert.equal(nodeApi.scripts.dev, "node --watch --watch-preserve-output src/main.ts");
+  await assert.rejects(readFile(join(node.destination, "apps/api/dev.js")), { code: "ENOENT" });
   const nodeReadme = await readFile(join(node.destination, "README.md"), "utf8");
   assert.match(nodeReadme, /`node dist\/main\.js` with `apps\/api` as the working directory/);
-  assert.match(nodeReadme, /`node --watch` restarts the API/);
+  assert.match(nodeReadme, /`node --watch` runs `apps\/api\/src\/main\.ts`/);
   assert.ok(!nodeReadme.includes("bun check"), "pnpm + Node projects skip the Bun note");
   assert.ok(!nodeReadme.includes("{{"));
 
@@ -226,13 +230,13 @@ void test("API runtime defaults to Node.js and Bun only changes the API process"
   const project = join(directory, "bun-api");
   const api = JSON.parse(await readFile(join(project, "apps/api/package.json"), "utf8"));
   assert.equal(api.scripts.start, "bun dist/main.js");
-  assert.equal(api.scripts.dev, `${nodeApi.scripts.dev.replaceAll("node-app", "bun-api")} bun`);
+  // The runner starts `bun --watch` and makes sure one Ctrl+C stops it.
+  assert.equal(api.scripts.dev, "node dev.js");
   assert.equal(api.engines.bun, ">=1.4.2");
   assert.ok(!nodeApi.engines?.bun);
-  // Both runtimes share one dev runner; only its argument differs.
   assert.equal(
     await readFile(join(project, "apps/api/dev.js"), "utf8"),
-    await readFile(new URL("../../apps/api/dev.js", import.meta.url), "utf8"),
+    await readFile(new URL("./runtimes/bun/dev.js", import.meta.url), "utf8"),
   );
   // The runtime choice is independent of the package manager.
   const manifest = JSON.parse(await readFile(join(project, "package.json"), "utf8"));
@@ -241,7 +245,7 @@ void test("API runtime defaults to Node.js and Bun only changes the API process"
   const readme = await readFile(join(project, "README.md"), "utf8");
   assert.match(readme, /runs on Bun 1\.4\.2\+/);
   assert.match(readme, /`bun dist\/main\.js` with `apps\/api` as the working directory/);
-  assert.match(readme, /`bun --watch` restarts the API/);
+  assert.match(readme, /`bun --watch` runs `apps\/api\/src\/main\.ts`/);
   // The Bun command notes belong to the package manager, not the runtime.
   assert.ok(!readme.includes("bun check"));
   assert.ok(!readme.includes("{{"));

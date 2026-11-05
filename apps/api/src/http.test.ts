@@ -5,8 +5,8 @@ import { HttpApiClient } from "effect/http-api";
 import { EffectDrizzleQueryError } from "drizzle-orm/effect-core";
 import { StarterApi } from "@effect-starter/contracts/http";
 import { describe, expect, it } from "@effect/vitest";
-import { Database } from "./db/client.js";
-import { HttpLive } from "./http.js";
+import { Database } from "./db/client.ts";
+import { HttpLive } from "./http.ts";
 
 const makeHandler = (rows: ReturnType<Database["Service"]["selectUsers"]>) =>
   Effect.acquireRelease(

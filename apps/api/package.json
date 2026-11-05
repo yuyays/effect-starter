@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vp run build && node dev.js",
-    "build": "vp run @effect-starter/contracts#build && effect-tsgo tsc -p tsconfig.build.json",
+    "dev": "node --watch --watch-preserve-output src/main.ts",
+    "build": "effect-tsgo tsc --noEmit && vp pack",
     "start": "node dist/main.js",
     "typecheck": "effect-tsgo tsc --noEmit",
     "test": "vp test run --passWithNoTests",

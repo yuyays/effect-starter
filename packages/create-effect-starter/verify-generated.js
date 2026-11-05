@@ -38,9 +38,8 @@ async function response(url) {
 }
 
 async function smokeDev(packageManager, destination, framework, runtime) {
-  // Development must start from a clean checkout without prebuilt JavaScript.
+  // Development runs the TypeScript source, so it must not depend on a production build.
   await rm(join(destination, "apps/api/dist"), { recursive: true, force: true });
-  await rm(join(destination, "packages/contracts/dist"), { recursive: true, force: true });
   const apiPort = await freePort();
   const webPort = await freePort();
   // Match the IPv4 probes even when localhost resolves to IPv6 on CI.

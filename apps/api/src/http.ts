@@ -2,7 +2,7 @@ import { HttpApiBuilder, HttpApiScalar } from "effect/http-api";
 import { HttpRouter } from "effect/http";
 import { StarterApi } from "@effect-starter/contracts/http";
 import { Effect, Layer } from "effect";
-import { listUsers } from "./services/users.js";
+import { listUsers } from "./services/users.ts";
 
 const HealthLive = HttpApiBuilder.group(StarterApi, "health", (handlers) =>
   handlers.handle("get", () => Effect.succeed({ ok: true, service: "api" as const })),

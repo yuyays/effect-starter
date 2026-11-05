@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import { Schema } from "effect";
-import { UsersListError } from "../http/errors.js";
-import { User, UserId } from "./user.js";
+import { UsersListError } from "../http/errors.ts";
+import { User, UserId } from "./user.ts";
 
 describe("User schema", () => {
   it("decodes a valid user", () => {
