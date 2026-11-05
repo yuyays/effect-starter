@@ -61,30 +61,36 @@ void test("retries while the proxy returns the empty 502 emitted during an API r
   assert.deepEqual(await result.api.json(), { ok: true, service: "api" });
 });
 
-void test("does not request the proxy before the API and web server respond", async () => {
-  let serversReady = false;
-  const api = fakeResponse(200, '{"ok":true,"service":"api"}');
-  const web = fakeResponse(200, '<div id="root">');
-  const proxy = fakeResponse(200, '{"ok":true,"service":"api"}');
+for (const [upstream, unavailableUrl] of [
+  ["API", apiUrl],
+  ["web server", webUrl],
+]) {
+  void test(`does not request the proxy before the ${upstream} responds`, async () => {
+    let serversReady = false;
+    const api = fakeResponse(200, '{"ok":true,"service":"api"}');
+    const web = fakeResponse(200, '<div id="root">');
+    const proxy = fakeResponse(200, '{"ok":true,"service":"api"}');
 
-  const result = await waitForDevServers({
-    apiUrl,
-    webUrl,
-    response: async (url) => {
-      if (url === apiUrl) return serversReady ? api : undefined;
-      if (url === webUrl) return web;
-      assert.equal(url, proxyUrl);
-      // Probing the proxy before its upstream is ready violates the readiness contract.
-      assert.ok(serversReady, "the proxy must wait for healthy upstream servers");
-      return proxy;
-    },
-    delay: async () => {
-      serversReady = true;
-    },
+    const result = await waitForDevServers({
+      apiUrl,
+      webUrl,
+      response: async (url) => {
+        if (!serversReady && url === unavailableUrl) return undefined;
+        if (url === apiUrl) return api;
+        if (url === webUrl) return web;
+        assert.equal(url, proxyUrl);
+        // Probing the proxy before either upstream is ready violates the readiness contract.
+        assert.ok(serversReady, "the proxy must wait for healthy upstream servers");
+        return proxy;
+      },
+      delay: async () => {
+        serversReady = true;
+      },
+    });
+    assert.equal(result.ready, true);
+    assert.deepEqual(await result.proxy.json(), { ok: true, service: "api" });
   });
-  assert.equal(result.ready, true);
-  assert.deepEqual(await result.proxy.json(), { ok: true, service: "api" });
-});
+}
 
 void test("does not report a proxy status when the proxy was never probed", async () => {
   // Only a healthy API and web server justify probing the proxy.
