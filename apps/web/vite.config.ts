@@ -10,7 +10,7 @@ export default defineConfig({
       target: "react",
       autoCodeSplitting: true,
     }),
-    react(),
+    react({ compiler: true }),
     tailwindcss(),
   ],
   server: {

@@ -1,14 +1,45 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { mkdtemp, mkdir, readdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import { versions } from "vite-plus/versions";
 import { format } from "vite-plus/fmt";
 import { parse } from "yaml";
 import { createProject } from "./create-project.js";
+
+// Reads an installed package's manifest by resolving it from a workspace, so the check
+// works with any node_modules layout (the plugin does not export its package.json).
+async function installedManifest(workspace, name) {
+  const require = createRequire(new URL(`../../${workspace}/package.json`, import.meta.url));
+  for (let directory = dirname(require.resolve(name)); ; directory = dirname(directory)) {
+    try {
+      const manifest = JSON.parse(await readFile(join(directory, "package.json"), "utf8"));
+      if (manifest.name === name) return manifest;
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
+    }
+    if (dirname(directory) === directory) throw new Error(`Cannot find the ${name} manifest`);
+  }
+}
+
+// Checks an exact version against `^x.y.z` alternatives joined by `||`; any other range
+// shape fails loudly rather than being misread.
+function satisfiesCaretRange(version, range) {
+  const [major, minor, patch] = version.split(".").map(Number);
+  return range.split("||").some((alternative) => {
+    const caret = /^\^(\d+)\.(\d+)\.(\d+)$/.exec(alternative.trim());
+    if (!caret) throw new Error(`Unsupported peer range: ${range}`);
+    const [low, lowMinor, lowPatch] = caret.slice(1).map(Number);
+    if (major !== low) return false;
+    // A 0.x caret allows patches of one minor; otherwise any later minor or patch.
+    if (low === 0) return minor === lowMinor && patch >= lowPatch;
+    return minor > lowMinor || (minor === lowMinor && patch >= lowPatch);
+  });
+}
 
 async function temporary(t) {
   const directory = await mkdtemp(join(tmpdir(), "effect-create-"));
@@ -346,6 +377,29 @@ for (const framework of ["react", "tanstack-start", "vue"]) {
       assert.equal(/^  react /m.test(result.stdout), framework !== "vue");
       assert.equal(/^  vue /m.test(result.stdout), framework === "vue");
       const project = join(directory, "chosen-app");
+      if (framework !== "vue") {
+        // The React Compiler's native transform must stay inside the Vite plugin's peer range.
+        assert.match(
+          await readFile(join(project, "apps/web/vite.config.ts"), "utf8"),
+          /react\(\{ compiler: true \}\)/,
+        );
+        const webManifest = JSON.parse(
+          await readFile(join(project, "apps/web/package.json"), "utf8"),
+        );
+        const source =
+          framework === "react"
+            ? "apps/web"
+            : `packages/create-effect-starter/frontends/${framework}`;
+        const plugin = await installedManifest(source, "@vitejs/plugin-react");
+        // Generated projects pin the plugin whose peer range is checked here, Bun included.
+        assert.equal(webManifest.devDependencies["@vitejs/plugin-react"], plugin.version);
+        const compiler = webManifest.devDependencies["oxc-transform-react"];
+        const range = plugin.peerDependencies["oxc-transform-react"];
+        assert.ok(
+          satisfiesCaretRange(compiler, range),
+          `oxc-transform-react ${compiler} must satisfy @vitejs/plugin-react ${plugin.version}'s peer ${range}`,
+        );
+      }
       const instructions = await readFile(join(project, "AGENTS.md"), "utf8");
       assert.match(instructions, /^# Effect architecture/m);
       // Lint explains its own rules; the instructions keep what no error message says.

@@ -23,6 +23,12 @@ updates:
         patterns:
           - effect
           - "@effect/*"
+      # @vitejs/plugin-react accepts one 0.x minor of the native React Compiler, so
+      # the two update together; the generator test checks the pair is compatible.
+      react-compiler:
+        patterns:
+          - "@vitejs/plugin-react"
+          - oxc-transform-react
       libraries:
         patterns:
           - "*"

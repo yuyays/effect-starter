@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { createServer } from "node:net";
 import { setTimeout } from "node:timers/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, sep } from "node:path";
 import { frameworks, getFramework, hasFrontend } from "./frameworks.js";
 import { createProject } from "./create-project.js";
 import { waitForDevServers } from "./dev-servers.js";
@@ -184,6 +184,23 @@ async function smokeDev(packageManager, destination, framework, runtime) {
   }
 }
 
+// Compiled components reference React's memo cache sentinel, which React's own runtime
+// also defines. A client chunk without the runtime (React's production build links its
+// errors to react.dev/errors) that references it proves the app's code was compiled.
+async function assertReactCompiled(destination) {
+  const output = join(destination, "apps/web/dist");
+  const compiled = [];
+  for (const file of await readdir(output, { recursive: true })) {
+    if (!file.endsWith(".js") || file.split(sep).includes("server")) continue;
+    const code = await readFile(join(output, file), "utf8");
+    if (!code.includes("react.dev/errors") && code.includes("react.memo_cache_sentinel")) {
+      compiled.push(file);
+    }
+  }
+  assert.ok(compiled.length > 0, "The React Compiler did not transform the web app's chunks");
+  console.log(`React Compiler verified in ${compiled.join(", ")}`);
+}
+
 async function smokeProduction(destination, runtime) {
   // Node with TypeScript support disabled proves production only loads bundled
   // JavaScript. Bun runs TypeScript natively, so it cannot prove that itself.
@@ -270,6 +287,9 @@ try {
         : ["lint", "format:check", "typecheck", "test", "build"];
       for (const script of scripts) {
         run(packageManager, ["run", script], project.destination);
+      }
+      if (framework === "react" || framework === "tanstack-start") {
+        await assertReactCompiled(project.destination);
       }
       await smokeProduction(project.destination, runtime);
       await smokeDev(packageManager, project.destination, framework, runtime);
