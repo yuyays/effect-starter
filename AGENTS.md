@@ -34,6 +34,8 @@ Lint restricts runtime execution to `main.ts` and `http.ts`; API tests run Effec
 introducing a framework adapter. `pnpm lint` and `pnpm test` apply the Effect Oxlint patch
 themselves, so they also work without install hooks.
 Diagnostic suppressions require a `-- reason` suffix.
+Shared versions (Effect, Vite+) come from the workspace catalog in `pnpm-workspace.yaml`,
+or `workspaces.catalog` in `package.json` for Bun; declare those packages as `catalog:`.
 Lint also runs the type-aware `effecttsgo` rules and a vendored anti-slop subset (see
 [its provenance](tools/oxlint/anti-slop/UPSTREAM.md)): recover with `Effect.catchTag(s)`,
 construct tagged values through their Schema or error class, hoist Schema decoders to module

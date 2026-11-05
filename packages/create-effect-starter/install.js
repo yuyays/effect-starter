@@ -2,9 +2,10 @@ import { spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { hasFrontend } from "./frameworks.js";
-import { getPackageManager } from "./package-manager.js";
+import { getPackageManager, readCatalogs, resolveCatalog } from "./package-manager.js";
 
 export async function dependencySummary(destination, framework = "react") {
+  const catalogs = await readCatalogs(destination);
   const workspaces = [
     ["Root tooling", "."],
     ...(hasFrontend(framework) ? [["Web", "apps/web"]] : []),
@@ -19,7 +20,9 @@ export async function dependencySummary(destination, framework = "react") {
       const packages = new Map();
       for (const field of ["dependencies", "devDependencies"]) {
         for (const [name, version] of Object.entries(manifest[field] ?? {})) {
-          if (!version.startsWith("workspace:")) packages.set(name, version);
+          if (version.startsWith("workspace:")) continue;
+          // Show the catalog's version rather than the `catalog:` reference.
+          packages.set(name, resolveCatalog(catalogs, name, version));
         }
       }
       return `${label}:\n${[...packages]

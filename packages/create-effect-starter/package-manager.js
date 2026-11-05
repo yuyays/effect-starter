@@ -55,6 +55,25 @@ export function scriptCommand(packageManager, script) {
     : `${packageManager} ${script}`;
 }
 
+// pnpm keeps catalogs in pnpm-workspace.yaml; Bun keeps them in package.json `workspaces`.
+export async function readCatalogs(destination) {
+  let config;
+  try {
+    config = parse(await readFile(join(destination, "pnpm-workspace.yaml"), "utf8")) ?? {};
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+    const { workspaces } = JSON.parse(await readFile(join(destination, "package.json"), "utf8"));
+    config = workspaces && !Array.isArray(workspaces) ? workspaces : {};
+  }
+  return { default: config.catalog ?? {}, ...config.catalogs };
+}
+
+// Returns the version a `catalog:` or `catalog:<name>` reference points to, or the specifier.
+export function resolveCatalog(catalogs, name, specifier) {
+  if (!specifier.startsWith("catalog:")) return specifier;
+  return catalogs[specifier.slice("catalog:".length) || "default"]?.[name] ?? specifier;
+}
+
 export function getPackageManager(name) {
   if (!Object.hasOwn(packageManagers, name)) {
     throw new Error(`Unsupported package manager: ${name}. Choose pnpm or bun.`);
@@ -79,12 +98,21 @@ export async function configurePackageManager(destination, packageManager, frame
   if (packageManager === "bun") manifest.packageManager = `bun@${manager.version}`;
   if (packageManager === "bun") {
     const workspaceConfig = parse(await readFile(join(destination, "pnpm-workspace.yaml"), "utf8"));
+    const catalogs = await readCatalogs(destination);
+    // Overrides may reference the catalog; Bun receives the versions they resolve to.
     manifest.overrides = {
-      vite: workspaceConfig.overrides["vite@*"],
-      vitest: workspaceConfig.overrides["vitest@*"],
+      vite: resolveCatalog(catalogs, "vite", workspaceConfig.overrides["vite@*"]),
+      vitest: resolveCatalog(catalogs, "vitest", workspaceConfig.overrides["vitest@*"]),
+    };
+    // Bun reads the shared `catalog:` versions from package.json instead of pnpm-workspace.yaml.
+    const { default: catalog, ...named } = catalogs;
+    manifest.workspaces = {
+      packages: manifest.workspaces,
+      catalog,
+      ...(Object.keys(named).length > 0 ? { catalogs: named } : {}),
     };
     // An explicit list replaces Bun's built-in trusted dependency list.
-    manifest.devDependencies.vite = manifest.overrides.vite;
+    manifest.devDependencies.vite = "catalog:";
     const { engines, packageManager: pin, ...workspace } = manifest;
     manifest = {
       ...workspace,

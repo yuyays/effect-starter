@@ -56,7 +56,11 @@ for (const packageManager of ["pnpm", "bun"]) {
         const apiManifest = JSON.parse(
           await readFile(join(project, "apps/api/package.json"), "utf8"),
         );
-        assert.ok(result.stdout.includes(`  effect ${apiManifest.dependencies.effect}`));
+        assert.equal(apiManifest.dependencies.effect, "catalog:");
+        // The summary shows the catalog's version, not the `catalog:` reference.
+        assert.match(result.stdout, /^ {2}effect \^?4\.\d+\.\d+$/m);
+        assert.match(result.stdout, /^ {2}vite-plus \d+\.\d+\.\d+$/m);
+        assert.ok(!result.stdout.includes("catalog:"), result.stdout);
         const nextSteps = result.stdout.split("Next steps:")[1];
         assert.ok(nextSteps);
         assert.equal(nextSteps.includes(`${packageManager} install`), exitCode !== 0);
