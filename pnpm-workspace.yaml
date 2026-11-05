@@ -9,8 +9,9 @@ catalog:
   "@effect/sql-pg": "^4.1.2"
   "@effect/vitest": "4.1.2"
   effect: "^4.1.2"
-  vite: "npm:@voidzero-dev/vite-plus-core@1.4.0"
-  vite-plus: "1.4.0"
+  # Match Vite+'s core version, Vitest override, and allowed Vite peer version below.
+  vite: "npm:@voidzero-dev/vite-plus-core@1.5.0"
+  vite-plus: "1.5.0"
 minimumReleaseAge: 1440
 allowBuilds:
   "vue-demi": true
@@ -19,9 +20,9 @@ allowBuilds:
   msgpackr-extract: true
 overrides:
   "vite@*": "catalog:"
-  "vitest@*": 5.0.5
+  "vitest@*": 5.1.0
 
 # Vite+ core uses the toolchain version for its Vite 8-compatible alias.
 peerDependencyRules:
   allowedVersions:
-    vite: "1.4.0"
+    vite: "1.5.0"

@@ -11,8 +11,12 @@ updates:
     cooldown:
       default-days: 1
     groups:
+      # Effect's patcher and Oxlint plugins must support Vite+'s bundled Oxlint.
+      # Keep this before the broader @effect/* and libraries groups.
       vite-toolchain:
         patterns:
+          - "@effect/tsgo"
+          - "@oxlint/*"
           - vite-plus
           - vite
           - "@voidzero-dev/*"
