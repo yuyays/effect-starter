@@ -109,8 +109,9 @@ export default defineConfig({
             {
               patterns: [
                 {
-                  regex: "^@effect-starter/api(?:/|$)|^(?:@/)?(?:\\.\\./)+(?:apps/)?api/src(?:/|$)",
-                  message: "Call the API through @effect-starter/contracts and its HttpApi client.",
+                  // Scope-free so generated projects keep this line within the format width.
+                  regex: "^@[^/]+/api(?:/|$)|^(?:@/)?(?:\\.\\./)+(?:apps/)?api/src(?:/|$)",
+                  message: "Call the API through the contracts package and its HttpApi client.",
                 },
               ],
             },
