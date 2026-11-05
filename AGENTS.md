@@ -8,6 +8,7 @@
   to Effect without rewriting unrelated operations.
 
 Run `pnpm lint`, `pnpm typecheck`, and `pnpm test` (or Bun equivalents) before finishing.
+Name API tests that open real sockets or processes `*.integration.test.ts`.
 
 # Test quality
 

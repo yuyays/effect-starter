@@ -19,4 +19,18 @@ export default defineConfig({
     fixedExtension: false,
     sourcemap: true,
   },
+  test: {
+    // Integration tests open real sockets or processes; run one kind with `--project`.
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: "unit",
+          include: ["src/**/*.test.ts"],
+          exclude: ["src/**/*.integration.test.ts"],
+        },
+      },
+      { extends: true, test: { name: "integration", include: ["src/**/*.integration.test.ts"] } },
+    ],
+  },
 });

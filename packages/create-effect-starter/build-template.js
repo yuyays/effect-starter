@@ -123,7 +123,7 @@ for (const framework of Object.keys(frameworks)) {
     readme = replaceRequired(
       readme,
       "`{{RUN}} dev:web` or `{{RUN}} dev:api` starts one server. The web app proxies\n`/api` and `/docs` to the API; ports are set in `apps/web/vite.config.ts` and\n`apps/api/.env`.",
-      "`{{RUN}} dev` builds the contracts and watches the API. The port is set in\n`apps/api/.env`, and API docs are served at `/docs`. Clients call the API through\nthe HttpApi contract in `packages/contracts`.",
+      "`{{RUN}} dev` watches the API and restarts it when it or the contracts change. The\nport is set in `apps/api/.env`, and API docs are served at `/docs`. Clients call the\nAPI through the HttpApi contract in `packages/contracts`.",
     );
   }
   if (framework === "vue") {
