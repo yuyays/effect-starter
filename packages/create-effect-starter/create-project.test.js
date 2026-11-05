@@ -376,10 +376,6 @@ for (const framework of ["react", "tanstack-start", "vue"]) {
         (await readFile(join(project, "README.md"), "utf8")).includes("test:browser"),
         browser,
       );
-      assert.equal(
-        (await readFile(join(project, "AGENTS.md"), "utf8")).includes("test:browser"),
-        browser,
-      );
       if (framework !== "vue") {
         // The React Compiler's native transform must stay inside the Vite plugin's peer range.
         assert.match(
@@ -404,16 +400,13 @@ for (const framework of ["react", "tanstack-start", "vue"]) {
         );
       }
       const instructions = await readFile(join(project, "AGENTS.md"), "utf8");
-      assert.match(instructions, /^# Effect architecture/m);
-      // Lint explains its own rules; the instructions keep what no error message says.
-      assert.match(instructions, /override in `vite\.config\.ts`/);
-      assert.match(instructions, /`-- reason` suffix/);
-      assert.match(instructions, /`catalog:`/);
-      const examplePaths = [...instructions.matchAll(/\]\(((?:apps|packages)\/[^)#]+)\)/g)];
-      assert.ok(examplePaths.length > 0, "Effect instructions link to working examples");
-      for (const [, path] of examplePaths) {
-        await readFile(join(project, path), "utf8");
-      }
+      assert.equal(
+        instructions,
+        (await readFile(new URL("../../AGENTS.md", import.meta.url), "utf8")).replaceAll(
+          "effect-starter",
+          "chosen-app",
+        ),
+      );
       const web = JSON.parse(await readFile(join(project, "apps/web/package.json"), "utf8"));
       const files = await readdir(join(project, "apps/web"), { recursive: true });
       assert.equal(web.dependencies["@chosen-app/contracts"], "workspace:*");
@@ -498,7 +491,6 @@ for (const packageManager of ["pnpm", "bun"]) {
     const readme = await readFile(join(project, "README.md"), "utf8");
     assert.match(readme, /^TypeScript API with Effect v4/m);
     assert.ok(!readme.includes("test:browser"));
-    assert.ok(!(await readFile(join(project, "AGENTS.md"), "utf8")).includes("test:browser"));
     assert.ok(!readme.includes("{{"));
     const paths = await readdir(project, { recursive: true });
     assert.ok(!paths.some((path) => path.startsWith("apps/web")));

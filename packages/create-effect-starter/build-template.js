@@ -132,15 +132,6 @@ for (const framework of Object.keys(frameworks)) {
   }
   const browserTests = isReact(framework);
   if (!browserTests) {
-    const agentsPath = new URL("AGENTS.md", destination);
-    await writeFile(
-      agentsPath,
-      replaceRequired(
-        await readFile(agentsPath, "utf8"),
-        "React frontends' `*.browser.test.tsx` component tests run in Chromium; run `pnpm test:browser` too.\n",
-        "",
-      ),
-    );
     readme = replaceRequired(
       readme,
       "\nComponent tests that need a real browser (`*.browser.test.tsx`) run in Chromium:\n`{{RUN}} browser:install` once per machine, then `{{RUN}} test:browser`.\n",
