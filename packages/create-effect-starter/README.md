@@ -1,6 +1,6 @@
 # create-effect-starter
 
-Create a full-stack Effect v4, Drizzle, and Vite+ project with React, TanStack Start, or Vue.
+Create a full-stack Effect v4, Drizzle, and Vite+ project with React, TanStack Start, Vue, or no frontend.
 Requires Node.js 24.11+ and pnpm 11 or Bun 1.4.2. The API runs on Node.js by
 default; Bun is an optional API runtime with either package manager.
 
@@ -101,7 +101,8 @@ Interactive users can just pick from the menus. Flags skip individual prompts:
 pnpm create:app ../my-app --framework vue --package-manager pnpm --runtime node
 ```
 
-Supported framework values are `react`, `tanstack-start`, and `vue`.
+Supported framework values are `react`, `tanstack-start`, `vue`, and `none`
+(the API and shared contracts without `apps/web`).
 Supported runtime values are `node` and `bun`.
 Noninteractive creation requires a directory and defaults to React, pnpm, and the
 Node.js API runtime, without installing dependencies. Use `--install` to explicitly install or
@@ -194,7 +195,7 @@ commit. The package version in
 `packages/create-effect-starter/package.json` must match the tag.
 
 In GitHub Actions, run **Release generator** and enter the existing tag. The
-workflow tests and packs the generator, smoke-tests all three starters, then
+workflow tests and packs the generator, smoke-tests every starter, then
 creates a GitHub release with `create-effect-starter.tgz` attached. It does not
 publish to npm. The workflow must be on the default branch before it can be run
 manually.
@@ -222,7 +223,7 @@ the repository root. Commit the manifests and root `pnpm-lock.yaml` together.
 
 The builder selects the API, contracts, and chosen frontend importers from that
 single lockfile and rebases workspace links. There are no separately maintained
-template lockfiles. Run `pnpm test:generated` to verify all three starters with
+template lockfiles. Run `pnpm test:generated` to verify every starter with
 pnpm + Node.js, Bun + Node.js, and Bun + the Bun API runtime. Pass a framework name (for example `pnpm test:generated vue`) to
 check only that starter.
 

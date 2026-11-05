@@ -5,6 +5,7 @@
 // process is down, the web dev server answers `/api` requests with an empty
 // 502, so readiness must require an `ok` proxy response instead of parsing the
 // body unconditionally. Transient failures are retried until the deadline.
+// Without a `webUrl` (projects without a frontend), only the API must be ready.
 export async function waitForDevServers({
   response,
   apiUrl,
@@ -17,7 +18,8 @@ export async function waitForDevServers({
   let proxyStatus;
   for (;;) {
     const api = await response(apiUrl);
-    const web = await response(webUrl);
+    if (!webUrl && api?.ok) return { ready: true, api };
+    const web = webUrl ? await response(webUrl) : undefined;
     const proxy = api?.ok && web?.ok ? await response(`${webUrl}/api/health`) : undefined;
     if (api?.ok && web?.ok && proxy?.ok) return { ready: true, api, web, proxy };
     if (proxy) proxyStatus = proxy.status;

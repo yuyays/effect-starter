@@ -1,6 +1,6 @@
 import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { format } from "vite-plus/fmt";
-import { frameworks } from "./frameworks.js";
+import { frameworks, hasFrontend } from "./frameworks.js";
 import { templateLockfile } from "./template-lockfile.js";
 
 const root = new URL("../../", import.meta.url);
@@ -35,6 +35,12 @@ const copyOptions = {
   },
 };
 
+// Fail the build when source text changes shape instead of silently skipping an edit.
+function replaceRequired(text, search, replacement) {
+  if (!text.includes(search)) throw new Error(`Template source no longer contains: ${search}`);
+  return text.replace(search, replacement);
+}
+
 await rm(template, { recursive: true, force: true });
 const lockfile = await readFile(new URL("pnpm-lock.yaml", root), "utf8");
 for (const framework of Object.keys(frameworks)) {
@@ -45,17 +51,20 @@ for (const framework of Object.keys(frameworks)) {
     const target = entry === ".gitignore" ? "gitignore.template" : entry;
     await cp(new URL(entry, root), new URL(target, destination), copyOptions);
   }
+  const frontend = hasFrontend(framework);
   const web = new URL("apps/web/", destination);
-  if (framework !== "vue") {
+  if (frontend && framework !== "vue") {
     await cp(new URL("apps/web/", root), web, copyOptions);
   }
-  if (framework !== "react") {
+  if (frontend && framework !== "react") {
     await cp(new URL(`./frontends/${framework}/`, import.meta.url), web, copyOptions);
   }
-  const webManifestPath = new URL("package.json", web);
-  const webManifest = JSON.parse(await readFile(webManifestPath, "utf8"));
-  webManifest.name = "@effect-starter/web";
-  await writeFile(webManifestPath, `${JSON.stringify(webManifest, null, 2)}\n`);
+  if (frontend) {
+    const webManifestPath = new URL("package.json", web);
+    const webManifest = JSON.parse(await readFile(webManifestPath, "utf8"));
+    webManifest.name = "@effect-starter/web";
+    await writeFile(webManifestPath, `${JSON.stringify(webManifest, null, 2)}\n`);
+  }
   const workspacePath = new URL("pnpm-workspace.yaml", destination);
   const workspace = await readFile(workspacePath, "utf8");
   await writeFile(
@@ -79,6 +88,14 @@ for (const framework of Object.keys(frameworks)) {
       )
       .replace(/^      "react\/.*\n/gm, "");
   }
+  if (!frontend) {
+    // `apps/web/**` overrides stay: they are inert until someone adds a frontend.
+    config = replaceRequired(
+      config,
+      '["react", "typescript", "import", "vitest", "effecttsgo"]',
+      '["typescript", "import", "vitest", "effecttsgo"]',
+    ).replace(/^      "react\/.*\n/gm, "");
+  }
   // Removing source-only ignore paths can change how arrays should wrap.
   const formatted = await format("vite.config.ts", config);
   if (formatted.errors.length) {
@@ -86,13 +103,26 @@ for (const framework of Object.keys(frameworks)) {
   }
   await writeFile(configPath, formatted.code);
   let readme = await readFile(new URL("./PROJECT_README.md", import.meta.url), "utf8");
-  const stack =
-    framework === "react"
-      ? "React, TanStack Router/Query"
-      : framework === "vue"
-        ? "Vue, Vue Router, TanStack Query"
-        : "TanStack Start (React), TanStack Query";
-  readme = readme.replace("React, TanStack Router/Query", stack);
+  if (frontend) {
+    const stack =
+      framework === "react"
+        ? "React, TanStack Router/Query"
+        : framework === "vue"
+          ? "Vue, Vue Router, TanStack Query"
+          : "TanStack Start (React), TanStack Query";
+    readme = readme.replace("React, TanStack Router/Query", stack);
+  } else {
+    readme = replaceRequired(
+      readme,
+      "Full-stack TypeScript app with React, TanStack Router/Query, Effect v4, Drizzle,\nPostgreSQL, and Vite+,",
+      "TypeScript API with Effect v4, Drizzle, PostgreSQL, and Vite+,",
+    );
+    readme = replaceRequired(
+      readme,
+      "`{{RUN}} dev:web` or `{{RUN}} dev:api` starts one server. The web app proxies\n`/api` and `/docs` to the API; ports are set in `apps/web/vite.config.ts` and\n`apps/api/.env`.",
+      "`{{RUN}} dev` builds the contracts and watches the API. The port is set in\n`apps/api/.env`, and API docs are served at `/docs`. Clients call the API through\nthe HttpApi contract in `packages/contracts`.",
+    );
+  }
   if (framework === "vue") {
     readme +=
       "\nVue single-file components use `vue-tsc` and a frontend-local TypeScript 5.9.\nThe API and shared contracts keep the root native TypeScript compiler and Effect diagnostics.\n";
@@ -107,9 +137,22 @@ for (const framework of Object.keys(frameworks)) {
   manifest.workspaces = ["apps/*", "packages/*"];
   delete manifest.scripts["create:app"];
   delete manifest.scripts["test:generated"];
+  if (!frontend) delete manifest.scripts["dev:web"];
   manifest.scripts.test = manifest.scripts.test.split(
     " && node packages/create-effect-starter/",
   )[0];
   await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+  if (!frontend) {
+    const agentsPath = new URL("AGENTS.md", destination);
+    const agents = await readFile(agentsPath, "utf8");
+    await writeFile(
+      agentsPath,
+      replaceRequired(
+        agents,
+        " The web app imports the API only through the contracts package.",
+        " Clients import the API only through the contracts package.",
+      ),
+    );
+  }
   await writeFile(new URL("pnpm-lock.yaml", destination), templateLockfile(lockfile, framework));
 }

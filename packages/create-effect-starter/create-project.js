@@ -2,7 +2,7 @@ import { lstat, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { getFramework } from "./frameworks.js";
+import { getFramework, hasFrontend } from "./frameworks.js";
 import { configurePackageManager, getPackageManager } from "./package-manager.js";
 import { configureRuntime, getRuntime } from "./runtime.js";
 
@@ -39,7 +39,7 @@ export async function createProject(directory, cwd = process.cwd(), options = {}
   await readdir(template);
   await mkdir(destination, { recursive: true });
   await copy(template, destination, name);
-  for (const app of ["api", "web"]) {
+  for (const app of hasFrontend(framework) ? ["api", "web"] : ["api"]) {
     const example = await readFile(join(destination, "apps", app, ".env.example"));
     await writeFile(join(destination, "apps", app, ".env"), example, { flag: "wx" });
   }

@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { getPackageManager } from "./package-manager.js";
@@ -6,7 +7,7 @@ import { getPackageManager } from "./package-manager.js";
 export async function dependencySummary(destination) {
   const workspaces = [
     ["Root tooling", "."],
-    ["Web", "apps/web"],
+    ...(existsSync(join(destination, "apps/web")) ? [["Web", "apps/web"]] : []),
     ["API", "apps/api"],
     ["Shared contracts", "packages/contracts"],
   ];
