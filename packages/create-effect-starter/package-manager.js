@@ -5,19 +5,42 @@ import { join } from "node:path";
 export const packageManagers = {
   pnpm: {
     run: "pnpm run",
-    setup: "      - uses: pnpm/action-setup@v5\n",
-    cache: "          cache: pnpm\n",
     lockfileNote: "The included pnpm lockfile keeps dependencies on the starter's tested versions.",
   },
   bun: {
     version: "1.4.2",
     run: "bun run",
-    setup: "      - uses: oven-sh/setup-bun@v2\n        with:\n          bun-version: 1.4.2\n",
-    cache: "",
     lockfileNote:
       "The first `bun install` creates `bun.lock`. Commit it before pushing so CI can use frozen installs.",
   },
 };
+
+function replaceRequired(text, pattern, replacement) {
+  // Fail generation if the repository workflow changes shape instead of emitting pnpm steps.
+  if (!pattern.test(text)) throw new Error(`The CI workflow no longer matches ${pattern}`);
+  return text.replace(pattern, replacement);
+}
+
+// Bun-only actions use the versions pinned in this repository's workflows.
+function bunWorkflow(workflow, version) {
+  const setup = [
+    "      - uses: oven-sh/setup-bun@v2",
+    "        with:",
+    `          bun-version: ${version}`,
+    "      - uses: actions/cache@v6",
+    "        with:",
+    "          path: ~/.bun/install/cache",
+    "          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}",
+    "          restore-keys: bun-${{ runner.os }}-",
+    "",
+  ].join("\n");
+  let result = replaceRequired(workflow, /^ {6}- uses: pnpm\/action-setup@\S+\n/m, setup);
+  result = replaceRequired(result, /^ {10}cache: pnpm\n/m, "");
+  result = replaceRequired(result, /- run: pnpm install /, "- run: bun install ");
+  result = replaceRequired(result, /- run: pnpm (?!install )/g, "- run: bun run ");
+  if (result.includes("pnpm")) throw new Error("The Bun CI workflow still references pnpm");
+  return result;
+}
 
 export function getPackageManager(name) {
   if (!Object.hasOwn(packageManagers, name)) {
@@ -80,8 +103,12 @@ export async function configurePackageManager(destination, packageManager, frame
       .replaceAll("{{RUN}}", manager.run)
       .replaceAll("{{LOCKFILE_NOTE}}", manager.lockfileNote),
   );
-  await writeFile(
-    join(destination, ".github/workflows/ci.yml"),
-    `name: CI\n\non:\n  pull_request:\n  push:\n    branches: [main]\n\njobs:\n  checks:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v5\n${manager.setup}      - uses: actions/setup-node@v6\n        with:\n          node-version: 24\n${manager.cache}      - run: ${packageManager} install --frozen-lockfile\n      - run: ${manager.run} lint\n      - run: ${manager.run} format:check\n      - run: ${manager.run} typecheck\n      - run: ${manager.run} test\n      - run: ${manager.run} build\n`,
-  );
+  // pnpm projects keep the copied repository workflow, which Dependabot maintains.
+  if (packageManager === "bun") {
+    const workflowPath = join(destination, ".github/workflows/ci.yml");
+    await writeFile(
+      workflowPath,
+      bunWorkflow(await readFile(workflowPath, "utf8"), manager.version),
+    );
+  }
 }
