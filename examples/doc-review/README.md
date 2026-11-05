@@ -63,6 +63,7 @@ pnpm typecheck:examples
 ```
 
 They cover duplicate and conflicting submissions, stale and unauthorized decisions,
-replay of committed model turns, the turn limit, retry exhaustion, cancellation,
-queue offers rolling back with their transaction, and a single sink
-record after the first publish acknowledgement is lost.
+replay of committed model turns, the turn limit, retry exhaustion, repeatedly
+crashing deliveries, cancellation, queue offers rolling back with their transaction,
+and a single sink record after the first publish acknowledgement is lost. The
+`Examples` workflow runs them against PostgreSQL 18 on every pull request.

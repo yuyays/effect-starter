@@ -1,0 +1,44 @@
+# Optional examples need real PostgreSQL. A separate workflow keeps them out of the
+# ci.yml that generated apps inherit, and keeps the base checks database-free.
+name: Examples
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: examples-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  doc-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck:examples
+      - run: pnpm test:examples
+        env:
+          DOC_REVIEW_TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres

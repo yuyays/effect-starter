@@ -110,8 +110,32 @@ it.live("reports a failed run once retries are exhausted", () => {
     const runs = yield* AgentRuns;
     const id = yield* runs.start(crypto.randomUUID(), document);
     for (let delivery = 0; delivery < 3; delivery++) yield* Effect.exit(deliver);
-    expect(yield* runs.read(id)).toMatchObject({ status: "failed", attempts: 3 });
+    expect(yield* runs.read(id)).toMatchObject({
+      status: "failed",
+      attempts: 3,
+      error: "Model failed: unavailable",
+    });
   }).pipe(Effect.provide(layerWith(down)));
+});
+
+it.live("settles a run whose deliveries keep crashing without calling the model again", () => {
+  let calls = 0;
+  const hangs = Layer.succeed(ModelClient, {
+    respond: () => Effect.sync(() => calls++).pipe(Effect.andThen(Effect.never)),
+  });
+  return Effect.gen(function* () {
+    const runs = yield* AgentRuns;
+    const id = yield* runs.start(crypto.randomUUID(), document);
+    // Interrupting a delivery models a worker dying mid-call: the job returns to the queue.
+    for (let crash = 0; crash < 3; crash++)
+      yield* Effect.exit(deliver.pipe(Effect.timeout("200 millis")));
+    yield* deliver;
+    expect(yield* runs.read(id)).toMatchObject({
+      status: "failed",
+      error: "Attempt limit exceeded",
+    });
+    expect(calls).toBe(3);
+  }).pipe(Effect.provide(layerWith(hangs)));
 });
 
 it.live("fails the run when the model never proposes within the turn limit", () => {

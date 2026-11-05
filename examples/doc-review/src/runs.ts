@@ -96,6 +96,16 @@ const readRun = Effect.fn("readRun")(function* (sql: SqlClient.SqlClient, id: st
   return yield* decodeView(rows[0]);
 });
 
+// Operator-facing reason; never includes storage internals.
+const failureMessage = (error: unknown) =>
+  error instanceof ModelError
+    ? `Model failed: ${error.message}`
+    : error instanceof PublishError
+      ? `Publish failed: ${error.message}`
+      : Schema.isSchemaError(error)
+        ? "Invalid model or stored data"
+        : "Processing failed";
+
 /** Request-side commands. Each state change and its queued job commit together. */
 export const RunsLive = Layer.effect(
   AgentRuns,
@@ -190,12 +200,15 @@ export const RunJobsLive = Layer.effect(
     const read = (id: string) => readRun(sql, id);
 
     // The key is stable per proposal version, so a redelivery cannot publish twice.
-    const publishApproved = Effect.fn("RunJobs.publishApproved")(function* (runId: string) {
+    const publishApproved = Effect.fn("RunJobs.publishApproved")(function* (
+      runId: string,
+      attempt: number,
+    ) {
       const view = yield* read(runId);
       if (view.status !== "publishing" || !view.proposal) return;
       const receipt = yield* sink.publish(`${runId}:${view.version}`, view.proposal);
       yield* sql`UPDATE review_runs SET status = 'published', receipt = ${receipt}, error = NULL
-        WHERE id = ${runId} AND status = 'publishing'`;
+        WHERE id = ${runId} AND status = 'publishing' AND phase_attempts = ${attempt}`;
     });
 
     const savedTurn = (runId: string, turn: number) =>
@@ -222,21 +235,26 @@ export const RunJobsLive = Layer.effect(
     });
 
     // Bounded tool loop; stops early if the run leaves `processing` (e.g. cancelled).
-    const propose = Effect.fn("RunJobs.propose")(function* (runId: string, document: string) {
+    const propose = Effect.fn("RunJobs.propose")(function* (
+      runId: string,
+      attempt: number,
+      document: string,
+    ) {
       const history: Array<Step> = [];
       for (let turn = 0; turn < turnLimit; turn++) {
         if ((yield* read(runId)).status !== "processing") return;
         const response = yield* modelTurn(runId, turn, document, history);
         if (response.kind === "proposal") {
           yield* sql`UPDATE review_runs SET status = 'awaitingApproval', version = version + 1,
-            proposal = ${JSON.stringify(response.proposal)}, error = NULL WHERE id = ${runId} AND status = 'processing'`;
+            proposal = ${JSON.stringify(response.proposal)}, error = NULL
+            WHERE id = ${runId} AND status = 'processing' AND phase_attempts = ${attempt}`;
           return;
         }
         // This tool returns immutable example policy; replay has the same output.
         history.push({ turn: response, policy: reviewPolicy });
       }
       yield* sql`UPDATE review_runs SET status = 'failed', error = 'Model turn limit exceeded'
-        WHERE id = ${runId} AND status = 'processing'`;
+        WHERE id = ${runId} AND status = 'processing' AND phase_attempts = ${attempt}`;
     });
 
     const handle = Effect.fn("RunJobs.handle")(
@@ -254,10 +272,12 @@ export const RunJobsLive = Layer.effect(
       SET attempts = attempts + 1, phase_attempts = phase_attempts + 1
       WHERE id = ${job.runId} AND status = ${expected} RETURNING document, phase_attempts`;
         if (!claimed[0]) return;
+        // Every later write is fenced on this attempt, so a delivery whose lease lapsed
+        // and was re-claimed elsewhere cannot overwrite the newer claim's outcome.
         const { document, phase_attempts: attempt } = claimed[0];
         const perform = Effect.gen(function* () {
-          if (job.phase === "publish") return yield* publishApproved(job.runId);
-          return yield* propose(job.runId, document);
+          if (job.phase === "publish") return yield* publishApproved(job.runId, attempt);
+          return yield* propose(job.runId, attempt, document);
         });
         yield* perform.pipe(
           Effect.catch((error) => {
@@ -266,8 +286,10 @@ export const RunJobsLive = Layer.effect(
             // Fail the delivery so the queue retries; record terminal failures on the run.
             return !fatal && attempt < attemptLimit
               ? Effect.fail(error)
-              : sql`UPDATE review_runs SET status = 'failed', error = 'Processing failed'
-                WHERE id = ${job.runId} AND status = ${expected}`.pipe(Effect.asVoid);
+              : sql`UPDATE review_runs SET status = 'failed', error = ${failureMessage(error)}
+                WHERE id = ${job.runId} AND status = ${expected} AND phase_attempts = ${attempt}`.pipe(
+                  Effect.asVoid,
+                );
           }),
         );
       },
