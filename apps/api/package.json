@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node --watch --watch-preserve-output src/main.ts",
     "build": "effect-tsgo tsc --noEmit && vp pack",
-    "start": "node dist/main.js",
+    "start": "node --enable-source-maps dist/main.js",
     "typecheck": "effect-tsgo tsc --noEmit",
     "test": "vp test run --passWithNoTests",
     "db:generate": "drizzle-kit generate",
@@ -14,7 +14,6 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@effect-starter/contracts": "workspace:*",
     "@effect/platform-node": "^4.1.1",
     "@effect/sql-pg": "^4.1.1",
     "drizzle-orm": "1.0.0-rc.5",
@@ -22,6 +21,7 @@
     "pg": "^8.23.1"
   },
   "devDependencies": {
+    "@effect-starter/contracts": "workspace:*",
     "@effect/vitest": "4.1.1",
     "@types/node": "^26.6.6",
     "@types/pg": "^8.23.1",

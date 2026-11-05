@@ -43,8 +43,10 @@ development, `{{RUNTIME_BIN}} --watch` runs `apps/api/src/main.ts` and restarts 
 when it or a workspace package changes.
 
 `{{RUN}} build` typechecks the API and bundles it with its workspace packages into
-`apps/api/dist/main.js`; installed dependencies stay external, so {{RUNTIME}} runs only
-JavaScript in production. Start the API with `{{RUN}} start:api` from the project root,
-with `DATABASE_URL` and `PORT` set.
-It runs `{{RUNTIME_BIN}} dist/main.js` with `apps/api` as the working directory.
-Deploy `apps/api/dist` with the API's production dependencies.
+`apps/api/dist/main.js`. The API's `dependencies` stay external and everything else is
+bundled, so {{RUNTIME}} runs only JavaScript in production.
+
+Start the API with `{{RUN}} start:api` from the project root, with `DATABASE_URL` and
+`PORT` set. It runs `dist/main.js` on {{RUNTIME}} with `apps/api` as the working directory.
+Deploy `apps/api/dist` with the API's production `dependencies`; workspace packages are
+already in the bundle.

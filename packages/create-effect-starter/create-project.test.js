@@ -56,7 +56,9 @@ void test("CLI generates a renamed project without generator artifacts", async (
   ]) {
     const pkg = JSON.parse(await readFile(join(project, location, "package.json"), "utf8"));
     assert.equal(pkg.name, `@my-app/${name}`);
-    if (name !== "contracts") assert.equal(pkg.dependencies["@my-app/contracts"], "workspace:*");
+    // The API bundles contracts, so production installs only its other dependencies.
+    if (name === "api") assert.equal(pkg.devDependencies["@my-app/contracts"], "workspace:*");
+    if (name === "web") assert.equal(pkg.dependencies["@my-app/contracts"], "workspace:*");
   }
   assert.deepEqual(await readdir(join(project, "packages")), ["contracts"]);
   assert.deepEqual(await readdir(join(project, ".github/workflows")), ["ci.yml"]);
@@ -212,11 +214,14 @@ void test("API runtime defaults to Node.js and Bun only changes the API process"
   const nodeApi = JSON.parse(
     await readFile(join(node.destination, "apps/api/package.json"), "utf8"),
   );
-  assert.equal(nodeApi.scripts.start, "node dist/main.js");
+  assert.equal(nodeApi.scripts.start, "node --enable-source-maps dist/main.js");
   assert.equal(nodeApi.scripts.dev, "node --watch --watch-preserve-output src/main.ts");
   await assert.rejects(readFile(join(node.destination, "apps/api/dev.js")), { code: "ENOENT" });
   const nodeReadme = await readFile(join(node.destination, "README.md"), "utf8");
-  assert.match(nodeReadme, /`node dist\/main\.js` with `apps\/api` as the working directory/);
+  assert.match(
+    nodeReadme,
+    /`dist\/main\.js` on Node\.js with `apps\/api` as the working directory/,
+  );
   assert.match(nodeReadme, /`node --watch` runs `apps\/api\/src\/main\.ts`/);
   assert.ok(!nodeReadme.includes("bun check"), "pnpm + Node projects skip the Bun note");
   assert.ok(!nodeReadme.includes("{{"));
@@ -244,7 +249,7 @@ void test("API runtime defaults to Node.js and Bun only changes the API process"
   assert.match(manifest.engines.node, /24\.11/);
   const readme = await readFile(join(project, "README.md"), "utf8");
   assert.match(readme, /runs on Bun 1\.4\.2\+/);
-  assert.match(readme, /`bun dist\/main\.js` with `apps\/api` as the working directory/);
+  assert.match(readme, /`dist\/main\.js` on Bun with `apps\/api` as the working directory/);
   assert.match(readme, /`bun --watch` runs `apps\/api\/src\/main\.ts`/);
   // The Bun command notes belong to the package manager, not the runtime.
   assert.ok(!readme.includes("bun check"));

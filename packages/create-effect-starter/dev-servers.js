@@ -1,9 +1,8 @@
 // Waits for a generated project's dev servers to become usable.
 //
-// The API starts after the compiler's first watch pass and is restarted by
-// its runtime's `--watch` whenever the compiler emits. While the API
-// process is down, the web dev server answers `/api` requests with an empty
-// 502, so readiness must require an `ok` proxy response instead of parsing the
+// The API's runtime `--watch` restarts it whenever its source or a workspace
+// package changes. While the API process is down, the web dev server answers
+// `/api` requests with an empty 502, so readiness must require an `ok` proxy response instead of parsing the
 // body unconditionally. Transient failures are retried until the deadline.
 // Without a `webUrl` (projects without a frontend), only the API must be ready.
 export async function waitForDevServers({

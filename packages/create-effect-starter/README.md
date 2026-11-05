@@ -150,7 +150,8 @@ Set `DATABASE_URL` in `apps/api/.env` to a running PostgreSQL database, then run
 Use `pnpm dev:web` or `pnpm dev:api` to run one server. The API health endpoint
 is http://localhost:3000/api/health.
 
-The API and shared contracts compile with TypeScript and run on Node.js; the
+Workspace packages export TypeScript source: development runs it directly, and
+the API build bundles it into one JavaScript file. The
 [generated README](PROJECT_README.md#api-production-build) describes production
 files and environment variables. `@effect/tsgo` adds Effect diagnostics to the
 workspace type checks. Drizzle ORM and Kit retain their paired Effect v4 release
