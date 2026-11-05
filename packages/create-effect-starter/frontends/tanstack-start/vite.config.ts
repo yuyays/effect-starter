@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => {
   // Vite keeps unprefixed .env values private; make the API origin available to SSR.
   process.env.API_URL ??= loadEnv(mode, process.cwd(), "API_").API_URL;
   return {
-    plugins: [tanstackStart(), react(), tailwindcss()],
+    plugins: [tanstackStart(), react({ compiler: true }), tailwindcss()],
     server: {
       port: 5173,
       proxy: {

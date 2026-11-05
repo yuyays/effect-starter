@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { createServer } from "node:net";
 import { setTimeout } from "node:timers/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, sep } from "node:path";
 import { frameworks, getFramework, hasFrontend } from "./frameworks.js";
 import { createProject } from "./create-project.js";
 import { waitForDevServers } from "./dev-servers.js";
@@ -184,6 +184,20 @@ async function smokeDev(packageManager, destination, framework, runtime) {
   }
 }
 
+// React's runtime holds one memo cache marker per bundle; every component the React
+// Compiler transforms adds another, so more than one proves the compiler ran.
+async function assertReactCompiled(destination) {
+  const output = join(destination, "apps/web/dist");
+  let markers = 0;
+  for (const file of await readdir(output, { recursive: true })) {
+    if (!file.endsWith(".js") || file.split(sep).includes("server")) continue;
+    markers +=
+      (await readFile(join(output, file), "utf8")).split("react.memo_cache_sentinel").length - 1;
+  }
+  assert.ok(markers > 1, `The React Compiler did not transform the web app (${markers} markers)`);
+  console.log(`React Compiler verified (${markers} memo cache markers in the client bundle)`);
+}
+
 async function smokeProduction(destination, runtime) {
   // Node with TypeScript support disabled proves production only loads bundled
   // JavaScript. Bun runs TypeScript natively, so it cannot prove that itself.
@@ -270,6 +284,9 @@ try {
         : ["lint", "format:check", "typecheck", "test", "build"];
       for (const script of scripts) {
         run(packageManager, ["run", script], project.destination);
+      }
+      if (framework === "react" || framework === "tanstack-start") {
+        await assertReactCompiled(project.destination);
       }
       await smokeProduction(project.destination, runtime);
       await smokeDev(packageManager, project.destination, framework, runtime);

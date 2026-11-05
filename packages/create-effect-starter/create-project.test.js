@@ -346,6 +346,33 @@ for (const framework of ["react", "tanstack-start", "vue"]) {
       assert.equal(/^  react /m.test(result.stdout), framework !== "vue");
       assert.equal(/^  vue /m.test(result.stdout), framework === "vue");
       const project = join(directory, "chosen-app");
+      if (framework !== "vue") {
+        // The React Compiler's native transform must stay inside the Vite plugin's peer range.
+        assert.match(
+          await readFile(join(project, "apps/web/vite.config.ts"), "utf8"),
+          /react\(\{ compiler: true \}\)/,
+        );
+        const webManifest = JSON.parse(
+          await readFile(join(project, "apps/web/package.json"), "utf8"),
+        );
+        // The plugin does not export its manifest; read the copy linked into apps/web.
+        const plugin = JSON.parse(
+          await readFile(
+            new URL(
+              "../../apps/web/node_modules/@vitejs/plugin-react/package.json",
+              import.meta.url,
+            ),
+            "utf8",
+          ),
+        );
+        const peer = plugin.peerDependencies["oxc-transform-react"].replace(/^\^/, "");
+        const [major, minor] = peer.split(".");
+        assert.match(
+          webManifest.devDependencies["oxc-transform-react"],
+          new RegExp(`^[~^]?${major}\\.${minor}\\.`),
+          `oxc-transform-react must satisfy @vitejs/plugin-react's peer ^${peer}`,
+        );
+      }
       const instructions = await readFile(join(project, "AGENTS.md"), "utf8");
       assert.match(instructions, /^# Effect architecture/m);
       // Lint explains its own rules; the instructions keep what no error message says.
