@@ -78,6 +78,8 @@ pnpm create:app
 Enter `../my-app` to generate an app beside the checkout. See the
 [CLI and maintenance guide](packages/create-effect-starter/README.md) for flags,
 testing, dependency updates, and releases. Effect conventions are in
-[AGENTS.md](AGENTS.md).
+[AGENTS.md](AGENTS.md). The optional
+[document-review agent example](examples/doc-review/README.md) shows durable agent
+runs with human approval; generated apps don't include it.
 
 [MIT License](LICENSE)

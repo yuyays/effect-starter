@@ -69,7 +69,11 @@ for (const framework of Object.keys(frameworks)) {
   const workspace = await readFile(workspacePath, "utf8");
   await writeFile(
     workspacePath,
-    workspace.replace('  - "packages/create-effect-starter/frontends/*"\n', ""),
+    replaceRequired(
+      replaceRequired(workspace, '  - "packages/create-effect-starter/frontends/*"\n', ""),
+      '  - "examples/*"\n',
+      "",
+    ),
   );
   if (framework === "tanstack-start") {
     for (const entry of ["index.html", "src/main.tsx", "src/lib/query-client.ts"]) {
@@ -136,6 +140,8 @@ for (const framework of Object.keys(frameworks)) {
   manifest.workspaces = ["apps/*", "packages/*"];
   delete manifest.scripts["create:app"];
   delete manifest.scripts["test:generated"];
+  delete manifest.scripts["typecheck:examples"];
+  delete manifest.scripts["test:examples"];
   if (!frontend) delete manifest.scripts["dev:web"];
   manifest.scripts.test = manifest.scripts.test.split(
     " && node packages/create-effect-starter/",
