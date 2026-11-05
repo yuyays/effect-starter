@@ -11,10 +11,10 @@
   },
   "dependencies": {
     "@effect-starter/contracts": "workspace:*",
-    "@tailwindcss/vite": "^4.3.3",
-    "@tanstack/vue-query": "^5.105.0",
+    "@tailwindcss/vite": "^4.3.4",
+    "@tanstack/vue-query": "^5.105.3",
     "effect": "catalog:",
-    "tailwindcss": "^4.3.3",
+    "tailwindcss": "^4.3.4",
     "vue": "^3.5.44",
     "vue-router": "^5.4.0"
   },
