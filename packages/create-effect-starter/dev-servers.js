@@ -1,7 +1,7 @@
 // Waits for a generated project's dev servers to become usable.
 //
-// The API starts once from the build output and is then restarted by
-// `node --watch` when the compiler emits its first watch result. While the API
+// The API starts after the compiler's first watch pass and is restarted by
+// its runtime's `--watch` whenever the compiler emits. While the API
 // process is down, the web dev server answers `/api` requests with an empty
 // 502, so readiness must require an `ok` proxy response instead of parsing the
 // body unconditionally. Transient failures are retried until the deadline.

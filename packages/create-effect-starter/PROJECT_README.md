@@ -4,7 +4,7 @@ Licensed under the [MIT License](LICENSE).
 
 Full-stack TypeScript app with React, TanStack Router/Query, Effect v4, Drizzle,
 PostgreSQL, and Vite+ (Vite, Vitest, Oxlint, and Oxfmt). Requires Node.js 24.11+
-and {{PACKAGE_MANAGER}}. The API runs on Node.js with either package manager.
+and {{PACKAGE_MANAGER}}. {{RUNTIME_NOTE}}
 
 ## Setup
 
@@ -55,18 +55,18 @@ editor to use the patched compiler's Effect diagnostics and refactors there too.
 {{RUN}} test
 {{RUN}} build
 ```
-
+{{BUN_CHECKS_NOTE}}
 {{LOCKFILE_NOTE}}
 Use {{PACKAGE_MANAGER}} directly or through `vp install` so installs and CI use the same lockfile.
 
 ## API production build
 
-The API and shared contracts compile with `effect-tsgo tsc`; Node.js runs the emitted JavaScript.
+The API and shared contracts compile with `effect-tsgo tsc`; {{RUNTIME}} runs the emitted JavaScript.
 Root development, typecheck, and test commands build contracts first. Development
-watches the API and contracts with `effect-tsgo tsc --watch`; `node --watch` restarts the API
+watches the API and contracts with `effect-tsgo tsc --watch`; `{{RUNTIME_BIN}} --watch` restarts the API
 when the emitted JavaScript changes.
 
-After building the workspace, start the API with `node apps/api/dist/main.js`
+After building the workspace, start the API with `{{RUNTIME_BIN}} apps/api/dist/main.js`
 from the project root. Set `DATABASE_URL` and `PORT` in the process environment.
 Keep `packages/contracts/dist`, the workspace package manifests, and production
 dependencies alongside `apps/api/dist`; the API is not bundled.

@@ -1,0 +1,63 @@
+import { readFile, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import { bunVersion } from "./package-manager.js";
+
+// The API runtime is independent of the package manager. Vite+, lint,
+// typecheck, and tests always run on Node.js; only the API process changes.
+export const runtimes = {
+  node: {
+    label: "Node.js",
+    bin: "node",
+    readme: "The API runs on Node.js.",
+  },
+  bun: {
+    label: "Bun",
+    bin: "bun",
+    version: bunVersion,
+    readme: `The API runs on Bun ${bunVersion}+; Vite+ and the project checks still run on Node.js.\nThe API keeps \`@effect/platform-node\`, which Bun supports: only the API \`dev\`\nand \`start\` scripts differ from a Node.js project.`,
+  },
+};
+
+export function getRuntime(name) {
+  if (!Object.hasOwn(runtimes, name)) {
+    throw new Error(`Unsupported runtime: ${name}. Choose node or bun.`);
+  }
+  return runtimes[name];
+}
+
+// Bun's built-in `bun lint` and `bun check` do not load the Effect compiler
+// profile or the patched Oxlint rules, so they would silently skip them.
+const bunChecksNote =
+  "\nRun checks through these scripts. Bun's built-in `bun lint` and `bun check` do not\nload the Effect compiler profile or the Effect lint rules, so they miss Effect mistakes.\n";
+
+export async function configureRuntime(destination, runtime, packageManager = "pnpm") {
+  const selected = getRuntime(runtime);
+  if (runtime === "bun") {
+    const manifestPath = join(destination, "apps/api/package.json");
+    const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+    const dev = "node dev.js";
+    if (!manifest.scripts.dev.endsWith(dev)) {
+      throw new Error(
+        `Cannot select the Bun runtime in the API dev script: ${manifest.scripts.dev}`,
+      );
+    }
+    // dev.js keeps the compiler on Node.js and runs the API with `bun --watch`.
+    manifest.scripts.dev = `${manifest.scripts.dev} bun`;
+    manifest.scripts.start = `bun dist/main.js`;
+    manifest.engines = { ...manifest.engines, bun: `>=${bunVersion}` };
+    await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+  }
+  const readmePath = join(destination, "README.md");
+  const readme = await readFile(readmePath, "utf8");
+  await writeFile(
+    readmePath,
+    readme
+      .replaceAll(
+        "{{BUN_CHECKS_NOTE}}",
+        runtime === "bun" || packageManager === "bun" ? bunChecksNote : "",
+      )
+      .replaceAll("{{RUNTIME_NOTE}}", selected.readme)
+      .replaceAll("{{RUNTIME_BIN}}", selected.bin)
+      .replaceAll("{{RUNTIME}}", selected.label),
+  );
+}

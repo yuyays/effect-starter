@@ -155,6 +155,7 @@ void test("Bun CLI emits Bun configuration, instructions, and CI", async (t) => 
   const readme = await readFile(join(project, "README.md"), "utf8");
   assert.match(readme, /bun run typecheck/);
   assert.match(readme, /Commit it before pushing/);
+  assert.match(readme, /`bun lint` and `bun check` do not/);
   assert.ok(!readme.includes("{{"));
   const ci = await readFile(join(project, ".github/workflows/ci.yml"), "utf8");
   assert.match(ci, /bun install --frozen-lockfile/);
@@ -185,6 +186,76 @@ void test("Bun CLI emits Bun configuration, instructions, and CI", async (t) => 
   }
   for (const step of steps) if (step.uses) assert.ok(pinned.has(step.uses), step.uses);
   assert.ok(!manifest.scripts.test.includes("create-effect-starter"));
+});
+
+void test("API runtime defaults to Node.js and Bun only changes the API process", async (t) => {
+  const directory = await temporary(t);
+  const cli = fileURLToPath(new URL("./cli.js", import.meta.url));
+  const node = await createProject("node-app", directory);
+  assert.equal(node.runtime, "node");
+  const nodeApi = JSON.parse(
+    await readFile(join(node.destination, "apps/api/package.json"), "utf8"),
+  );
+  assert.equal(nodeApi.scripts.start, "node dist/main.js");
+  assert.equal(
+    await readFile(join(node.destination, "apps/api/dev.js"), "utf8"),
+    await readFile(new URL("../../apps/api/dev.js", import.meta.url), "utf8"),
+  );
+  const nodeReadme = await readFile(join(node.destination, "README.md"), "utf8");
+  assert.match(nodeReadme, /`node apps\/api\/dist\/main\.js`/);
+  assert.match(nodeReadme, /`node --watch` restarts the API/);
+  assert.ok(!nodeReadme.includes("bun check"), "pnpm + Node projects skip the Bun note");
+  assert.ok(!nodeReadme.includes("{{"));
+
+  const result = spawnSync(process.execPath, [cli, "bun-api", "--runtime", "bun"], {
+    cwd: directory,
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /Bun API/);
+  const project = join(directory, "bun-api");
+  const api = JSON.parse(await readFile(join(project, "apps/api/package.json"), "utf8"));
+  assert.equal(api.scripts.start, "bun dist/main.js");
+  assert.equal(api.scripts.dev, `${nodeApi.scripts.dev.replaceAll("node-app", "bun-api")} bun`);
+  assert.equal(api.engines.bun, ">=1.4.2");
+  assert.ok(!nodeApi.engines?.bun);
+  // Both runtimes share one dev runner; only its argument differs.
+  assert.equal(
+    await readFile(join(project, "apps/api/dev.js"), "utf8"),
+    await readFile(new URL("../../apps/api/dev.js", import.meta.url), "utf8"),
+  );
+  // The runtime choice is independent of the package manager.
+  const manifest = JSON.parse(await readFile(join(project, "package.json"), "utf8"));
+  assert.match(manifest.packageManager, /^pnpm@/);
+  assert.match(manifest.engines.node, /24\.11/);
+  const readme = await readFile(join(project, "README.md"), "utf8");
+  assert.match(readme, /runs on Bun 1\.4\.2\+/);
+  assert.match(readme, /`bun apps\/api\/dist\/main\.js`/);
+  assert.match(readme, /`bun --watch` restarts the API/);
+  assert.match(readme, /`bun lint` and `bun check` do not/);
+  assert.ok(!readme.includes("{{"));
+  assert.ok(!readme.includes("{{"));
+});
+
+void test("invalid runtimes fail before creating files", async (t) => {
+  const directory = await temporary(t);
+  await assert.rejects(
+    createProject("my-app", directory, { runtime: "deno" }),
+    /Unsupported runtime/,
+  );
+  const cli = fileURLToPath(new URL("./cli.js", import.meta.url));
+  for (const args of [
+    ["my-app", "--runtime", "deno"],
+    ["my-app", "--runtime"],
+    ["my-app", "--runtime", "bun", "--runtime", "node"],
+  ]) {
+    const result = spawnSync(process.execPath, [cli, ...args], {
+      cwd: directory,
+      encoding: "utf8",
+    });
+    assert.equal(result.status, 1);
+  }
+  assert.deepEqual(await readdir(directory), []);
 });
 
 void test("invalid package managers and CLI flags fail before creating files", async (t) => {

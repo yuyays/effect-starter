@@ -2,13 +2,16 @@ import { parse } from "yaml";
 import { readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
+// Bun is pinned once for the package manager, the API runtime, and CI.
+export const bunVersion = "1.4.2";
+
 export const packageManagers = {
   pnpm: {
     run: "pnpm run",
     lockfileNote: "The included pnpm lockfile keeps dependencies on the starter's tested versions.",
   },
   bun: {
-    version: "1.4.2",
+    version: bunVersion,
     run: "bun run",
     lockfileNote:
       "The first `bun install` creates `bun.lock`. Commit it before pushing so CI can use frozen installs.",

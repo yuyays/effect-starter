@@ -4,12 +4,15 @@ import { fileURLToPath } from "node:url";
 
 import { getFramework } from "./frameworks.js";
 import { configurePackageManager, getPackageManager } from "./package-manager.js";
+import { configureRuntime, getRuntime } from "./runtime.js";
 
 export async function createProject(directory, cwd = process.cwd(), options = {}) {
   const framework = options.framework ?? "react";
   getFramework(framework);
   const packageManager = options.packageManager ?? "pnpm";
   getPackageManager(packageManager);
+  const runtime = options.runtime ?? "node";
+  getRuntime(runtime);
   const destination = resolve(cwd, directory);
   const name = basename(destination);
   if (!/^[a-z0-9][a-z0-9-]*$/.test(name) || name.length > 100) {
@@ -41,7 +44,8 @@ export async function createProject(directory, cwd = process.cwd(), options = {}
     await writeFile(join(destination, "apps", app, ".env"), example, { flag: "wx" });
   }
   await configurePackageManager(destination, packageManager, framework);
-  return { destination, name, packageManager, framework };
+  await configureRuntime(destination, runtime, packageManager);
+  return { destination, name, packageManager, framework, runtime };
 }
 
 async function copy(source, destination, name) {

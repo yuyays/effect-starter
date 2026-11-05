@@ -5,9 +5,10 @@ import { createProject } from "./create-project.js";
 import { frameworks, getFramework } from "./frameworks.js";
 import { dependencySummary, installDependencies } from "./install.js";
 import { getPackageManager, nextSteps } from "./package-manager.js";
+import { getRuntime, runtimes } from "./runtime.js";
 
 const usage =
-  "Usage: create-effect-starter [directory] [--framework react|tanstack-start|vue] [--package-manager pnpm|bun] [--install|--no-install]";
+  "Usage: create-effect-starter [directory] [--framework react|tanstack-start|vue] [--package-manager pnpm|bun] [--runtime node|bun] [--install|--no-install]";
 const args = process.argv.slice(2);
 
 async function answer(prompt) {
@@ -21,13 +22,14 @@ async function answer(prompt) {
 
 if (args.includes("--help") || args.includes("-h")) {
   console.log(
-    `${usage}\n\nCreate an Effect v4 + Drizzle + Vite+ project. Requires Node.js 24.11+.\nChoose your starter and package manager interactively with arrow keys and Enter.\nNoninteractive defaults: React and pnpm, without installation.\n--install runs dependency installation; --no-install skips the installation prompt.`,
+    `${usage}\n\nCreate an Effect v4 + Drizzle + Vite+ project. Requires Node.js 24.11+.\nChoose your starter and package manager interactively with arrow keys and Enter.\nNoninteractive defaults: React, pnpm, and the Node.js API runtime, without installation.\n--runtime bun runs the API on Bun; Vite+ and the project checks still use Node.js.\n--install runs dependency installation; --no-install skips the installation prompt.`,
   );
 } else {
   try {
     let directory;
     let packageManager;
     let framework;
+    let runtime;
     let install;
     const interactive = stdin.isTTY && stdout.isTTY;
     for (let index = 0; index < args.length; index++) {
@@ -40,6 +42,10 @@ if (args.includes("--help") || args.includes("-h")) {
         framework = args[++index];
         if (!framework) throw new Error(usage);
         getFramework(framework);
+      } else if (arg === "--runtime" && !runtime) {
+        runtime = args[++index];
+        if (!runtime) throw new Error(usage);
+        getRuntime(runtime);
       } else if (arg === "--install" && install === undefined) {
         install = true;
       } else if (arg === "--no-install" && install === undefined) {
@@ -83,13 +89,33 @@ if (args.includes("--help") || args.includes("-h")) {
           ],
         }),
       );
+      runtime ??= await answer(
+        select({
+          message: "API runtime (Vite+ and project checks always use Node.js)",
+          // Suggest the all-Bun setup for Bun users; any combination still works.
+          initialValue: packageManager === "bun" ? "bun" : "node",
+          options: Object.entries(runtimes).map(([value, { label }]) => ({
+            value,
+            label,
+            hint:
+              value === "node"
+                ? "runs on any Node.js host"
+                : `requires Bun ${runtimes.bun.version}+`,
+          })),
+        }),
+      );
     }
     if (!directory) throw new Error("Provide a project directory: create-effect-starter my-app");
     packageManager ??= "pnpm";
     framework ??= "react";
-    const project = await createProject(directory, process.cwd(), { packageManager, framework });
+    runtime ??= "node";
+    const project = await createProject(directory, process.cwd(), {
+      packageManager,
+      framework,
+      runtime,
+    });
     console.log(
-      `\nCreated ${project.name} (${getFramework(framework).label}) at ${project.destination}`,
+      `\nCreated ${project.name} (${getFramework(framework).label}, ${getRuntime(runtime).label} API) at ${project.destination}`,
     );
     const summary = await dependencySummary(project.destination);
     if (interactive) note(summary, "Packages to install (direct dependencies and dev tools)");
