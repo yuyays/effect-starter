@@ -30,6 +30,9 @@ on:
       - ".github/workflows/generated-projects.yml"
       - "!**/*.md"
 
+permissions:
+  contents: read
+
 concurrency:
   group: generated-projects-${{ github.ref }}
   cancel-in-progress: true
@@ -38,6 +41,7 @@ jobs:
   generated-projects:
     name: ${{ matrix.framework }}
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -48,6 +52,12 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.4.2
+      # Generated Bun projects resolve the same versions as the pnpm lockfile.
+      - uses: actions/cache@v6
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: bun-${{ runner.os }}-
       - uses: actions/setup-node@v7
         with:
           node-version: 24
