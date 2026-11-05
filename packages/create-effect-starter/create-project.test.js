@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
+import semver from "semver";
 import { versions } from "vite-plus/versions";
 import { format } from "vite-plus/fmt";
 import { parse } from "yaml";
@@ -24,21 +25,6 @@ async function installedManifest(workspace, name) {
     }
     if (dirname(directory) === directory) throw new Error(`Cannot find the ${name} manifest`);
   }
-}
-
-// Checks an exact version against `^x.y.z` alternatives joined by `||`; any other range
-// shape fails loudly rather than being misread.
-function satisfiesCaretRange(version, range) {
-  const [major, minor, patch] = version.split(".").map(Number);
-  return range.split("||").some((alternative) => {
-    const caret = /^\^(\d+)\.(\d+)\.(\d+)$/.exec(alternative.trim());
-    if (!caret) throw new Error(`Unsupported peer range: ${range}`);
-    const [low, lowMinor, lowPatch] = caret.slice(1).map(Number);
-    if (major !== low) return false;
-    // A 0.x caret allows patches of one minor; otherwise any later minor or patch.
-    if (low === 0) return minor === lowMinor && patch >= lowPatch;
-    return minor > lowMinor || (minor === lowMinor && patch >= lowPatch);
-  });
 }
 
 async function temporary(t) {
@@ -389,7 +375,7 @@ for (const framework of ["react", "tanstack-start", "vue"]) {
         const compiler = webManifest.devDependencies["oxc-transform-react"];
         const range = plugin.peerDependencies["oxc-transform-react"];
         assert.ok(
-          satisfiesCaretRange(compiler, range),
+          semver.satisfies(compiler, range),
           `oxc-transform-react ${compiler} must satisfy @vitejs/plugin-react ${plugin.version}'s peer ${range}`,
         );
       }
