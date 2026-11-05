@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Button } from "@/components/ui/button.js";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.js";
+import { UsersCard } from "@/components/users-card.js";
 import { usersQueryOptions } from "@/lib/users.js";
 
 export const Route = createFileRoute("/")({
@@ -27,33 +26,12 @@ function IndexRoute() {
           </p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Users</CardTitle>
-            <CardDescription>Read-only example backed by Drizzle and PostgreSQL.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Button onClick={() => void usersQuery.refetch()} disabled={usersQuery.isFetching}>
-              {usersQuery.isFetching ? "Loading..." : "Refetch"}
-            </Button>
-
-            {usersQuery.isError ? (
-              <p className="text-sm text-red-700">Could not load users. Is the API running?</p>
-            ) : usersQuery.data?.length ? (
-              <ul className="space-y-2">
-                {usersQuery.data.map((user) => (
-                  <li key={user.id} className="rounded-md border border-stone-200 bg-white p-3">
-                    {user.name}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="rounded-md border border-dashed border-stone-300 bg-white/70 p-4 text-sm text-stone-600">
-                No users yet. The starter intentionally ships without seed data.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+        <UsersCard
+          users={usersQuery.data}
+          isError={usersQuery.isError}
+          isFetching={usersQuery.isFetching}
+          onRefetch={() => void usersQuery.refetch()}
+        />
       </section>
     </main>
   );

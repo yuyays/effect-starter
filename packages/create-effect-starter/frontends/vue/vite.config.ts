@@ -10,4 +10,7 @@ export default defineConfig({
       "/docs": "http://localhost:3000",
     },
   },
+  test: {
+    environment: "happy-dom",
+  },
 });

@@ -20,5 +20,8 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
     },
+    test: {
+      environment: "happy-dom",
+    },
   };
 });
