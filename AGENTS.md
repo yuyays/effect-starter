@@ -33,5 +33,6 @@ entrypoints: add an override in `vite.config.ts` when introducing a framework ad
 Diagnostic suppressions require a `-- reason` suffix.
 Tests sit next to the code they cover; name API tests that open real sockets or processes
 `*.integration.test.ts` (run one kind with `vp test run --project unit` or `integration`).
+React frontends' `*.browser.test.tsx` component tests run in Chromium; run `pnpm test:browser` too.
 Shared versions (Effect, Vite+) come from the workspace catalog in `pnpm-workspace.yaml`,
 or `workspaces.catalog` in `package.json` for Bun; declare those packages as `catalog:`.

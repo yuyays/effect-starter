@@ -1,6 +1,6 @@
 import { copyFile, cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { format } from "vite-plus/fmt";
-import { frameworks, hasFrontend } from "./frameworks.js";
+import { frameworks, hasFrontend, isReact } from "./frameworks.js";
 import { templateLockfile } from "./template-lockfile.js";
 
 const root = new URL("../../", import.meta.url);
@@ -130,6 +130,28 @@ for (const framework of Object.keys(frameworks)) {
     readme +=
       "\n## Server rendering\n\nTanStack Start renders the page on the server; the example users query runs in the browser.\nEach request gets its own router and query client. For server-side API calls, use\n`API_URL` in `apps/web/.env` (default `http://localhost:3000`). `VITE_API_URL`\nis public and only configures browser requests.\n\nProduction hosting needs a TanStack Start server adapter as well as the Effect API.\nSee https://tanstack.com/start/latest/docs/framework/react/guide/hosting.\nConfigure your production reverse proxy for `/api` and `/docs`, or set `VITE_API_URL`.\n";
   }
+  const browserTests = isReact(framework);
+  if (!browserTests) {
+    const agentsPath = new URL("AGENTS.md", destination);
+    await writeFile(
+      agentsPath,
+      replaceRequired(
+        await readFile(agentsPath, "utf8"),
+        "React frontends' `*.browser.test.tsx` component tests run in Chromium; run `pnpm test:browser` too.\n",
+        "",
+      ),
+    );
+    readme = replaceRequired(
+      readme,
+      "\nComponent tests that need a real browser (`*.browser.test.tsx`) run in Chromium:\n`{{RUN}} browser:install` once per machine, then `{{RUN}} test:browser`.\n",
+      "",
+    );
+    const workflowPath = new URL(".github/workflows/ci.yml", destination);
+    let workflow = await readFile(workflowPath, "utf8");
+    workflow = replaceRequired(workflow, "      - run: pnpm browser:install --with-deps\n", "");
+    workflow = replaceRequired(workflow, "      - run: pnpm test:browser\n", "");
+    await writeFile(workflowPath, workflow);
+  }
   await writeFile(new URL("README.md", destination), readme);
   const manifestPath = new URL("package.json", destination);
   const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
@@ -137,6 +159,10 @@ for (const framework of Object.keys(frameworks)) {
   delete manifest.scripts["create:app"];
   delete manifest.scripts["test:generated"];
   if (!frontend) delete manifest.scripts["dev:web"];
+  if (!browserTests) {
+    delete manifest.scripts["test:browser"];
+    delete manifest.scripts["browser:install"];
+  }
   manifest.scripts.test = manifest.scripts.test.split(
     " && node packages/create-effect-starter/",
   )[0];

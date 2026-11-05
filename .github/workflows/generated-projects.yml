@@ -66,4 +66,7 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # React starters' browser tests reuse this Playwright version's Chromium.
+      - if: matrix.framework == 'react' || matrix.framework == 'tanstack-start'
+        run: pnpm browser:install --with-deps
       - run: pnpm test:generated ${{ matrix.framework }}

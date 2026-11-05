@@ -11,6 +11,7 @@ import { versions } from "vite-plus/versions";
 import { format } from "vite-plus/fmt";
 import { parse } from "yaml";
 import { createProject } from "./create-project.js";
+import { isReact } from "./frameworks.js";
 
 // Reads an installed package's manifest by resolving it from a workspace, so the check
 // works with any node_modules layout (the plugin does not export its package.json).
@@ -84,6 +85,8 @@ void test("CLI generates a renamed project without generator artifacts", async (
   assert.equal(catalog.vite, `npm:@voidzero-dev/vite-plus-core@${catalog["vite-plus"]}`);
   assert.equal(workspace.overrides["vite@*"], "catalog:");
   assert.equal(workspace.peerDependencyRules.allowedVersions.vite, catalog["vite-plus"]);
+  // The browser test provider is part of Vitest and must match its overridden version.
+  assert.equal(catalog["@vitest/browser-playwright"], workspace.overrides["vitest@*"]);
   for (const location of [".", "apps/api", "apps/web", "packages/contracts"]) {
     const pkg = JSON.parse(await readFile(join(project, location, "package.json"), "utf8"));
     for (const field of ["dependencies", "devDependencies"]) {
@@ -356,6 +359,27 @@ for (const framework of ["react", "tanstack-start", "vue"]) {
       assert.equal(/^  react /m.test(result.stdout), framework !== "vue");
       assert.equal(/^  vue /m.test(result.stdout), framework === "vue");
       const project = join(directory, "chosen-app");
+      // React starters also run component tests in Chromium; Vue keeps its happy-dom tests.
+      const browser = isReact(framework);
+      const rootScripts = JSON.parse(await readFile(join(project, "package.json"), "utf8")).scripts;
+      assert.equal("test:browser" in rootScripts, browser);
+      assert.equal("browser:install" in rootScripts, browser);
+      const workflow = await readFile(join(project, ".github/workflows/ci.yml"), "utf8");
+      assert.equal(/run: \S+ (run )?browser:install --with-deps$/m.test(workflow), browser);
+      assert.equal(/run: \S+ (run )?test:browser$/m.test(workflow), browser);
+      const webFiles = await readdir(join(project, "apps/web/src"), { recursive: true });
+      assert.equal(
+        webFiles.some((file) => file.endsWith(".browser.test.tsx")),
+        browser,
+      );
+      assert.equal(
+        (await readFile(join(project, "README.md"), "utf8")).includes("test:browser"),
+        browser,
+      );
+      assert.equal(
+        (await readFile(join(project, "AGENTS.md"), "utf8")).includes("test:browser"),
+        browser,
+      );
       if (framework !== "vue") {
         // The React Compiler's native transform must stay inside the Vite plugin's peer range.
         assert.match(
@@ -461,6 +485,11 @@ for (const packageManager of ["pnpm", "bun"]) {
     assert.deepEqual((await readdir(join(project, "apps"))).sort(), ["api"]);
     const manifest = JSON.parse(await readFile(join(project, "package.json"), "utf8"));
     assert.ok(!("dev:web" in manifest.scripts));
+    assert.ok(!("test:browser" in manifest.scripts) && !("browser:install" in manifest.scripts));
+    assert.doesNotMatch(
+      await readFile(join(project, ".github/workflows/ci.yml"), "utf8"),
+      /browser:install|test:browser/,
+    );
     assert.match(manifest.scripts["dev:api"], /--filter @api-app\/api/);
     const config = await readFile(join(project, "vite.config.ts"), "utf8");
     assert.match(config, /effecttsgo/);
@@ -468,6 +497,8 @@ for (const packageManager of ["pnpm", "bun"]) {
     assert.equal(config, formatted.code);
     const readme = await readFile(join(project, "README.md"), "utf8");
     assert.match(readme, /^TypeScript API with Effect v4/m);
+    assert.ok(!readme.includes("test:browser"));
+    assert.ok(!(await readFile(join(project, "AGENTS.md"), "utf8")).includes("test:browser"));
     assert.ok(!readme.includes("{{"));
     const paths = await readdir(project, { recursive: true });
     assert.ok(!paths.some((path) => path.startsWith("apps/web")));

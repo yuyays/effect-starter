@@ -28,4 +28,6 @@ jobs:
       - run: pnpm format:check
       - run: pnpm typecheck
       - run: pnpm test
+      - run: pnpm browser:install --with-deps
+      - run: pnpm test:browser
       - run: pnpm build

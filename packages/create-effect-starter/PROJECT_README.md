@@ -30,6 +30,9 @@ Set `DATABASE_URL` in `apps/api/.env` to a running PostgreSQL database first.
 {{RUN}} build
 ```
 
+Component tests that need a real browser (`*.browser.test.tsx`) run in Chromium:
+`{{RUN}} browser:install` once per machine, then `{{RUN}} test:browser`.
+
 {{BUN_CHECKS_NOTE}}The checks enforce the Effect rules in `AGENTS.md`, and `{{RUN}} test` proves that
 invalid examples fail. Select the workspace TypeScript version in your editor to
 see Effect diagnostics there.
