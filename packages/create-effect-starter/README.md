@@ -1,6 +1,6 @@
 # create-effect-starter
 
-Create a full-stack Effect v4, Drizzle, and Vite+ project with React, TanStack Start, Vue, or no frontend.
+Create an Effect-based TypeScript application with an optional React, TanStack Start, or Vue frontend.
 Requires Node.js 24.11+ and pnpm 11 or Bun 1.4.2. The API runs on Node.js by
 default; Bun is an optional API runtime with either package manager.
 
