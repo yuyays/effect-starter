@@ -282,9 +282,17 @@ void test("invalid frameworks and duplicate or missing framework flags do not cr
 for (const framework of ["react", "tanstack-start", "vue"]) {
   void test(`generated root configs are formatted for ${framework}`, async (t) => {
     const directory = await temporary(t);
-    const project = await createProject("my-app", directory, { framework });
+    const project = await createProject(
+      // A long name catches scope renames that push config lines past the format width.
+      "tanstack-start-pnpm-generated-app",
+      directory,
+      { framework },
+    );
     for (const path of [
       "tools/oxlint/index.js",
+      "tools/oxlint/anti-slop/index.ts",
+      "tools/oxlint/anti-slop/effect/index.ts",
+      "tools/oxlint/anti-slop/rules/no-module-mocking.ts",
       "tools/effect-policy.test.js",
       "apps/api/tsconfig.json",
     ]) {

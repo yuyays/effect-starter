@@ -29,7 +29,14 @@ See also [the HTTP adapter](apps/api/src/http.ts) and [the entrypoint](apps/api/
 The API's compiler profile enforces Effect correctness and recommends named
 `Effect.fn` operations. Run `pnpm typecheck` (or `bun run typecheck`) to check it;
 the scripts invoke the Effect compiler directly, independently of install hooks.
-Lint restricts runtime execution to `main.ts`, `http.ts`, and test files. Add an
-explicit override in `vite.config.ts` when introducing a framework adapter.
-Diagnostic suppressions require a `-- reason` suffix. `pnpm test` also verifies
+Lint restricts runtime execution to `main.ts` and `http.ts`; API tests run Effects with
+`it.effect` from `@effect/vitest`. Add an explicit override in `vite.config.ts` when
+introducing a framework adapter. `pnpm lint` and `pnpm test` apply the Effect Oxlint patch
+themselves, so they also work without install hooks.
+Diagnostic suppressions require a `-- reason` suffix.
+Lint also runs the type-aware `effecttsgo` rules and a vendored anti-slop subset (see
+[its provenance](tools/oxlint/anti-slop/UPSTREAM.md)): recover with `Effect.catchTag(s)`,
+construct tagged values through their Schema or error class, hoist Schema decoders to module
+scope, replace dependencies through Layers rather than module mocks, and run test Effects with
+`it.effect` and `TestClock`. The web app imports the API only through the contracts package. `pnpm test` also verifies
 that deliberate compiler and lint violations fail, even without this document.
