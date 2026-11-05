@@ -208,7 +208,7 @@ void test("API runtime defaults to Node.js and Bun only changes the API process"
     await readFile(new URL("../../apps/api/dev.js", import.meta.url), "utf8"),
   );
   const nodeReadme = await readFile(join(node.destination, "README.md"), "utf8");
-  assert.match(nodeReadme, /`node apps\/api\/dist\/main\.js`/);
+  assert.match(nodeReadme, /`node dist\/main\.js` with `apps\/api` as the working directory/);
   assert.match(nodeReadme, /`node --watch` restarts the API/);
   assert.ok(!nodeReadme.includes("bun check"), "pnpm + Node projects skip the Bun note");
   assert.ok(!nodeReadme.includes("{{"));
@@ -236,7 +236,7 @@ void test("API runtime defaults to Node.js and Bun only changes the API process"
   assert.match(manifest.engines.node, /24\.11/);
   const readme = await readFile(join(project, "README.md"), "utf8");
   assert.match(readme, /runs on Bun 1\.4\.2\+/);
-  assert.match(readme, /`bun apps\/api\/dist\/main\.js`/);
+  assert.match(readme, /`bun dist\/main\.js` with `apps\/api` as the working directory/);
   assert.match(readme, /`bun --watch` restarts the API/);
   assert.match(readme, /`bun lint` and `bun check` do not/);
   assert.ok(!readme.includes("{{"));
