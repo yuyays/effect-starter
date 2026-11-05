@@ -32,6 +32,9 @@
     "@clack/prompts": "1.8.1",
     "yaml": "^2.9.1"
   },
+  "devDependencies": {
+    "semver": "^7.8.6"
+  },
   "engines": {
     "node": ">=24.11.0"
   }
