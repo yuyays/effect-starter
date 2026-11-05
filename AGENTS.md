@@ -31,5 +31,7 @@ finishing. The Effect compiler profile and lint enforce these rules independentl
 hooks, and each message says how to fix the violation. Running Effects is limited to
 entrypoints: add an override in `vite.config.ts` when introducing a framework adapter.
 Diagnostic suppressions require a `-- reason` suffix.
+Tests sit next to the code they cover; name API tests that open real sockets or processes
+`*.integration.test.ts` (run one kind with `vp test run --project unit` or `integration`).
 Shared versions (Effect, Vite+) come from the workspace catalog in `pnpm-workspace.yaml`,
 or `workspaces.catalog` in `package.json` for Bun; declare those packages as `catalog:`.
