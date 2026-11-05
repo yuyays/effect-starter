@@ -26,7 +26,7 @@ export default defineConfig({
       perf: "warn",
     },
     // `effecttsgo` requires the Oxlint integration patched by `effect-tsgo patch --oxlint`.
-    plugins: ["react", "typescript", "import", "vitest", "effecttsgo"],
+    plugins: ["react", "jsx-a11y", "typescript", "import", "vitest", "effecttsgo"],
     jsPlugins: [
       "./tools/oxlint/index.js",
       "./tools/oxlint/anti-slop/index.ts",
@@ -49,6 +49,17 @@ export default defineConfig({
       "react/set-state-in-effect": "error",
       "react/static-components": "error",
       "react/no-unstable-nested-components": "error",
+      // The rest of the React Compiler's checks, as t3code enables them.
+      "react/capitalized-calls": "error",
+      "react/exhaustive-effect-dependencies": "error",
+      "react/globals": "error",
+      "react/hooks": "error",
+      "react/immutability": "error",
+      "react/memo-dependencies": "error",
+      "react/no-array-index-key": "error",
+      "react/preserve-manual-memoization": "error",
+      "react/set-state-in-render": "error",
+      "react/unsupported-syntax": "error",
       "typescript/consistent-type-imports": "error",
       "typescript/no-base-to-string": "warn",
       "typescript/no-floating-promises": "warn",
