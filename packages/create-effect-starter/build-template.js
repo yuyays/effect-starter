@@ -81,12 +81,11 @@ for (const framework of Object.keys(frameworks)) {
   // Template source files are not part of generated projects.
   config = config.replace(/^\s*"packages\/create-effect-starter\/[^"\n]+",\n/gm, "");
   if (framework === "vue") {
-    config = config
-      .replace(
-        '["react", "typescript", "import", "vitest", "effecttsgo"]',
-        '["vue", "typescript", "import", "vitest", "effecttsgo"]',
-      )
-      .replace(/^      "react\/.*\n/gm, "");
+    config = replaceRequired(
+      config,
+      '["react", "typescript", "import", "vitest", "effecttsgo"]',
+      '["vue", "typescript", "import", "vitest", "effecttsgo"]',
+    ).replace(/^      "react\/.*\n/gm, "");
   }
   if (!frontend) {
     // `apps/web/**` overrides stay: they are inert until someone adds a frontend.

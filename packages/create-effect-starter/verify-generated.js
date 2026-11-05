@@ -100,7 +100,9 @@ async function smokeDev(packageManager, destination, framework, runtime) {
       ready,
       reason === "exited"
         ? `Dev servers exited before becoming ready (code ${child.exitCode}):\n${output}`
-        : `Dev servers did not become ready (proxy ${proxyStatus ?? "unreachable"}):\n${output}`,
+        : frontend
+          ? `Dev servers did not become ready (proxy ${proxyStatus ?? "unreachable"}):\n${output}`
+          : `The API did not become ready:\n${output}`,
     );
     assert.deepEqual(await apiHealth.json(), { ok: true, service: "api" });
     if (frontend) {

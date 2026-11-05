@@ -7,8 +7,7 @@ import { dependencySummary, installDependencies } from "./install.js";
 import { getPackageManager, nextSteps } from "./package-manager.js";
 import { getRuntime, runtimes } from "./runtime.js";
 
-const usage =
-  "Usage: create-effect-starter [directory] [--framework react|tanstack-start|vue] [--package-manager pnpm|bun] [--runtime node|bun] [--install|--no-install]";
+const usage = `Usage: create-effect-starter [directory] [--framework ${Object.keys(frameworks).join("|")}] [--package-manager pnpm|bun] [--runtime node|bun] [--install|--no-install]`;
 const args = process.argv.slice(2);
 
 async function answer(prompt) {
@@ -117,7 +116,7 @@ if (args.includes("--help") || args.includes("-h")) {
     console.log(
       `\nCreated ${project.name} (${getFramework(framework).label}, ${getRuntime(runtime).label} API) at ${project.destination}`,
     );
-    const summary = await dependencySummary(project.destination);
+    const summary = await dependencySummary(project.destination, framework);
     if (interactive) note(summary, "Packages to install (direct dependencies and dev tools)");
     else console.log(`\nPackages to install (direct dependencies and dev tools):\n${summary}`);
     console.log("The package manager also installs their transitive dependencies.");

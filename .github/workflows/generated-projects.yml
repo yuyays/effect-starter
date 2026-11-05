@@ -6,6 +6,7 @@ on:
     paths:
       - "apps/**"
       - "packages/**"
+      - "tools/**"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
       - "vite.config.ts"
@@ -20,6 +21,7 @@ on:
     paths:
       - "apps/**"
       - "packages/**"
+      - "tools/**"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
       - "vite.config.ts"

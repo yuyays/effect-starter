@@ -1,13 +1,13 @@
 import { spawn } from "node:child_process";
-import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { hasFrontend } from "./frameworks.js";
 import { getPackageManager } from "./package-manager.js";
 
-export async function dependencySummary(destination) {
+export async function dependencySummary(destination, framework = "react") {
   const workspaces = [
     ["Root tooling", "."],
-    ...(existsSync(join(destination, "apps/web")) ? [["Web", "apps/web"]] : []),
+    ...(hasFrontend(framework) ? [["Web", "apps/web"]] : []),
     ["API", "apps/api"],
     ["Shared contracts", "packages/contracts"],
   ];
