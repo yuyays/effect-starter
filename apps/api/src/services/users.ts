@@ -1,4 +1,4 @@
-import { Database } from "../db/client.js";
+import { Database } from "../db/client.ts";
 import { UsersListError } from "@effect-starter/contracts/http";
 import { Schema, Effect } from "effect";
 import { UsersResponse } from "@effect-starter/contracts/schemas/user";

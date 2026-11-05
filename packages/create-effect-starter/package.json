@@ -16,6 +16,7 @@
     "create-project.js",
     "package-manager.js",
     "runtime.js",
+    "runtimes",
     "template",
     "README.md",
     "frameworks.js",

@@ -3,7 +3,7 @@ import { Deferred, Effect, Fiber, Layer } from "effect";
 import { HttpRouter, HttpServerResponse } from "effect/http";
 import { describe, expect, it } from "@effect/vitest";
 import { Agent, get, type Server } from "node:http";
-import { createApiServer } from "./server.js";
+import { createApiServer } from "./server.ts";
 
 // Signals when a request reaches the handler, then answers after a delay, so the
 // request is provably in flight when the test starts shutdown.

@@ -47,8 +47,8 @@ void test("returns all three responses once the proxy is healthy", async () => {
 });
 
 void test("retries while the proxy returns the empty 502 emitted during an API restart", async () => {
-  // The dev API restarts once after startup; while it is down the proxy fails
-  // with an empty body. Parsing that body used to throw
+  // The dev API restarts when its source changes; while it is down the proxy
+  // fails with an empty body. Parsing that body used to throw
   // "SyntaxError: Unexpected end of JSON input".
   const restarting = fakeResponse(502);
   const api = fakeResponse(200, '{"ok":true,"service":"api"}');

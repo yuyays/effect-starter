@@ -38,10 +38,15 @@ see Effect diagnostics there.
 
 ## API production build
 
-`{{RUN}} build` compiles the API and contracts; {{RUNTIME}} runs the emitted JavaScript.
-In development, `{{RUNTIME_BIN}} --watch` restarts the API when it is recompiled.
+Workspace packages export their TypeScript source, so nothing is compiled first. In
+development, `{{RUNTIME_BIN}} --watch` runs `apps/api/src/main.ts` and restarts the API
+when it or a workspace package changes.
+
+`{{RUN}} build` typechecks the API and bundles it with its workspace packages into
+`apps/api/dist/main.js`. The API's `dependencies` stay external and everything else is
+bundled, so {{RUNTIME}} runs only JavaScript in production.
 
 Start the API with `{{RUN}} start:api` from the project root, with `DATABASE_URL` and
-`PORT` set. It runs `{{RUNTIME_BIN}} dist/main.js` with `apps/api` as the working directory.
-The API is not bundled: deploy it with `packages/contracts/dist`, the workspace
-manifests, and production dependencies.
+`PORT` set. It runs `dist/main.js` on {{RUNTIME}} with `apps/api` as the working directory.
+Deploy `apps/api/dist` with the API's production `dependencies`; workspace packages are
+already in the bundle.

@@ -1,9 +1,9 @@
 import { HttpRouter } from "effect/http";
 import { NodeHttpServer, NodeRuntime } from "@effect/platform-node";
 import { Config, Effect, Layer } from "effect";
-import { HttpLive } from "./http.js";
-import { DrizzleLive } from "./db/client.js";
-import { createApiServer } from "./server.js";
+import { HttpLive } from "./http.ts";
+import { DrizzleLive } from "./db/client.ts";
+import { createApiServer } from "./server.ts";
 
 const Port = Config.Port("PORT").pipe(Config.withDefault(3000));
 

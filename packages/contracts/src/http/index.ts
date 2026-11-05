@@ -1,9 +1,9 @@
 import { HttpApi, HttpApiEndpoint, HttpApiGroup, HttpApiSchema } from "effect/http-api";
 import { Schema } from "effect";
-import { UsersResponse } from "../schemas/user.js";
-import { UsersListError } from "./errors.js";
+import { UsersResponse } from "../schemas/user.ts";
+import { UsersListError } from "./errors.ts";
 
-export { UsersListError } from "./errors.js";
+export { UsersListError } from "./errors.ts";
 
 export const HealthResponse = Schema.Struct({
   ok: Schema.Boolean,

@@ -1,9 +1,9 @@
-import { Database } from "../db/client.js";
+import { Database } from "../db/client.ts";
 import { Effect, Result } from "effect";
 import { EffectDrizzleQueryError } from "drizzle-orm/effect-core";
 import { describe, expect, it } from "@effect/vitest";
 import { UsersListError } from "@effect-starter/contracts/http";
-import { listUsers } from "./users.js";
+import { listUsers } from "./users.ts";
 
 describe("listUsers", () => {
   it.effect("decodes rows returned by the database", () =>

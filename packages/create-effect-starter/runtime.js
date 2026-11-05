@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { copyFile, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { bunVersion } from "./package-manager.js";
 
@@ -30,14 +30,19 @@ export async function configureRuntime(destination, runtime) {
   if (runtime === "bun") {
     const manifestPath = join(destination, "apps/api/package.json");
     const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
-    const dev = "node dev.js";
-    if (!manifest.scripts.dev.endsWith(dev)) {
+    const dev = "node --watch --watch-preserve-output src/main.ts";
+    if (manifest.scripts.dev !== dev) {
       throw new Error(
         `Cannot select the Bun runtime in the API dev script: ${manifest.scripts.dev}`,
       );
     }
-    // dev.js keeps the compiler on Node.js and runs the API with `bun --watch`.
-    manifest.scripts.dev = `${manifest.scripts.dev} bun`;
+    // Both runtimes run the TypeScript source directly and restart on changes; the
+    // runner works around Bun dropping Ctrl+C during a restart.
+    await copyFile(
+      new URL("./runtimes/bun/dev.js", import.meta.url),
+      join(destination, "apps/api/dev.js"),
+    );
+    manifest.scripts.dev = "node dev.js";
     manifest.scripts.start = `bun dist/main.js`;
     manifest.engines = { ...manifest.engines, bun: `>=${bunVersion}` };
     await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);

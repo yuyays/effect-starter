@@ -2,7 +2,7 @@ import { PgClient } from "@effect/sql-pg";
 import * as PgDrizzle from "drizzle-orm/effect-postgres";
 import { Config, Context, Effect, Layer } from "effect";
 import type { EffectDrizzleQueryError } from "drizzle-orm/effect-core";
-import { users } from "./schema.js";
+import { users } from "./schema.ts";
 
 export class Database extends Context.Service<
   Database,
