@@ -5,7 +5,7 @@ import { createServer } from "node:net";
 import { setTimeout } from "node:timers/promises";
 import { tmpdir } from "node:os";
 import { join, sep } from "node:path";
-import { frameworks, getFramework, hasFrontend } from "./frameworks.js";
+import { frameworks, getFramework, hasFrontend, isReact } from "./frameworks.js";
 import { createProject } from "./create-project.js";
 import { waitForDevServers } from "./dev-servers.js";
 
@@ -284,11 +284,19 @@ try {
       await rm(join(project.destination, "AGENTS.md"));
       const scripts = runtimeOnly
         ? ["format:check", "build"]
-        : ["lint", "format:check", "typecheck", "test", "build"];
+        : [
+            "lint",
+            "format:check",
+            "typecheck",
+            "test",
+            // React starters run component tests in Chromium (installed by CI or browser:install).
+            ...(isReact(framework) ? ["test:browser"] : []),
+            "build",
+          ];
       for (const script of scripts) {
         run(packageManager, ["run", script], project.destination);
       }
-      if (framework === "react" || framework === "tanstack-start") {
+      if (isReact(framework)) {
         await assertReactCompiled(project.destination);
       }
       await smokeProduction(project.destination, runtime);

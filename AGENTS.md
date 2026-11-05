@@ -7,7 +7,8 @@
 - When extending a legacy Promise-based backend operation, migrate that operation
   to Effect without rewriting unrelated operations.
 
-Run `pnpm lint`, `pnpm typecheck`, and `pnpm test` (or Bun equivalents) before finishing.
+Run `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm test:browser` where it exists
+(or Bun equivalents) before finishing.
 Name API tests that open real sockets or processes `*.integration.test.ts`.
 
 # Test quality
