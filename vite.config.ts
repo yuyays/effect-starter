@@ -49,7 +49,7 @@ export default defineConfig({
       "react/set-state-in-effect": "error",
       "react/static-components": "error",
       "react/no-unstable-nested-components": "error",
-      // The rest of the React Compiler's checks, as t3code enables them.
+      // The rest of the React Compiler's Rules-of-React checks.
       "react/capitalized-calls": "error",
       "react/exhaustive-effect-dependencies": "error",
       "react/globals": "error",
