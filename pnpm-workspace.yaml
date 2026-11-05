@@ -5,10 +5,10 @@ packages:
 # Shared versions: packages declare these as `catalog:` so they stay aligned.
 # TypeScript is not here because the Vue starter pins its own version.
 catalog:
-  "@effect/platform-node": "^4.1.1"
-  "@effect/sql-pg": "^4.1.1"
-  "@effect/vitest": "4.1.1"
-  effect: "^4.1.1"
+  "@effect/platform-node": "^4.1.2"
+  "@effect/sql-pg": "^4.1.2"
+  "@effect/vitest": "4.1.2"
+  effect: "^4.1.2"
   vite: "npm:@voidzero-dev/vite-plus-core@1.4.0"
   vite-plus: "1.4.0"
 minimumReleaseAge: 1440
