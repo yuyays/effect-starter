@@ -34,13 +34,13 @@ The wizard asks for:
 - **Starter:** React (TanStack Router and Query), TanStack Start (server rendering),
   Vue (Vue Router and TanStack Query), or no frontend, for API servers and backends
   that agents, CLIs, or other services call. All share the same Effect API and contracts.
+- **Package manager:** pnpm or Bun.
+- **API runtime:** Node.js or Bun. Vite+ and the checks always run on Node.js.
 
 Building a CLI, MCP server, agent, or custom harness? Start with no frontend and add
 it as another app under `apps/`, with its own `main.ts` entrypoint. Then extend the
 `starter/runtime-boundary` override in `vite.config.ts` to that app, so lint keeps
 Effect execution at its entrypoint too.
-- **Package manager:** pnpm or Bun.
-- **API runtime:** Node.js or Bun. Vite+ and the checks always run on Node.js.
 
 ## Run and verify your app
 

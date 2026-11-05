@@ -257,11 +257,17 @@ try {
       console.log(
         `\nVerifying ${packageManager} project with ${runtime} API: ${project.destination}`,
       );
+      // The Bun runtime only changes the API `dev`/`start` scripts and README text,
+      // so lint, typecheck, tests, and the lockfile check would repeat Bun + Node.
+      const runtimeOnly = runtime !== "node";
       if (packageManager === "bun") run("bun", ["install"], project.destination);
-      run(packageManager, ["install", "--frozen-lockfile"], project.destination);
+      if (!runtimeOnly) run(packageManager, ["install", "--frozen-lockfile"], project.destination);
       // Enforcement must survive consumers replacing the agent instructions.
       await rm(join(project.destination, "AGENTS.md"));
-      for (const script of ["lint", "format:check", "typecheck", "test", "build"]) {
+      const scripts = runtimeOnly
+        ? ["format:check", "build"]
+        : ["lint", "format:check", "typecheck", "test", "build"];
+      for (const script of scripts) {
         run(packageManager, ["run", script], project.destination);
       }
       await smokeProduction(project.destination, runtime);

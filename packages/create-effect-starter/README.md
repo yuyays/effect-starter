@@ -224,7 +224,9 @@ the repository root. Commit the manifests and root `pnpm-lock.yaml` together.
 The builder selects the API, contracts, and chosen frontend importers from that
 single lockfile and rebases workspace links. There are no separately maintained
 template lockfiles. Run `pnpm test:generated` to verify every starter with
-pnpm + Node.js, Bun + Node.js, and Bun + the Bun API runtime. Pass a framework name (for example `pnpm test:generated vue`) to
+pnpm + Node.js, Bun + Node.js, and Bun + the Bun API runtime. The Bun runtime
+project only re-runs what the runtime changes: formatting, the build, and the
+production and dev smoke tests. Pass a framework name (for example `pnpm test:generated vue`) to
 check only that starter.
 
 ## Dependency updates
