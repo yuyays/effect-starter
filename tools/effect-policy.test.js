@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
@@ -18,7 +18,7 @@ function run(binary, args) {
     timeout: 60_000,
   });
   assert.ifError(result.error);
-  return { status: result.status, output: result.stdout + result.stderr };
+  return { status: result.status, stdout: result.stdout, output: result.stdout + result.stderr };
 }
 
 async function fixture(t, location = "apps/api/src") {
@@ -90,7 +90,6 @@ export const untypedSdkCall = Effect.tryPromise({
 });
 
 void test("lint restricts imported runtimes while allowing adapters and unrelated methods", async (t) => {
-  const directory = await fixture(t);
   const cases = [
     [
       "service.ts",
@@ -134,11 +133,6 @@ void test("lint restricts imported runtimes while allowing adapters and unrelate
       false,
     ],
     [
-      "allowed.test.ts",
-      'import { Effect } from "effect"; export const run = Effect.runPromise;',
-      true,
-    ],
-    [
       "plain.ts",
       "const Effect = { runSync: () => 1 }; export const value = Effect.runSync();",
       true,
@@ -149,13 +143,185 @@ void test("lint restricts imported runtimes while allowing adapters and unrelate
       true,
     ],
   ];
-  for (const [name, source, allowed] of cases) {
-    const path = join(directory, name);
-    await writeFile(path, source);
-    const result = run(vp, ["lint", path]);
-    assert.equal(result.status, allowed ? 0 : 1, result.output);
-    if (!allowed) assert.match(result.output, /runtime-boundary/);
+  const codes = await lintFixtures(t, "apps/api/src", Object.fromEntries(cases));
+  for (const [name, , allowed] of cases) {
+    assertRules(codes, { [name]: allowed ? [] : ["starter(runtime-boundary)"] });
   }
+});
+
+// Generated projects rename the workspace scope, so read names from the manifests.
+async function packageName(workspace) {
+  return JSON.parse(await readFile(join(root, workspace, "package.json"), "utf8")).name;
+}
+
+// Lint each fixture directory once and group reported rule codes by file name.
+async function lintFixtures(t, location, files) {
+  const directory = await fixture(t, location);
+  for (const [name, source] of Object.entries(files)) {
+    await writeFile(join(directory, name), source);
+  }
+  const result = run(vp, ["lint", "--format", "json", directory]);
+  assert.ok(result.stdout.trimStart().startsWith("{"), result.output);
+  const codes = new Map(Object.keys(files).map((name) => [name, new Set()]));
+  for (const diagnostic of JSON.parse(result.stdout).diagnostics) {
+    codes.get(diagnostic.filename.split("/").at(-1))?.add(diagnostic.code);
+  }
+  return codes;
+}
+
+function assertRules(codes, expected) {
+  for (const [name, rules] of Object.entries(expected)) {
+    const reported = [...codes.get(name)];
+    if (rules.length === 0) assert.deepEqual(reported, [], `${name} must lint cleanly`);
+    for (const rule of rules) {
+      assert.ok(reported.includes(rule), `${name} must report ${rule}; got ${reported.join(", ")}`);
+    }
+  }
+}
+
+void test("lint enforces typed Effect recovery, tagged constructors, and evidence-preserving casts", async (t) => {
+  const codes = await lintFixtures(t, "apps/api/src", {
+    "catch.ts": `import { Effect } from "effect";
+declare const program: Effect.Effect<number, { readonly _tag: "NotFound" }>;
+export const recovered = program.pipe(
+  Effect.catch((error) => (error._tag === "NotFound" ? Effect.succeed(0) : Effect.fail(error))),
+);
+`,
+    "catch-tag.ts": `import { Effect, Schema } from "effect";
+class NotFound extends Schema.TaggedError<NotFound>()("NotFound", {}) {}
+declare const program: Effect.Effect<number, NotFound>;
+export const recovered = program.pipe(Effect.catchTag("NotFound", () => Effect.succeed(0)));
+`,
+    "tagged.ts": 'export const ready = { _tag: "Ready", value: 1 };\n',
+    "wire.test.ts": 'export const expected = { _tag: "Ready", value: 1 };\n',
+    "struct-tag.ts": `import { Schema } from "effect";
+export const Ready = Schema.Struct({ _tag: Schema.Literal("Ready") });
+`,
+    "chained.ts":
+      "declare const input: string;\nexport const value = input as unknown as number;\n",
+    "widen.ts": `interface User { readonly id: string }
+declare function loadUser(): User;
+const loaded: User = loadUser();
+const stored: unknown = loaded;
+export const user = stored as User;
+`,
+    "reduce.ts": `const items = [1, 2];
+export const all = items.reduce((acc, item) => acc.concat([item]), []);
+`,
+  });
+  assertRules(codes, {
+    "catch.ts": ["anti-slop-effect(no-manual-effect-error-tag)"],
+    "catch-tag.ts": [],
+    "tagged.ts": ["anti-slop-effect(no-manual-tagged-construction)"],
+    "wire.test.ts": [],
+    "struct-tag.ts": ["effecttsgo(schema-struct-with-tag)"],
+    "chained.ts": ["anti-slop(no-chained-type-assertions)"],
+    "widen.ts": ["anti-slop(no-widen-then-assert)"],
+    "reduce.ts": ["anti-slop(no-reduce-accumulator-copy)"],
+  });
+});
+
+void test("lint requires parsed boundaries only in domain workflows", async (t) => {
+  const files = {
+    "parameter.ts": "export function handle(input: unknown) {\n  return String(input);\n}\n",
+    "dictionary.ts": "export type Metadata = Record<string, unknown>;\n",
+  };
+  assertRules(await lintFixtures(t, "apps/api/src/services", files), {
+    "parameter.ts": ["anti-slop(no-unknown-parameters)"],
+    "dictionary.ts": ["anti-slop(no-unsafe-dictionary-type)"],
+  });
+  assertRules(await lintFixtures(t, "apps/api/src", files), {
+    "parameter.ts": [],
+    "dictionary.ts": [],
+  });
+});
+
+void test("lint hoists Schema compilers out of function bodies", async (t) => {
+  const schema =
+    'import { Schema } from "effect";\nconst User = Schema.Struct({ name: Schema.String });\n';
+  const codes = await lintFixtures(t, "apps/api/src", {
+    "inline.ts": `${schema}export const decode = (input: string) => Schema.decodeUnknownSync(User)(input);\n`,
+    "hoisted.ts": `${schema}const decodeUser = Schema.decodeUnknownSync(User);\nexport const decode = (input: string) => decodeUser(input);\n`,
+    "aliased.ts": `import * as S from "effect/Schema";\nconst User = S.Struct({ name: S.String });\nexport const decode = (input: string) => S.decodeUnknownSync(User)(input);\n`,
+    "local.ts":
+      "const Schema = { decodeSync: (schema: string) => (input: string) => schema + input };\nexport const decode = (input: string) => Schema.decodeSync('User')(input);\n",
+    "camel.ts":
+      'import { Schema } from "effect";\nconst userSchema = Schema.Struct({ name: Schema.String });\nexport const decode = (input: string) => Schema.decodeUnknownSync(userSchema)(input);\n',
+    "argument.ts": `${schema}import { Effect } from "effect";\nexport const decode = (input: string) => Effect.succeed(input).pipe(Effect.flatMap(Schema.decodeUnknownEffect(User)));\n`,
+    "named.ts":
+      'import { Struct, String as Text, decodeUnknownSync } from "effect/Schema";\nconst User = Struct({ name: Text });\nexport const decode = (input: string) => decodeUnknownSync(User)(input);\n',
+    "parameter.ts":
+      'import { Schema } from "effect";\nexport const decodeWith = (options: { readonly schema: Schema.String; readonly input: string }) => Schema.decodeSync(options.schema)(options.input);\n',
+  });
+  assertRules(codes, {
+    "inline.ts": ["starter(schema-compile-scope)"],
+    "hoisted.ts": [],
+    "aliased.ts": ["starter(schema-compile-scope)"],
+    "local.ts": [],
+    "camel.ts": ["starter(schema-compile-scope)"],
+    "argument.ts": ["starter(schema-compile-scope)"],
+    "named.ts": ["starter(schema-compile-scope)"],
+    "parameter.ts": [],
+  });
+});
+
+void test("lint keeps tests on real seams, Effect test runners, and controlled clocks", async (t) => {
+  const codes = await lintFixtures(t, "apps/api/src", {
+    "vite-plus.test.ts": 'import { vi } from "vite-plus/test";\nvi.mock("./users.js");\n',
+    "effect-vitest.test.ts": 'import { vi } from "@effect/vitest";\nvi.doMock("./users.js");\n',
+    "runtime.test.ts":
+      'import { Effect } from "effect";\nexport const value = Effect.runSync(Effect.succeed(1));\n',
+    "managed.test.ts":
+      'import { Layer, ManagedRuntime } from "effect";\nexport const runtime = ManagedRuntime.make(Layer.empty);\n',
+    "wall-clock.test.ts": "export const started = Date.now();\nexport const today = new Date();\n",
+    "global-clock.test.ts": "export const started = globalThis.Date.now();\n",
+    "date-call.test.ts": "export const today = Date();\n",
+    "fixed-clock.test.ts": 'export const epoch = new Date("2026-01-01T00:00:00.000Z");\n',
+    "clock.ts": "export const started = Date.now();\n",
+  });
+  assertRules(codes, {
+    "vite-plus.test.ts": ["anti-slop(no-module-mocking)"],
+    "effect-vitest.test.ts": ["anti-slop(no-module-mocking)"],
+    "runtime.test.ts": ["starter(test-runtime)"],
+    "managed.test.ts": ["starter(test-runtime)"],
+    "wall-clock.test.ts": ["starter(no-wall-clock-in-tests)"],
+    "global-clock.test.ts": ["starter(no-wall-clock-in-tests)"],
+    "date-call.test.ts": ["starter(no-wall-clock-in-tests)"],
+    "fixed-clock.test.ts": [],
+    "clock.ts": [],
+  });
+  for (const name of ["runtime.test.ts", "managed.test.ts"]) {
+    assert.ok(!codes.get(name).has("starter(runtime-boundary)"), `${name} is a test, not app code`);
+  }
+});
+
+void test("lint lets web tests run Effects and tooling tests read the clock", async (t) => {
+  const source =
+    'import { Effect } from "effect";\nexport const value = Effect.runSync(Effect.succeed(1));\n';
+  assertRules(await lintFixtures(t, "apps/web/src", { "client.test.ts": source }), {
+    "client.test.ts": [],
+  });
+  assertRules(
+    await lintFixtures(t, "tools", { "timing.test.js": "export const started = Date.now();\n" }),
+    { "timing.test.js": [] },
+  );
+});
+
+void test("lint keeps the web app on the shared contracts instead of API internals", async (t) => {
+  const codes = await lintFixtures(t, "apps/web/src", {
+    "relative.ts": 'export { listUsers } from "../../../api/src/services/users.js";\n',
+    "root.ts": 'export { listUsers } from "../../../../apps/api/src/services/users.js";\n',
+    "alias.ts": 'export { listUsers } from "@/../../api/src/services/users.js";\n',
+    "package.ts": `export * from "${await packageName("apps/api")}";\n`,
+    "contracts.ts": `export { StarterApi } from "${await packageName("packages/contracts")}/http";\n`,
+  });
+  assertRules(codes, {
+    "relative.ts": ["eslint(no-restricted-imports)"],
+    "root.ts": ["eslint(no-restricted-imports)"],
+    "alias.ts": ["eslint(no-restricted-imports)"],
+    "package.ts": ["eslint(no-restricted-imports)"],
+    "contracts.ts": [],
+  });
 });
 
 void test("lint requires explanations for lint, TypeScript, and Effect suppressions", async (t) => {

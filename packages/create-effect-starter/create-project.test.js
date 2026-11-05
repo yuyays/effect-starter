@@ -285,6 +285,9 @@ for (const framework of ["react", "tanstack-start", "vue"]) {
     const project = await createProject("my-app", directory, { framework });
     for (const path of [
       "tools/oxlint/index.js",
+      "tools/oxlint/anti-slop/index.ts",
+      "tools/oxlint/anti-slop/effect/index.ts",
+      "tools/oxlint/anti-slop/rules/no-module-mocking.ts",
       "tools/effect-policy.test.js",
       "apps/api/tsconfig.json",
     ]) {

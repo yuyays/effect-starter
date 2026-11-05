@@ -74,8 +74,8 @@ for (const framework of Object.keys(frameworks)) {
   if (framework === "vue") {
     config = config
       .replace(
-        '["react", "typescript", "import", "vitest"]',
-        '["vue", "typescript", "import", "vitest"]',
+        '["react", "typescript", "import", "vitest", "effecttsgo"]',
+        '["vue", "typescript", "import", "vitest", "effecttsgo"]',
       )
       .replace(/^      "react\/.*\n/gm, "");
   }
