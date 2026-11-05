@@ -61,6 +61,22 @@ void test("CLI generates a renamed project without generator artifacts", async (
     if (name === "web") assert.equal(pkg.dependencies["@my-app/contracts"], "workspace:*");
   }
   assert.deepEqual(await readdir(join(project, "packages")), ["contracts"]);
+  // Shared versions live once in the workspace catalog; no package pins its own copy.
+  const workspace = parse(await readFile(join(project, "pnpm-workspace.yaml"), "utf8"));
+  const { catalog } = workspace;
+  assert.match(catalog.effect, /^\^?4\./);
+  // Vite+ and its Vite-compatible core must move together when either is bumped.
+  assert.equal(catalog.vite, `npm:@voidzero-dev/vite-plus-core@${catalog["vite-plus"]}`);
+  assert.equal(workspace.overrides["vite@*"], "catalog:");
+  assert.equal(workspace.peerDependencyRules.allowedVersions.vite, catalog["vite-plus"]);
+  for (const location of [".", "apps/api", "apps/web", "packages/contracts"]) {
+    const pkg = JSON.parse(await readFile(join(project, location, "package.json"), "utf8"));
+    for (const field of ["dependencies", "devDependencies"]) {
+      for (const [name, version] of Object.entries(pkg[field] ?? {})) {
+        if (Object.hasOwn(catalog, name)) assert.equal(version, "catalog:", `${location} ${name}`);
+      }
+    }
+  }
   assert.deepEqual(await readdir(join(project, ".github/workflows")), ["ci.yml"]);
   // Generated pnpm CI is the repository workflow, so Dependabot updates reach new projects.
   assert.equal(
@@ -155,12 +171,14 @@ void test("Bun CLI emits Bun configuration, instructions, and CI", async (t) => 
   const project = join(directory, "bun-app");
   const manifest = JSON.parse(await readFile(join(project, "package.json"), "utf8"));
   assert.equal(manifest.packageManager, "bun@1.4.2");
-  assert.deepEqual(manifest.workspaces, ["apps/*", "packages/*"]);
-  assert.equal(manifest.overrides.vite, manifest.devDependencies.vite);
-  assert.equal(
-    manifest.overrides.vite,
-    `npm:@voidzero-dev/vite-plus-core@${manifest.devDependencies["vite-plus"]}`,
-  );
+  // Bun reads the workspace catalog from package.json.
+  assert.deepEqual(manifest.workspaces.packages, ["apps/*", "packages/*"]);
+  const { catalog } = manifest.workspaces;
+  assert.match(catalog.effect, /^\^?4\./);
+  assert.equal(manifest.devDependencies["vite-plus"], "catalog:");
+  assert.equal(manifest.overrides.vite, catalog.vite);
+  assert.equal(manifest.devDependencies.vite, "catalog:");
+  assert.equal(manifest.overrides.vite, `npm:@voidzero-dev/vite-plus-core@${catalog["vite-plus"]}`);
   assert.equal(manifest.overrides.vitest, versions.vitest);
   assert.ok(manifest.trustedDependencies.includes("esbuild"));
   const files = await readdir(project);

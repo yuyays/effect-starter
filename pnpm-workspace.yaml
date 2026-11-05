@@ -2,6 +2,15 @@ packages:
   - "apps/*"
   - "packages/*"
   - "packages/create-effect-starter/frontends/*"
+# Shared versions: packages declare these as `catalog:` so they stay aligned.
+# TypeScript is not here because the Vue starter pins its own version.
+catalog:
+  "@effect/platform-node": "^4.1.1"
+  "@effect/sql-pg": "^4.1.1"
+  "@effect/vitest": "4.1.1"
+  effect: "^4.1.1"
+  vite: "npm:@voidzero-dev/vite-plus-core@1.4.0"
+  vite-plus: "1.4.0"
 minimumReleaseAge: 1440
 allowBuilds:
   "vue-demi": true
@@ -9,7 +18,7 @@ allowBuilds:
   esbuild: true
   msgpackr-extract: true
 overrides:
-  "vite@*": npm:@voidzero-dev/vite-plus-core@1.4.0
+  "vite@*": "catalog:"
   "vitest@*": 5.0.5
 
 # Vite+ core uses the toolchain version for its Vite 8-compatible alias.
