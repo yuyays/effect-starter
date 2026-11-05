@@ -41,7 +41,8 @@ concurrency:
 
 jobs:
   generated-projects:
-    name: ${{ matrix.framework }}
+    # `--framework none` generates the API without a frontend.
+    name: ${{ matrix.framework == 'none' && 'api-only' || matrix.framework }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
