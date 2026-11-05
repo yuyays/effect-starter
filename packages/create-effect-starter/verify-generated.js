@@ -37,7 +37,7 @@ async function response(url) {
   }
 }
 
-async function smokeDev(packageManager, destination, framework) {
+async function smokeDev(packageManager, destination, framework, runtime) {
   // Development must start from a clean checkout without prebuilt JavaScript.
   await rm(join(destination, "apps/api/dist"), { recursive: true, force: true });
   await rm(join(destination, "packages/contracts/dist"), { recursive: true, force: true });
@@ -105,7 +105,7 @@ async function smokeDev(packageManager, destination, framework) {
       framework === "tanstack-start" ? /TanStack Start, Effect Platform API/ : /<div id="root">/,
     );
     assert.deepEqual(await proxyHealth.json(), { ok: true, service: "api" });
-    // Change a contract route to verify compilation and Node dependency watching.
+    // Change a contract route to verify compilation and runtime dependency watching.
     const contractsPath = join(destination, "packages/contracts/src/http/index.ts");
     const contracts = await readFile(contractsPath, "utf8");
     try {
@@ -160,7 +160,15 @@ async function smokeDev(packageManager, destination, framework) {
       await setTimeout(100);
     }
     assert.ok(stopped, `Dev servers remained running after Ctrl+C:\n${output}`);
-    console.log(`${packageManager}: web, API, proxy, API/contract reload, and Ctrl+C verified`);
+    // Closed ports are not enough: lingering watchers would keep the terminal busy.
+    const exited = () => child.exitCode !== null || child.signalCode !== null;
+    for (let attempt = 0; attempt < 100 && !exited(); attempt++) {
+      await setTimeout(100);
+    }
+    assert.ok(exited(), `The dev command kept running after Ctrl+C:\n${output}`);
+    console.log(
+      `${packageManager} (${runtime} API): web, API, proxy, API/contract reload, and Ctrl+C verified`,
+    );
   } finally {
     try {
       process.kill(-pid, "SIGKILL");
@@ -170,10 +178,20 @@ async function smokeDev(packageManager, destination, framework) {
   }
 }
 
-async function smokeProduction(destination) {
+async function smokeProduction(destination, runtime) {
+  // Node with TypeScript support disabled proves production only loads emitted
+  // JavaScript. Bun runs TypeScript natively, so it cannot prove that itself.
+  await smokeApi(destination, process.execPath, ["--no-strip-types", "apps/api/dist/main.js"]);
+  console.log("Node production API verified with TypeScript support disabled");
+  if (runtime === "bun") {
+    await smokeApi(destination, "bun", ["apps/api/dist/main.js"]);
+    console.log("Bun production API verified");
+  }
+}
+
+async function smokeApi(destination, command, args) {
   const port = await freePort();
-  // Disable native TypeScript support to prove production only loads JavaScript.
-  const child = spawn(process.execPath, ["--no-strip-types", "apps/api/dist/main.js"], {
+  const child = spawn(command, args, {
     cwd: destination,
     env: {
       ...process.env,
@@ -197,13 +215,12 @@ async function smokeProduction(destination) {
       const api = await response(`http://127.0.0.1:${port}/api/health`);
       if (api?.ok) {
         assert.deepEqual(await api.json(), { ok: true, service: "api" });
-        console.log("Node production API verified with TypeScript support disabled");
         return;
       }
       if (child.exitCode !== null) break;
       await setTimeout(100);
     }
-    assert.fail(`Production API did not become ready:\n${output}`);
+    assert.fail(`Production API (${command}) did not become ready:\n${output}`);
   } finally {
     child.kill("SIGKILL");
     await new Promise((resolve) => {
@@ -221,12 +238,20 @@ for (const framework of frameworkNames) getFramework(framework);
 const directory = await mkdtemp(join(tmpdir(), "effect-generated-check-"));
 try {
   for (const framework of frameworkNames) {
-    for (const packageManager of ["pnpm", "bun"]) {
-      const project = await createProject(`${framework}-${packageManager}-app`, directory, {
-        packageManager,
-        framework,
-      });
-      console.log(`\nVerifying ${packageManager} project: ${project.destination}`);
+    // Common setups end to end; unit tests cover pnpm with the Bun runtime.
+    for (const [packageManager, runtime] of [
+      ["pnpm", "node"],
+      ["bun", "node"],
+      ["bun", "bun"],
+    ]) {
+      const project = await createProject(
+        `${framework}-${packageManager}-${runtime}-app`,
+        directory,
+        { packageManager, framework, runtime },
+      );
+      console.log(
+        `\nVerifying ${packageManager} project with ${runtime} API: ${project.destination}`,
+      );
       if (packageManager === "bun") run("bun", ["install"], project.destination);
       run(packageManager, ["install", "--frozen-lockfile"], project.destination);
       // Enforcement must survive consumers replacing the agent instructions.
@@ -234,8 +259,8 @@ try {
       for (const script of ["lint", "format:check", "typecheck", "test", "build"]) {
         run(packageManager, ["run", script], project.destination);
       }
-      await smokeProduction(project.destination);
-      await smokeDev(packageManager, project.destination, framework);
+      await smokeProduction(project.destination, runtime);
+      await smokeDev(packageManager, project.destination, framework, runtime);
     }
   }
 } finally {

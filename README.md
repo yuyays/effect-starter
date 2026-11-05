@@ -5,9 +5,9 @@ Effect v4, Drizzle, PostgreSQL, and Vite+.
 
 Deployment is provider-agnostic: no hosting provider is preconfigured. Choose
 your own platform—AWS, Azure, GCP, Cloudflare, Railway, or another host. The API
-targets Node.js; Bun is supported as a package manager, not as the API runtime
-for now.
-Non-Node runtimes may require platform-specific adaptation.
+runs on Node.js by default. Bun is supported as a package manager and, optionally,
+as the API runtime (`--runtime bun`); Vite+ and the project checks always run on Node.js.
+Other runtimes may require platform-specific adaptation.
 
 ## Why I built this
 
@@ -31,7 +31,7 @@ npx --yes https://github.com/yuyays/effect-starter/releases/latest/download/crea
 ```
 
 Use arrow keys and Enter to choose your project
-name, starter, and package manager. Review the dependency list, then accept or
+name, starter, package manager, and API runtime (Node.js by default, or Bun). Review the dependency list, then accept or
 skip installation.
 
 - **React:** single-page app with TanStack Router and Query.

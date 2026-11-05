@@ -1,8 +1,8 @@
 # create-effect-starter
 
 Create a full-stack Effect v4, Drizzle, and Vite+ project with React, TanStack Start, or Vue.
-Requires Node.js 24.11+ and pnpm 11 or Bun 1.4.2. The API runs on Node.js with
-either package manager.
+Requires Node.js 24.11+ and pnpm 11 or Bun 1.4.2. The API runs on Node.js by
+default; Bun is an optional API runtime with either package manager.
 
 ## Recommended: run a GitHub Release
 
@@ -31,8 +31,9 @@ Older releases, including v0.1.0, provide the React starter only. The `latest`
 URL points at the newest GitHub release, so new versions do not require a new
 command.
 
-Enter `my-app` to create a project in the current directory. Choose pnpm or Bun,
-review the direct dependencies and development tools, then confirm whether to
+Enter `my-app` to create a project in the current directory. Choose pnpm or Bun
+as the package manager, then Node.js or Bun as the API runtime (preselected to
+match the package manager). Review the direct dependencies and development tools, then confirm whether to
 run `pnpm install` or `bun install`. After installation, change into your project
 and follow its README. If you decline, the CLI shows the manual install command.
 The launcher does not choose your app's package manager. Ctrl+C at the install
@@ -97,16 +98,24 @@ node effect-starter-cli/package/cli.js
 Interactive users can just pick from the menus. Flags skip individual prompts:
 
 ```sh
-pnpm create:app ../my-app --framework vue --package-manager pnpm
+pnpm create:app ../my-app --framework vue --package-manager pnpm --runtime node
 ```
 
 Supported framework values are `react`, `tanstack-start`, and `vue`.
-Noninteractive creation requires a directory and defaults to React and pnpm,
-without installing dependencies. Use `--install` to explicitly install or
+Supported runtime values are `node` and `bun`.
+Noninteractive creation requires a directory and defaults to React, pnpm, and the
+Node.js API runtime, without installing dependencies. Use `--install` to explicitly install or
 `--no-install` to skip the interactive install prompt. Installation runs inside
 the generated project with the selected package manager. If it fails or that
 package manager is missing, the CLI keeps the project, exits with an error, and
 shows the install command to retry.
+
+`--runtime bun` runs the API on Bun 1.4.2+ in development (`bun --watch`) and
+production (`bun dist/main.js`). It is independent of the package manager: Vite+,
+lint, typecheck, and tests still run on Node.js, and the API keeps
+`@effect/platform-node`, which Bun supports. The Bun option changes only the API
+`dev` and `start` scripts, not the codebase. Generated projects declare
+`engines.bun` on the API package; install Bun wherever that API runs.
 Existing empty directories and nested paths are supported; nonempty directories
 are never overwritten.
 
@@ -210,7 +219,7 @@ the repository root. Commit the manifests and root `pnpm-lock.yaml` together.
 The builder selects the API, contracts, and chosen frontend importers from that
 single lockfile and rebases workspace links. There are no separately maintained
 template lockfiles. Run `pnpm test:generated` to verify all three starters with
-pnpm and Bun. Pass a framework name (for example `pnpm test:generated vue`) to
+pnpm + Node.js, Bun + Node.js, and Bun + the Bun API runtime. Pass a framework name (for example `pnpm test:generated vue`) to
 check only that starter.
 
 ## Dependency updates
