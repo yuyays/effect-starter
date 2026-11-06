@@ -113,21 +113,8 @@ export default defineConfig({
         },
       },
       {
-        files: ["apps/web/src/**"],
-        rules: {
-          "no-restricted-imports": [
-            "error",
-            {
-              patterns: [
-                {
-                  // Scope-free so generated projects keep this line within the format width.
-                  regex: "^@[^/]+/api(?:/|$)|^(?:@/)?(?:\\.\\./)+(?:apps/)?api/src(?:/|$)",
-                  message: "Call the API through the contracts package and its HttpApi client.",
-                },
-              ],
-            },
-          ],
-        },
+        files: ["apps/*/src/**", "packages/*/src/**"],
+        rules: { "starter/workspace-imports": "error" },
       },
       {
         // The browser client module is the frontend's Effect entry point.

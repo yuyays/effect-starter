@@ -357,17 +357,67 @@ void test(
       "root.ts": 'export { listUsers } from "../../../../apps/api/src/services/users.js";\n',
       "alias.ts": 'export { listUsers } from "@/../../api/src/services/users.js";\n',
       "package.ts": `export * from "${await packageName("apps/api")}";\n`,
+      "normalized.ts": 'export * from ".././../../api/src/services/users.ts";\n',
+      "dynamic.ts": `export const load = () => import("${await packageName("apps/api")}/src/http.ts");\n`,
       "contracts.ts": `export { StarterApi } from "${await packageName("packages/contracts")}/http";\n`,
     });
     assertRules(codes, {
-      "relative.ts": ["eslint(no-restricted-imports)"],
-      "root.ts": ["eslint(no-restricted-imports)"],
-      "alias.ts": ["eslint(no-restricted-imports)"],
-      "package.ts": ["eslint(no-restricted-imports)"],
+      "relative.ts": ["starter(workspace-imports)"],
+      "root.ts": ["starter(workspace-imports)"],
+      "alias.ts": ["starter(workspace-imports)"],
+      "package.ts": ["starter(workspace-imports)"],
+      "normalized.ts": ["starter(workspace-imports)"],
+      "dynamic.ts": ["starter(workspace-imports)"],
       "contracts.ts": [],
     });
   },
 );
+
+void test("lint keeps contracts independent of applications", async (t) => {
+  const api = await packageName("apps/api");
+  assertRules(
+    await lintFixtures(t, "packages/contracts/src", {
+      "app.ts": `export * from "${api}";\n`,
+      "relative.ts": 'export * from "../../../../apps/api/src/db/database.ts";\n',
+      "dynamic.ts": `export const load = () => import("${api}/src/http.ts");\n`,
+      "import-type.ts": `export type App = typeof import("${api}");\n`,
+      "require.ts": `export const app = require("${api}");\n`,
+      "local.ts": 'export { UsersResponse } from "../schemas/user.ts";\n',
+    }),
+    {
+      "app.ts": ["starter(workspace-imports)"],
+      "relative.ts": ["starter(workspace-imports)"],
+      "dynamic.ts": ["starter(workspace-imports)"],
+      "import-type.ts": ["starter(workspace-imports)"],
+      "require.ts": ["starter(workspace-imports)"],
+      "local.ts": [],
+    },
+  );
+});
+
+void test("lint requires public package exports across workspaces", async (t) => {
+  const contracts = await packageName("packages/contracts");
+  assertRules(
+    await lintFixtures(t, "apps/api/src", {
+      "public.ts": `export { StarterApi } from "${contracts}/http";\n`,
+      "root.ts": `export { StarterApi } from "${contracts}";\n`,
+      "private.ts": `export { StarterApi } from "${contracts}/src/http/index.ts";\n`,
+      "type.ts": `export type { User } from "${contracts}/src/schemas/user.ts";\n`,
+      "relative.ts": 'export * from "../../../../packages/contracts/src/http/index.ts";\n',
+      "normalized.ts": 'export * from ".././../../../packages/contracts/src/http/index.ts";\n',
+      "local.ts": 'export { Database } from "../db/database.ts";\n',
+    }),
+    {
+      "public.ts": [],
+      "root.ts": [],
+      "private.ts": ["starter(workspace-imports)"],
+      "type.ts": ["starter(workspace-imports)"],
+      "relative.ts": ["starter(workspace-imports)"],
+      "normalized.ts": ["starter(workspace-imports)"],
+      "local.ts": [],
+    },
+  );
+});
 
 void test("lint requires explanations for lint, TypeScript, and Effect suppressions", async (t) => {
   const directory = await fixture(t);

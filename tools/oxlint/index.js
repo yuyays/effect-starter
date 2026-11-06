@@ -1,3 +1,5 @@
+import { workspaceImports } from "./workspace-imports.js";
+
 function memberName(node) {
   return node.computed ? node.property.value : node.property.name;
 }
@@ -281,6 +283,7 @@ const suppressionReason = {
 export default {
   meta: { name: "starter" },
   rules: {
+    "workspace-imports": workspaceImports,
     "no-wall-clock-in-tests": noWallClockInTests,
     "runtime-boundary": runtimeBoundary,
     "schema-compile-scope": schemaCompileScope,
