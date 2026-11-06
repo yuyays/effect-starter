@@ -49,8 +49,12 @@ export const workspaceImports = {
     if (!owner) return {};
 
     const check = (node) => {
-      if (typeof node?.value !== "string") return;
-      const source = node.value.split(/[?#]/)[0];
+      const value =
+        node?.type === "TemplateLiteral" && node.expressions.length === 0
+          ? node.quasis[0].value.cooked
+          : node?.value;
+      if (typeof value !== "string") return;
+      const source = value.split(/[?#]/)[0];
       const relative = source.startsWith(".") || source.startsWith("/") || source.startsWith("@/");
       const target = relative
         ? workspaceAt(

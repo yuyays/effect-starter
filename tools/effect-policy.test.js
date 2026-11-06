@@ -359,6 +359,7 @@ void test(
       "package.ts": `export * from "${await packageName("apps/api")}";\n`,
       "normalized.ts": 'export * from ".././../../api/src/services/users.ts";\n',
       "dynamic.ts": `export const load = () => import("${await packageName("apps/api")}/src/http.ts");\n`,
+      "template.ts": `export const load = () => import(\`${await packageName("apps/api")}\`);\n`,
       "contracts.ts": `export { StarterApi } from "${await packageName("packages/contracts")}/http";\n`,
     });
     assertRules(codes, {
@@ -368,8 +369,45 @@ void test(
       "package.ts": ["starter(workspace-imports)"],
       "normalized.ts": ["starter(workspace-imports)"],
       "dynamic.ts": ["starter(workspace-imports)"],
+      "template.ts": ["starter(workspace-imports)"],
       "contracts.ts": [],
     });
+  },
+);
+
+void test(
+  "lint keeps app configuration and backend code on public package interfaces",
+  { skip: skipWithoutWeb },
+  async (t) => {
+    const api = await packageName("apps/api");
+    const web = await packageName("apps/web");
+    assertRules(await lintFixtures(t, "apps/web", { "config.ts": `export * from "${api}";\n` }), {
+      "config.ts": ["starter(workspace-imports)"],
+    });
+    assertRules(await lintFixtures(t, "apps/api/src", { "web.ts": `export * from "${web}";\n` }), {
+      "web.ts": ["starter(workspace-imports)"],
+    });
+  },
+);
+
+void test(
+  "lint enforces workspace imports in Vue single-file components",
+  { skip: existsSync(join(root, "apps/web/src/App.vue")) ? false : "no Vue frontend" },
+  async (t) => {
+    const api = await packageName("apps/api");
+    const contracts = await packageName("packages/contracts");
+    const component = (source) =>
+      `<script setup lang="ts">\nimport * as api from "${source}";\n</script>\n<template><pre>{{ api }}</pre></template>\n`;
+    assertRules(
+      await lintFixtures(t, "apps/web/src", {
+        "private.vue": component(api),
+        "public.vue": component(`${contracts}/http`),
+      }),
+      {
+        "private.vue": ["starter(workspace-imports)"],
+        "public.vue": [],
+      },
+    );
   },
 );
 

@@ -113,7 +113,7 @@ export default defineConfig({
         },
       },
       {
-        files: ["apps/*/src/**", "packages/*/src/**"],
+        files: ["apps/**", "packages/**"],
         rules: { "starter/workspace-imports": "error" },
       },
       {

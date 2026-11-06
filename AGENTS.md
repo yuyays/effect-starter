@@ -17,8 +17,6 @@ Name API tests that open real sockets or processes `*.integration.test.ts`.
   and call the API through its typed client. Contracts stay independent of apps.
 - Import another workspace by its package name and declared public exports. Use
   relative paths within a workspace; cross-workspace source paths are rejected by lint.
-- Keep database access and runtime wiring in `apps/api`. Extract another shared
-  package when a second backend consumer needs the same implementation.
 
 # Test quality
 
