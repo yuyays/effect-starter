@@ -24,6 +24,7 @@ function isExported(workspace, subpath) {
   if (exports === null) return false;
   if (exports === undefined || typeof exports === "string") return subpath === ".";
   const keys = Object.keys(exports);
+  if (keys.length === 0) return false;
   if (!keys.some((key) => key.startsWith("."))) return subpath === ".";
   if (Object.hasOwn(exports, subpath)) return exports[subpath] !== null;
   const pattern = keys

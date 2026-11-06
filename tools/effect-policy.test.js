@@ -419,6 +419,43 @@ void test("lint requires public package exports across workspaces", async (t) =>
   );
 });
 
+void test("lint respects empty export maps, conditional roots, and private pattern exclusions", async (t) => {
+  const empty = await fixture(t, "packages");
+  const library = await fixture(t, "packages");
+  await writeFile(
+    join(empty, "package.json"),
+    JSON.stringify({ name: "@policy/empty", exports: {} }),
+  );
+  await writeFile(
+    join(library, "package.json"),
+    JSON.stringify({
+      name: "@policy/library",
+      exports: {
+        ".": { import: "./src/index.ts" },
+        "./*": "./src/*.ts",
+        "./private/*": null,
+        "./blocked": null,
+      },
+    }),
+  );
+  assertRules(
+    await lintFixtures(t, "apps/api/src", {
+      "empty.ts": 'export * from "@policy/empty";\n',
+      "conditional.ts": 'export * from "@policy/library";\n',
+      "pattern.ts": 'export * from "@policy/library/users";\n',
+      "private.ts": 'export * from "@policy/library/private/users";\n',
+      "blocked.ts": 'export * from "@policy/library/blocked";\n',
+    }),
+    {
+      "empty.ts": ["starter(workspace-imports)"],
+      "conditional.ts": [],
+      "pattern.ts": [],
+      "private.ts": ["starter(workspace-imports)"],
+      "blocked.ts": ["starter(workspace-imports)"],
+    },
+  );
+});
+
 void test("lint requires explanations for lint, TypeScript, and Effect suppressions", async (t) => {
   const directory = await fixture(t);
   for (const [name, source, allowed] of [
