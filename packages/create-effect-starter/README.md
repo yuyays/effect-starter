@@ -209,8 +209,9 @@ creates a GitHub release with `create-effect-starter.tgz` attached. It does not
 publish to npm. The workflow must be on the default branch before it can be run
 manually.
 
-For a manual release from a checkout of the tagged commit, use the test and
-pack commands above, then:
+For a manual release from a checkout of the tagged commit, first run the checks in
+`.github/workflows/ci.yml` and `pnpm test:generated`. Use the test and pack commands
+above, then:
 
 ```sh
 gh release create v0.2.0 /tmp/create-effect-starter.tgz --verify-tag --generate-notes
