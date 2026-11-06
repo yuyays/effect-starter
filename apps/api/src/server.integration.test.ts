@@ -1,9 +1,11 @@
 import { NodeHttpServer } from "@effect/platform-node";
-import { Deferred, Effect, Fiber, Layer } from "effect";
-import { HttpRouter, HttpServerResponse } from "effect/http";
+import { Deferred, Effect, Fiber, Layer, Ref } from "effect";
+import { FetchHttpClient, HttpClient, HttpRouter, HttpServerResponse } from "effect/http";
 import { describe, expect, it } from "@effect/vitest";
 import { Agent, get, type Server } from "node:http";
 import { createApiServer } from "./server.ts";
+import { Database } from "./db/database.ts";
+import { HttpLive } from "./http.ts";
 
 // Signals when a request reaches the handler, then answers after a delay, so the
 // request is provably in flight when the test starts shutdown.
@@ -68,6 +70,50 @@ const shutDown = (serving: Fiber.Fiber<unknown, unknown>) =>
   Fiber.interrupt(serving).pipe(Effect.timeout("3 seconds"));
 
 describe("API server", () => {
+  it.live("interrupts backend work and runs cleanup when the client disconnects", () =>
+    Effect.gen(function* () {
+      const entered = yield* Deferred.make<void>();
+      const cleaned = yield* Deferred.make<void>();
+      const interrupted = yield* Ref.make(false);
+      const finalizers = yield* Ref.make(0);
+      const query = Deferred.succeed(entered, undefined).pipe(
+        Effect.andThen(Effect.never),
+        Effect.onInterrupt(() => Ref.set(interrupted, true)),
+        Effect.ensuring(
+          Ref.update(finalizers, (count) => count + 1).pipe(
+            Effect.andThen(Deferred.succeed(cleaned, undefined)),
+          ),
+        ),
+      );
+      const server = createApiServer();
+      yield* Effect.addFinalizer(() => Effect.sync(() => server.closeAllConnections()));
+      const serving = yield* HttpRouter.serve(HttpLive, { disableLogger: true }).pipe(
+        Layer.provide(Layer.succeed(Database, { selectUsers: () => query })),
+        Layer.provide(NodeHttpServer.layer(() => server, { port: 0 })),
+        Layer.launch,
+        Effect.forkChild,
+      );
+      const port = yield* listeningPort(server);
+      const client = yield* HttpClient.HttpClient;
+      const pending = yield* client
+        .get(`http://127.0.0.1:${port}/api/users`)
+        .pipe(Effect.forkChild);
+      yield* Deferred.await(entered).pipe(Effect.timeout("3 seconds"));
+
+      // Interrupting the real HTTP client closes its connection after the query has started.
+      yield* Fiber.interrupt(pending);
+      yield* Deferred.await(cleaned).pipe(Effect.timeout("3 seconds"));
+      expect(yield* Ref.get(interrupted)).toBe(true);
+      expect(yield* Ref.get(finalizers)).toBe(1);
+
+      const health = yield* client.get(`http://127.0.0.1:${port}/api/health`);
+      expect(health.status).toBe(200);
+      expect(yield* health.json).toEqual({ ok: true, service: "api" });
+      yield* shutDown(serving);
+      expect(yield* Ref.get(finalizers)).toBe(1);
+    }).pipe(Effect.provide(FetchHttpClient.layer)),
+  );
+
   // Real sockets and Node's keep-alive handling run on the wall clock, not TestClock.
   it.live("closes a connection whose request was in flight when shutdown started", () =>
     Effect.gen(function* () {
