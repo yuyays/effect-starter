@@ -145,6 +145,11 @@ cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env
 ```
 
+The API loads `.env` from its working directory through Effect (`apps/api` for the
+commands below), with environment variables taking priority. The file is optional
+when the required values are supplied by the environment.
+Restart the API after editing `.env`.
+
 Set `DATABASE_URL` in `apps/api/.env` to a running PostgreSQL database, then run
 `pnpm db:generate`, `pnpm db:migrate`, and `pnpm dev`.
 Use `pnpm dev:web` or `pnpm dev:api` to run one server. The API health endpoint

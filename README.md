@@ -47,7 +47,13 @@ Effect execution at its entrypoint too.
 
 ## Run and verify your app
 
-Set `DATABASE_URL` in `apps/api/.env`, then:
+Set `DATABASE_URL` in `apps/api/.env`.
+
+The API loads `.env` through Effect's configuration provider, with environment
+variables taking priority. The file is optional; missing required values, invalid
+values, and file read errors still fail startup. Restart the API after editing `.env`.
+
+Then run:
 
 | Task               | pnpm                | Bun                |
 | ------------------ | ------------------- | ------------------ |
