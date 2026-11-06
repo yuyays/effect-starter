@@ -293,7 +293,7 @@ function timerKind(context, callee) {
   return undefined;
 }
 
-// Only direct Promise executors are inspected; this rule does not follow helper calls.
+// Inspect enclosing Promise executors without following calls or timer aliases.
 function inPromiseExecutor(context, node) {
   for (let parent = node.parent; parent; parent = parent.parent) {
     if (
@@ -303,11 +303,12 @@ function inPromiseExecutor(context, node) {
     )
       continue;
     const constructor = parent.parent;
-    return (
+    if (
       constructor?.type === "NewExpression" &&
       constructor.arguments[0] === parent &&
       globalReference(context, constructor.callee, "Promise")
-    );
+    )
+      return true;
   }
   return false;
 }

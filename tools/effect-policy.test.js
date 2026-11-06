@@ -318,6 +318,8 @@ void test("lint rejects direct timer waits in unit tests without banning event s
       "export const wait = () => new Promise<void>((resolve) => setTimeout(resolve, 50));\n",
     "callback.test.ts":
       "export const wait = () => new Promise<void>((resolve) => globalThis.setTimeout(() => resolve(), 50));\n",
+    "nested.test.ts":
+      "export const wait = () => new Promise<void>((resolve) => queueMicrotask(() => setTimeout(resolve, 50)));\n",
     "alias.test.ts":
       'import { setTimeout as sleep } from "node:timers/promises";\nexport const wait = () => sleep(50);\n',
     "namespace.test.ts":
@@ -346,6 +348,7 @@ void test("lint rejects direct timer waits in unit tests without banning event s
   assertRules(codes, {
     "wrapped.test.ts": ["starter(no-timer-waits-in-tests)"],
     "callback.test.ts": ["starter(no-timer-waits-in-tests)"],
+    "nested.test.ts": ["starter(no-timer-waits-in-tests)"],
     "alias.test.ts": ["starter(no-timer-waits-in-tests)"],
     "namespace.test.ts": ["starter(no-timer-waits-in-tests)"],
     "default.test.ts": ["starter(no-timer-waits-in-tests)"],

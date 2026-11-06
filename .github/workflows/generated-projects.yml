@@ -41,7 +41,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: generated-projects-${{ github.workflow }}-${{ inputs.ref || github.ref }}
+  group: generated-projects-${{ github.workflow }}-${{ inputs.ref && github.run_id || github.ref }}
   cancel-in-progress: true
 
 jobs:
