@@ -209,6 +209,10 @@ creates a GitHub release with `create-effect-starter.tgz` attached. It does not
 publish to npm. The workflow must be on the default branch before it can be run
 manually.
 
+Keep version tags immutable. Packaging runs with read-only permissions; a separate
+job publishes the validated archive. Its final tag comparison detects changes before
+publication but cannot lock the tag against concurrent edits.
+
 For a manual release from a checkout of the tagged commit, first run the checks in
 `.github/workflows/ci.yml` and `pnpm test:generated`. Use the test and pack commands
 above, then:

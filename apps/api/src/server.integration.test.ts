@@ -93,7 +93,10 @@ describe("API server", () => {
         Layer.launch,
         Effect.forkChild,
       );
-      const port = yield* listeningPort(server);
+      const port = yield* listeningPort(server).pipe(
+        Effect.raceFirst(Fiber.join(serving)),
+        Effect.timeout("3 seconds"),
+      );
       const client = yield* HttpClient.HttpClient;
       const pending = yield* client
         .get(`http://127.0.0.1:${port}/api/users`)
@@ -101,7 +104,7 @@ describe("API server", () => {
       yield* Deferred.await(entered).pipe(Effect.timeout("3 seconds"));
 
       // Interrupting the real HTTP client closes its connection after the query has started.
-      yield* Fiber.interrupt(pending);
+      yield* Fiber.interrupt(pending).pipe(Effect.timeout("3 seconds"));
       yield* Deferred.await(cleaned).pipe(Effect.timeout("3 seconds"));
       expect(yield* Ref.get(interrupted)).toBe(true);
       expect(yield* Ref.get(finalizers)).toBe(1);
