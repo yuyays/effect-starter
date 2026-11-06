@@ -9,19 +9,47 @@ on:
         type: string
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: release-${{ inputs.tag }}
   cancel-in-progress: false
 
 jobs:
-  release:
+  source:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      sha: ${{ steps.resolve.outputs.sha }}
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ inputs.tag }}
+          ref: refs/tags/${{ inputs.tag }}
+      - id: resolve
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  checks:
+    needs: source
+    uses: ./.github/workflows/ci.yml
+    with:
+      ref: ${{ needs.source.outputs.sha }}
+
+  generated-projects:
+    needs: source
+    uses: ./.github/workflows/generated-projects.yml
+    with:
+      ref: ${{ needs.source.outputs.sha }}
+
+  release:
+    needs: [source, checks, generated-projects]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.source.outputs.sha }}
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
@@ -33,7 +61,7 @@ jobs:
       - name: Verify all starters in the archive run through npx
         working-directory: ${{ runner.temp }}
         run: |
-          for framework in react tanstack-start vue; do
+          for framework in react tanstack-start vue none; do
             npx --yes --package "$RUNNER_TEMP/create-effect-starter.tgz" -- \
               create-effect-starter "release-smoke-$framework" \
               --framework "$framework" --package-manager pnpm --no-install
@@ -43,4 +71,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ inputs.tag }}
-        run: gh release create "$RELEASE_TAG" "$RUNNER_TEMP/create-effect-starter.tgz" --verify-tag --generate-notes
+          SOURCE_SHA: ${{ needs.source.outputs.sha }}
+        run: |
+          git fetch --no-tags origin "refs/tags/$RELEASE_TAG"
+          if [ "$(git rev-parse 'FETCH_HEAD^{commit}')" != "$SOURCE_SHA" ]; then
+            echo "Release tag changed after validation" >&2
+            exit 1
+          fi
+          gh release create "$RELEASE_TAG" "$RUNNER_TEMP/create-effect-starter.tgz" --verify-tag --generate-notes

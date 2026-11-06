@@ -202,7 +202,9 @@ commit. The package version in
 `packages/create-effect-starter/package.json` must match the tag.
 
 In GitHub Actions, run **Release generator** and enter the existing tag. The
-workflow tests and packs the generator, smoke-tests every starter, then
+workflow resolves the tag to a commit and runs the existing CI and generated-project
+checks against that commit before packaging. It smoke-tests all four starter modes
+from the archive and verifies the tag still points at the checked commit before it
 creates a GitHub release with `create-effect-starter.tgz` attached. It does not
 publish to npm. The workflow must be on the default branch before it can be run
 manually.
