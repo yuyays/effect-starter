@@ -1,6 +1,5 @@
-import { Database } from "../db/client.ts";
+import { Database, DatabaseError } from "../db/database.ts";
 import { Effect, Result } from "effect";
-import { EffectDrizzleQueryError } from "drizzle-orm/effect-core";
 import { describe, expect, it } from "@effect/vitest";
 import { UsersListError } from "@effect-starter/contracts/http";
 import { listUsers } from "./users.ts";
@@ -13,9 +12,7 @@ describe("listUsers", () => {
           Effect.provideService(Database, {
             selectUsers: () =>
               Effect.fail(
-                new EffectDrizzleQueryError({
-                  query: "select users",
-                  params: [],
+                new DatabaseError({
                   cause: "database unavailable",
                 }),
               ),

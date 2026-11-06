@@ -2,10 +2,9 @@ import { NodeHttpServer } from "@effect/platform-node";
 import { DateTime, Effect, Layer } from "effect";
 import { HttpRouter, FetchHttpClient } from "effect/http";
 import { HttpApiClient } from "effect/http-api";
-import { EffectDrizzleQueryError } from "drizzle-orm/effect-core";
 import { StarterApi } from "@effect-starter/contracts/http";
 import { describe, expect, it } from "@effect/vitest";
-import { Database } from "./db/client.ts";
+import { Database, DatabaseError } from "./db/database.ts";
 import { HttpLive } from "./http.ts";
 
 const makeHandler = (rows: ReturnType<Database["Service"]["selectUsers"]>) =>
@@ -92,9 +91,7 @@ describe("HTTP API", () => {
     Effect.gen(function* () {
       for (const query of [
         Effect.fail(
-          new EffectDrizzleQueryError({
-            query: "select users",
-            params: [],
+          new DatabaseError({
             cause: "database unavailable",
           }),
         ),
