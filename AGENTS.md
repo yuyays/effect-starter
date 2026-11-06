@@ -20,6 +20,8 @@ Name API tests that open real sockets or processes `*.integration.test.ts`.
 
 # Test quality
 
+- Synchronize unit tests with TestClock, event signals, or retry assertions. Lint
+  rejects direct timer waits; real socket/process tests use `*.integration.test.ts`.
 - Test observable contracts and plausible failures; derive expectations independently
   of the implementation. Avoid tautologies that merely repeat mock outputs or code logic.
 - Consolidate redundant coverage. Avoid change detectors that pin private structure,

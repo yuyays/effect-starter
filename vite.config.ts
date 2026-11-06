@@ -101,7 +101,10 @@ export default defineConfig({
       {
         // Tooling tests under tools/ and the generator measure real processes.
         files: ["apps/**", "packages/contracts/**"],
-        rules: { "starter/no-wall-clock-in-tests": "error" },
+        rules: {
+          "starter/no-wall-clock-in-tests": "error",
+          "starter/no-timer-waits-in-tests": "error",
+        },
       },
       {
         // Domain workflows and contracts parse input at their boundary instead of passing it on.

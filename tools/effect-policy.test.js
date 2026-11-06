@@ -312,6 +312,58 @@ void test("lint lets web tests run Effects", { skip: skipWithoutWeb }, async (t)
   });
 });
 
+void test("lint rejects direct timer waits in unit tests without banning event signals", async (t) => {
+  const cases = {
+    "wrapped.test.ts":
+      "export const wait = () => new Promise<void>((resolve) => setTimeout(resolve, 50));\n",
+    "callback.test.ts":
+      "export const wait = () => new Promise<void>((resolve) => globalThis.setTimeout(() => resolve(), 50));\n",
+    "alias.test.ts":
+      'import { setTimeout as sleep } from "node:timers/promises";\nexport const wait = () => sleep(50);\n',
+    "namespace.test.ts":
+      'import * as timers from "node:timers/promises";\nexport const wait = () => timers.setTimeout(50);\n',
+    "default.test.ts":
+      'import timers from "timers/promises";\nexport const wait = () => timers["setTimeout"](50);\n',
+    "callback-import.test.ts":
+      'import { setTimeout as later } from "node:timers";\nexport const wait = () => new Promise<void>((resolve) => later(resolve, 50));\n',
+    "shadow-import.test.ts":
+      'import { setTimeout as sleep } from "node:timers/promises";\nexport { sleep };\n// eslint-disable-next-line no-shadow -- Verify a local function is not mistaken for the imported timer.\nexport const wait = (sleep: (ms: number) => Promise<void>) => sleep(50);\n',
+    "retry.test.ts":
+      'import { vi } from "@effect/vitest";\nexport const wait = () => vi.waitFor(() => true);\n',
+    "shadow.test.ts":
+      "export const wait = (setTimeout: (callback: () => void, ms: number) => void) => new Promise<void>((resolve) => setTimeout(resolve, 50));\n",
+    "plain.test.ts": "export const wait = (sleep: (ms: number) => Promise<void>) => sleep(50);\n",
+    "event.test.ts":
+      "export const wait = (target: EventTarget) => new Promise<void>((resolve) => target.addEventListener('ready', () => resolve(), { once: true }));\n",
+    "schedule.test.ts":
+      "export const schedule = (callback: () => void) => setTimeout(callback, 50);\n",
+    "clock.test.ts":
+      'import { Effect, TestClock } from "effect";\nexport const work = Effect.sleep(50);\nexport const advance = TestClock.adjust(50);\n',
+    "live.integration.test.ts":
+      'import { setTimeout as sleep } from "node:timers/promises";\nexport const wait = () => sleep(50);\n',
+  };
+  const codes = await lintFixtures(t, "apps/api/src", cases);
+  assertRules(codes, {
+    "wrapped.test.ts": ["starter(no-timer-waits-in-tests)"],
+    "callback.test.ts": ["starter(no-timer-waits-in-tests)"],
+    "alias.test.ts": ["starter(no-timer-waits-in-tests)"],
+    "namespace.test.ts": ["starter(no-timer-waits-in-tests)"],
+    "default.test.ts": ["starter(no-timer-waits-in-tests)"],
+    "callback-import.test.ts": ["starter(no-timer-waits-in-tests)"],
+    "shadow-import.test.ts": [],
+    "retry.test.ts": [],
+    "shadow.test.ts": [],
+    "plain.test.ts": [],
+    "event.test.ts": [],
+    "schedule.test.ts": [],
+    "clock.test.ts": [],
+    "live.integration.test.ts": [],
+  });
+  assertRules(await lintFixtures(t, "tools", { "wait.test.js": cases["alias.test.ts"] }), {
+    "wait.test.js": [],
+  });
+});
+
 void test(
   "lint enforces the React Compiler rules and JSX accessibility",
   { skip: skipWithoutReact },
