@@ -8,6 +8,8 @@ Frontend hosting and the Bun runtime are outside this first experiment.
 Alchemy and Railway are pinned to `2.0.0-beta.85`; Effect is `4.1.2`. Review
 upgrades explicitly. The example has its own pnpm workspace and lockfile, so
 normal starter installs do not install Alchemy.
+`@effect/platform-bun` satisfies Alchemy's peer dependency; the deployed API
+still runs on Node.
 
 ## Build
 
@@ -29,6 +31,9 @@ the same Drizzle Kit version for the pre-deploy step. The committed
 it with `npm ci`. A dependency mismatch fails packaging before replacing the
 previous context. Local `.env` files and Alchemy state
 are never copied. Inspect `.build/` before deploying.
+Packaging relies on `apps/api/vite.config.ts` bundling workspace imports and
+externalizing only the API's production dependencies. Recheck packaging when
+changing that bundler contract.
 
 When API dependency versions change, refresh the runtime lock deliberately:
 update its root dependency entries to match the versions reported by `prepare.mjs`
@@ -69,7 +74,8 @@ pnpm plan
 pnpm deploy
 ```
 
-Both scripts target `alchemy-spike` explicitly. Review the plan before accepting.
+The plan/deploy scripts rebuild the context and target `alchemy-spike` explicitly.
+Review the plan before accepting.
 The stack creates a separate Railway Project for the stage, a Postgres service
 with persistent storage and no public database TCP proxy, and a public API service.
 The API receives Railway's private `DATABASE_URL` reference. The service name
@@ -80,16 +86,21 @@ Railway builds the uploaded `.build/` context. Its pre-deploy container runs
 A failed migration fails the deployment. Use backward-compatible schema changes:
 app rollback does not undo a migration, and the previous app may still be running.
 Railway checks `/api/health`; use `/api/users` to verify database access too.
+Alchemy may stop waiting while Railway is still building or migrating; inspect
+the dashboard before retrying a pending deployment. Pre-deploy migrations have
+no default timeout, so cancel a hung migration explicitly after inspecting it.
 
-The stack prints the API URL and project ID, never database credentials.
+The stack's console outputs are the API URL and project ID, not database credentials.
 Run `plan`/`deploy` from this directory; context paths are relative to the command's
-working directory. Re-run `pnpm build` before deploying changed application code.
+working directory. Use the package scripts so changed application code is rebuilt.
 
 ## State and recovery
 
 This solo experiment uses local state under `.alchemy/`, excluded from Git.
 Keep a private backup of it and your Alchemy profile. Always operate from the same
-state directory and serialize deploy/destroy commands. Do not use this local-state
+state directory. State contains the generated database password: treat backups as
+credentials and never commit or share them. Always serialize deploy/destroy commands
+against the same stage. Do not use this local-state
 recipe from CI, another machine, or multiple worktrees. Lost state is not a reason
 to redeploy blindly: inspect Railway first and recover state before continuing.
 
@@ -107,11 +118,14 @@ Alchemy state; the next deploy reconciles the checked-in stack again.
 
 These cloud checks must be completed before promoting the example to a generator
 option. Ordinary starter tests remain offline and require no cloud credentials.
-The example is outside the root check scripts and CI: run its own frozen install,
+Root lint and format include the example, but root typecheck/test/build and their
+CI jobs do not check its independent dependencies. Run its own frozen install,
 typecheck, and build explicitly when changing it or updating API dependencies.
 
 1. Deploy a fresh `alchemy-spike` stage; `/api/health` returns
    `{"ok":true,"service":"api"}` and `/api/users` returns `[]`.
+   Verify the database has no public TCP proxy in Railway and the API's resolved
+   database hostname ends in `.railway.internal`; do not log the full connection URL.
 2. In the Railway database console, insert a test user with a known name. Confirm
    `/api/users` returns it. Redeploy unchanged and confirm the user survives and
    migrations are not reapplied. Record whether Alchemy plans a no-op.

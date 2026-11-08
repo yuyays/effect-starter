@@ -6,8 +6,8 @@
     "build": "pnpm --dir ../.. --filter @effect-starter/api build && node prepare.mjs",
     "db:generate": "drizzle-kit generate",
     "typecheck": "tsc --noEmit",
-    "plan": "alchemy plan --stage alchemy-spike",
-    "deploy": "alchemy deploy --stage alchemy-spike",
+    "plan": "pnpm build && alchemy plan --stage alchemy-spike",
+    "deploy": "pnpm build && alchemy deploy --stage alchemy-spike",
     "destroy": "alchemy destroy --stage alchemy-spike"
   },
   "devDependencies": {

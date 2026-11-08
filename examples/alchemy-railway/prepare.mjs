@@ -50,3 +50,4 @@ await cp(new URL("apps/api/dist/", root), new URL("dist/", context), { recursive
 await cp(migrations, new URL("migrations/", context), { recursive: true });
 await cp(new URL("./migrate.config.ts", import.meta.url), new URL("drizzle.config.ts", context));
 await cp(new URL("./Dockerfile", import.meta.url), new URL("Dockerfile", context));
+await cp(new URL("./.dockerignore", import.meta.url), new URL(".dockerignore", context));

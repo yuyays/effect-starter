@@ -9,6 +9,7 @@ export default Alchemy.Stack(
     const project = yield* Railway.Project("Project");
     const database = yield* Railway.Postgres("Database", {
       project,
+      // Railway.ref uses the logical ID; keep the physical name identical.
       name: "Database",
       public: false,
     });
