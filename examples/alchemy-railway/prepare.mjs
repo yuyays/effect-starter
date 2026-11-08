@@ -26,8 +26,11 @@ for (const directory of directories) {
   await readFile(new URL(`${directory.name}/migration.sql`, migrations));
 }
 const runtimeLock = await readFile(new URL("./runtime-package-lock.json", import.meta.url), "utf8");
-const locked = JSON.parse(runtimeLock).packages[""].dependencies;
+const parsedLock = JSON.parse(runtimeLock);
+const locked = parsedLock.packages?.[""]?.dependencies;
 if (
+  parsedLock.lockfileVersion !== 3 ||
+  !locked ||
   Object.keys(locked).length !== Object.keys(dependencies).length ||
   Object.entries(dependencies).some(([name, version]) => locked[name] !== version)
 ) {

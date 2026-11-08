@@ -43,7 +43,9 @@ Schema changes use the API schema as their source:
 pnpm db:generate
 ```
 
-Review and commit the resulting `migrations/` directory before building again.
+Run this before each build after changing the API schema; packaging checks for
+migration files but does not detect schema drift. Review and commit the resulting
+`migrations/` directory before building again.
 This example owns a separate migration history; do not point it at an existing
 application database or apply the API's other migration history to this database.
 
@@ -105,6 +107,8 @@ Alchemy state; the next deploy reconciles the checked-in stack again.
 
 These cloud checks must be completed before promoting the example to a generator
 option. Ordinary starter tests remain offline and require no cloud credentials.
+The example is outside the root check scripts and CI: run its own frozen install,
+typecheck, and build explicitly when changing it or updating API dependencies.
 
 1. Deploy a fresh `alchemy-spike` stage; `/api/health` returns
    `{"ok":true,"service":"api"}` and `/api/users` returns `[]`.
