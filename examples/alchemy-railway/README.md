@@ -1,7 +1,7 @@
 # Alchemy + Railway experiment
 
 Deploy the starter's existing Node API and PostgreSQL with Alchemy v2. This is an
-evaluation example, not a verified production deployment or a generator option.
+evaluation example, not a production hosting preset or a generator option.
 It leaves the application runtime, API dependencies, and default CI unchanged.
 Frontend hosting and the Bun runtime are outside this first experiment.
 
@@ -10,6 +10,21 @@ upgrades explicitly. The example has its own pnpm workspace and lockfile, so
 normal starter installs do not install Alchemy.
 `@effect/platform-bun` satisfies Alchemy's peer dependency; the deployed API
 still runs on Node.
+
+## Verification status
+
+Verified on 2026-11-08 with the pinned dependencies: local Docker build and
+non-root execution; live Railway provisioning; private database connectivity;
+pre-deploy migrations; health and user reads; unchanged no-op planning; a
+deliberately failed migration leaving the previous API available; recovery with
+an additive migration and preserved data. The failure and additive-migration
+probes changed only the disposable build context, not application source or
+committed migrations.
+Alchemy then deleted the four stack resources; Railway CLI independently
+confirmed the project no longer existed.
+
+Mid-deploy cancellation, concurrent deploys, backup/restore, retention policies,
+and beta upgrades remain untested. This does not establish production readiness.
 
 ## Build
 
@@ -71,11 +86,13 @@ through Alchemy's profile command:
 ```sh
 pnpm exec alchemy profile edit --add Railway
 pnpm plan
-pnpm deploy
+pnpm run deploy
 ```
 
 The plan/deploy scripts rebuild the context and target `alchemy-spike` explicitly.
 Review the plan before accepting.
+Use `pnpm run deploy`: plain `pnpm deploy` invokes pnpm's workspace packaging
+command instead of the example's deployment script.
 The stack creates a separate Railway Project for the stage, a Postgres service
 with persistent storage and no public database TCP proxy, and a public API service.
 The API receives Railway's private `DATABASE_URL` reference. The service name
