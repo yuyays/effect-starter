@@ -1,0 +1,6 @@
+# Independent install: Alchemy is not a dependency of the starter or its templates.
+packages: []
+minimumReleaseAge: 1440
+allowBuilds:
+  esbuild: true
+  msgpackr-extract: true
