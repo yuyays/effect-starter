@@ -1,5 +1,5 @@
 {
-  "name": "@effect-starter-examples/doc-review",
+  "name": "@effect-starter-examples/durable-agent",
   "private": true,
   "type": "module",
   "scripts": {

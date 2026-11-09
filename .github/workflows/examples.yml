@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  doc-review:
+  durable-agent:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     services:

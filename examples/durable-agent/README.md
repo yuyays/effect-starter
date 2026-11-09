@@ -1,4 +1,4 @@
-# Document-review agent example
+# Durable agent example: document review
 
 An optional example of a durable domain agent built on this starter's stack. It is
 not copied into generated apps.
@@ -33,9 +33,9 @@ reported as an unknown outcome, because the sink may already hold the record.
 ## Run it
 
 ```sh
-cp examples/doc-review/.env.example examples/doc-review/.env  # then fill it in
-pnpm --filter @effect-starter-examples/doc-review dev     # API on :3001
-pnpm --filter @effect-starter-examples/doc-review worker  # in another shell
+cp examples/durable-agent/.env.example examples/durable-agent/.env  # then fill it in
+pnpm --filter @effect-starter-examples/durable-agent dev     # API on :3001
+pnpm --filter @effect-starter-examples/durable-agent worker  # in another shell
 ```
 
 ```sh
