@@ -1,0 +1,37 @@
+{
+  "extends": "../../apps/api/tsconfig.json",
+  "compilerOptions": {
+    "plugins": [
+      {
+        "name": "@effect/language-service",
+        "includeSuggestionsInTsc": false,
+        "ignoreEffectErrorsInTscExitCode": false,
+        "allowedUnstableApis": [
+          "effect/http",
+          "effect/http-api",
+          "effect/sql",
+          "effect/persistence",
+          "@effect/platform-node",
+          "@effect/sql-pg",
+          "@effect/vitest"
+        ],
+        "effectFn": ["inferred-span", "suggested-span"],
+        "diagnosticSeverity": {
+          "floatingEffect": "error",
+          "effectFnOpportunity": "error",
+          "runEffectInsideEffect": "error",
+          "promiseInEffectSuccess": "error",
+          "globalErrorInEffectFailure": "error",
+          "unknownInEffectCatch": "error"
+        },
+        "overrides": [
+          {
+            "include": ["**/*.test.ts"],
+            "options": { "diagnosticSeverity": { "effectFnOpportunity": "off" } }
+          }
+        ]
+      }
+    ]
+  },
+  "include": ["src", "migrations"]
+}

@@ -1,0 +1,21 @@
+{
+  "name": "@effect-starter-examples/durable-agent",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --env-file=.env --watch src/api.ts",
+    "worker": "node --env-file=.env src/worker.ts",
+    "typecheck": "effect-tsgo tsc --noEmit",
+    "test": "vp test run"
+  },
+  "dependencies": {
+    "@effect/platform-node": "catalog:",
+    "@effect/sql-pg": "catalog:",
+    "effect": "catalog:"
+  },
+  "devDependencies": {
+    "@effect/vitest": "catalog:",
+    "@types/node": "^26.6.6",
+    "vite-plus": "catalog:"
+  }
+}
