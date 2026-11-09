@@ -74,6 +74,10 @@ framework notes.
 
 ## Develop the starter
 
+An experimental [Alchemy + Railway example](examples/alchemy-railway/README.md)
+packages the existing Node API with PostgreSQL. It has a separate dependency
+install and is not included in generated projects.
+
 ```sh
 git clone https://github.com/yuyays/effect-starter.git
 cd effect-starter
@@ -84,6 +88,8 @@ pnpm create:app
 Enter `../my-app` to generate an app beside the checkout. See the
 [CLI and maintenance guide](packages/create-effect-starter/README.md) for flags,
 testing, dependency updates, and releases. Effect conventions are in
-[AGENTS.md](AGENTS.md).
+[AGENTS.md](AGENTS.md). The optional
+[durable agent example](examples/durable-agent/README.md) shows durable agent
+runs with human approval; generated apps don't include it.
 
 [MIT License](LICENSE)
