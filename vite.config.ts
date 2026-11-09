@@ -154,6 +154,8 @@ export default defineConfig({
       "tools/oxlint/anti-slop/**",
       "packages/create-effect-starter/template/**",
       "packages/create-effect-starter/frontends/**",
+      // This standalone workspace has a separate install, absent from root CI.
+      "examples/alchemy-railway/**",
     ],
   },
   fmt: {

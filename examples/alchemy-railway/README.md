@@ -140,8 +140,8 @@ Alchemy state; the next deploy reconciles the checked-in stack again.
 
 These cloud checks must be completed before promoting the example to a generator
 option. Ordinary starter tests remain offline and require no cloud credentials.
-Root lint and format include the example, but root typecheck/test/build and their
-CI jobs do not check its independent dependencies. Run its own frozen install,
+Root formatting includes the example, but root lint/typecheck/test/build and their
+CI jobs exclude its independently installed sources. Run its own frozen install,
 typecheck, and build explicitly when changing it or updating API dependencies.
 
 Statuses below record the 2026-11-08 experiment; partial and pending items remain
