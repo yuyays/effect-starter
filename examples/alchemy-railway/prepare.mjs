@@ -10,7 +10,7 @@ const dependencies = {};
 
 // Pin the runtime to the API's resolved direct dependencies, without workspace tools.
 for (const name of [...Object.keys(manifest.dependencies), "drizzle-kit"]) {
-  const dependency = api.dependencies[name] ?? api.devDependencies[name];
+  const dependency = api.dependencies[name] ?? api.devDependencies?.[name];
   const version = dependency?.version.split("(")[0];
   if (!version || !/^\d/.test(version)) throw new Error(`Cannot package dependency ${name}`);
   dependencies[name] = version;

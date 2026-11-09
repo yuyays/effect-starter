@@ -19,12 +19,17 @@ pre-deploy migrations; health and user reads; unchanged no-op planning; a
 deliberately failed migration leaving the previous API available; recovery with
 an additive migration and preserved data. The failure and additive-migration
 probes changed only the disposable build context, not application source or
-committed migrations.
+committed migrations. They invoked `alchemy deploy` directly so the package
+script's rebuild would not overwrite the probes. The initial deployment used
+`pnpm run deploy`.
 Alchemy then deleted the four stack resources; Railway CLI independently
 confirmed the project no longer existed.
 
-Mid-deploy cancellation, concurrent deploys, backup/restore, retention policies,
-and beta upgrades remain untested. This does not establish production readiness.
+Unchanged redeployment (as opposed to no-op planning), an application-code change
+through the rebuild/deploy scripts, and package/install cost measurement remain
+unverified. Mid-deploy cancellation, concurrent deploys, backup/restore, retention
+policies, and beta upgrades also remain untested. This does not establish
+production readiness.
 
 ## Build
 
@@ -139,24 +144,35 @@ Root lint and format include the example, but root typecheck/test/build and thei
 CI jobs do not check its independent dependencies. Run its own frozen install,
 typecheck, and build explicitly when changing it or updating API dependencies.
 
-1. Deploy a fresh `alchemy-spike` stage; `/api/health` returns
+Statuses below record the 2026-11-08 experiment; partial and pending items remain
+requirements for promotion.
+
+1. **Verified:** deploy a fresh `alchemy-spike` stage; `/api/health` returns
    `{"ok":true,"service":"api"}` and `/api/users` returns `[]`.
    Verify the database has no public TCP proxy in Railway and the API's resolved
    database hostname ends in `.railway.internal`; do not log the full connection URL.
-2. In the Railway database console, insert a test user with a known name. Confirm
+2. **Partial:** in the Railway database console, insert a test user with a known name. Confirm
    `/api/users` returns it. Redeploy unchanged and confirm the user survives and
    migrations are not reapplied. Record whether Alchemy plans a no-op.
-3. Make and deploy one additive migration; confirm existing data survives.
-4. On this disposable stage, exercise a failing migration and cancelled deployment.
+   The test user was inserted over SSH and returned by `/api/users`; unchanged
+   planning was a no-op. An unchanged redeploy and its migration behavior were
+   not tested. Data survived the separate recovery deployment in item 3.
+3. **Verified via direct Alchemy invocation:** make and deploy one additive
+   migration; confirm existing data survives.
+4. **Partial:** on this disposable stage, exercise a failing migration and cancelled deployment.
    Confirm logs explain the failure and a corrected deploy recovers with the same
    state. Do not race deploys against the same local-state directory.
-5. Rebuild after changing code and confirm the new artifact is deployed.
-6. Record package/install costs and any required provider workarounds.
-7. Destroy only the disposable stage and confirm its Project, API, database, and
-   volume disappear in the Railway dashboard:
+   Failure reporting and recovery passed; cancellation was not tested.
+5. **Pending:** rebuild after changing application code and confirm the new artifact
+   is deployed. The generated migration probe did not exercise this script path.
+6. **Pending:** record package/install costs and any required provider workarounds.
+   Cost measurements were not taken.
+7. **Verified:** destroy only the disposable stage and confirm its Project, API,
+   database, and volume are deleted. Alchemy reported all stack resources deleted,
+   and Railway CLI confirmed the project was absent:
 
 ```sh
-pnpm destroy
+pnpm run destroy
 ```
 
 Do not delete `.alchemy/` until cleanup has been verified. If a partial create left
