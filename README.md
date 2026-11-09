@@ -74,6 +74,10 @@ framework notes.
 
 ## Develop the starter
 
+An experimental [Alchemy + Railway example](examples/alchemy-railway/README.md)
+packages the existing Node API with PostgreSQL. It has a separate dependency
+install and is not included in generated projects.
+
 ```sh
 git clone https://github.com/yuyays/effect-starter.git
 cd effect-starter
