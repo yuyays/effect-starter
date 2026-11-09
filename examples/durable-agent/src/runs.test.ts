@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import { expect, it } from "@effect/vitest";
 import { PgClient } from "@effect/sql-pg";
-import { ConfigProvider, Effect, Layer, Option, Redacted } from "effect";
+import { ConfigProvider, Effect, Fiber, Layer, Option, Queue, Redacted } from "effect";
 import { SqlClient } from "effect/sql";
 import { DatabaseLive, Jobs } from "./db.ts";
 import { ModelClient, ModelError, type ModelTurn } from "./propose.ts";
@@ -118,25 +118,35 @@ it.live("reports a failed run once retries are exhausted", () => {
   }).pipe(Effect.provide(layerWith(down)));
 });
 
-it.live("settles a run whose deliveries keep crashing without calling the model again", () => {
-  let calls = 0;
-  const hangs = Layer.succeed(ModelClient, {
-    respond: () => Effect.sync(() => calls++).pipe(Effect.andThen(Effect.never)),
-  });
-  return Effect.gen(function* () {
-    const runs = yield* AgentRuns;
-    const id = yield* runs.start(crypto.randomUUID(), document);
-    // Interrupting a delivery models a worker dying mid-call: the job returns to the queue.
-    for (let crash = 0; crash < 3; crash++)
-      yield* Effect.exit(deliver.pipe(Effect.timeout("200 millis")));
-    yield* deliver;
-    expect(yield* runs.read(id)).toMatchObject({
-      status: "failed",
-      error: "Attempt limit exceeded",
+it.live("settles a run whose deliveries keep crashing without calling the model again", () =>
+  Effect.gen(function* () {
+    let calls = 0;
+    const entered = yield* Queue.unbounded<void>();
+    const hangs = Layer.succeed(ModelClient, {
+      respond: () =>
+        Effect.sync(() => calls++).pipe(
+          Effect.andThen(Queue.offer(entered, undefined)),
+          Effect.andThen(Effect.never),
+        ),
     });
-    expect(calls).toBe(3);
-  }).pipe(Effect.provide(layerWith(hangs)));
-});
+    return yield* Effect.gen(function* () {
+      const runs = yield* AgentRuns;
+      const id = yield* runs.start(crypto.randomUUID(), document);
+      // Interrupt only after the model starts; database latency must not choose the crash point.
+      for (let crash = 0; crash < 3; crash++) {
+        const delivery = yield* Effect.forkChild(deliver);
+        yield* Queue.take(entered);
+        yield* Fiber.interrupt(delivery);
+      }
+      yield* deliver;
+      expect(yield* runs.read(id)).toMatchObject({
+        status: "failed",
+        error: "Attempt limit exceeded",
+      });
+      expect(calls).toBe(3);
+    }).pipe(Effect.provide(layerWith(hangs)));
+  }),
+);
 
 it.live("fails the run when the model never proposes within the turn limit", () => {
   let calls = 0;
