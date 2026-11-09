@@ -5,7 +5,7 @@
   "license": "MIT",
   "workspaces": [
     "apps/*",
-    "examples/*",
+    "examples/durable-agent",
     "packages/*",
     "packages/create-effect-starter/frontends/*"
   ],

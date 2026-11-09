@@ -71,7 +71,7 @@ for (const framework of Object.keys(frameworks)) {
     workspacePath,
     replaceRequired(
       replaceRequired(workspace, '  - "packages/create-effect-starter/frontends/*"\n', ""),
-      '  - "examples/*"\n',
+      '  - "examples/durable-agent"\n',
       "",
     ),
   );

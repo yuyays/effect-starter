@@ -1,6 +1,6 @@
 packages:
   - "apps/*"
-  - "examples/*"
+  - "examples/durable-agent"
   - "packages/*"
   - "packages/create-effect-starter/frontends/*"
 # Shared versions: packages declare these as `catalog:` so they stay aligned.
