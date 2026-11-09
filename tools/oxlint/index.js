@@ -1,3 +1,5 @@
+import { workspaceImports } from "./workspace-imports.js";
+
 function memberName(node) {
   return node.computed ? node.property.value : node.property.name;
 }
@@ -258,6 +260,79 @@ const noWallClockInTests = {
   },
 };
 
+// Check bindings so local functions named Promise or setTimeout remain ordinary code.
+function globalReference(context, node, name) {
+  node = unwrap(node);
+  if (node?.type === "MemberExpression" && memberName(node) === name) {
+    node = unwrap(node.object);
+    if (!["globalThis", "window", "self", "global"].includes(node?.name)) return false;
+  } else if (node?.type !== "Identifier" || node.name !== name) return false;
+  return node.type === "Identifier" && !resolve(context, node)?.variable.defs.length;
+}
+
+function timerKind(context, callee) {
+  callee = unwrap(callee);
+  if (globalReference(context, callee, "setTimeout")) return "callback";
+  let binding = callee;
+  let method;
+  if (callee?.type === "MemberExpression") {
+    method = memberName(callee);
+    binding = unwrap(callee.object);
+  }
+  if (binding?.type !== "Identifier") return undefined;
+  const definition = resolve(context, binding)?.variable.defs[0];
+  if (definition?.type !== "ImportBinding") return undefined;
+  if (definition.node.type === "ImportSpecifier") {
+    if (method) return undefined;
+    method = definition.node.imported.name ?? definition.node.imported.value;
+  }
+  if (method !== "setTimeout") return undefined;
+  const source = definition.parent.source.value;
+  if (source === "node:timers/promises" || source === "timers/promises") return "promise";
+  if (source === "node:timers" || source === "timers") return "callback";
+  return undefined;
+}
+
+// Inspect enclosing Promise executors without following calls or timer aliases.
+function inPromiseExecutor(context, node) {
+  for (let parent = node.parent; parent; parent = parent.parent) {
+    if (
+      !["ArrowFunctionExpression", "FunctionExpression", "FunctionDeclaration"].includes(
+        parent.type,
+      )
+    )
+      continue;
+    const constructor = parent.parent;
+    if (
+      constructor?.type === "NewExpression" &&
+      constructor.arguments[0] === parent &&
+      globalReference(context, constructor.callee, "Promise")
+    )
+      return true;
+  }
+  return false;
+}
+
+const noTimerWaitsInTests = {
+  meta: { type: "problem", schema: [] },
+  create(context) {
+    if (!testFile.test(context.filename) || /\.integration\.(?:test|spec)\./.test(context.filename))
+      return {};
+    return {
+      CallExpression(node) {
+        const kind = timerKind(context, node.callee);
+        if (kind === "promise" || (kind === "callback" && inPromiseExecutor(context, node))) {
+          context.report({
+            node,
+            message:
+              "Replace timer waits with TestClock, an event signal, or a retry assertion. Live socket/process tests belong in *.integration.test.ts.",
+          });
+        }
+      },
+    };
+  },
+};
+
 const suppressionReason = {
   meta: { type: "problem", schema: [] },
   create(context) {
@@ -281,7 +356,9 @@ const suppressionReason = {
 export default {
   meta: { name: "starter" },
   rules: {
+    "workspace-imports": workspaceImports,
     "no-wall-clock-in-tests": noWallClockInTests,
+    "no-timer-waits-in-tests": noTimerWaitsInTests,
     "runtime-boundary": runtimeBoundary,
     "schema-compile-scope": schemaCompileScope,
     "suppression-reason": suppressionReason,

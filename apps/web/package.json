@@ -7,7 +7,9 @@
     "dev": "vp dev",
     "build": "tsc --noEmit && vp build",
     "typecheck": "tsc --noEmit",
-    "test": "vp test run --passWithNoTests"
+    "test": "vp test run --passWithNoTests --project unit",
+    "test:browser": "vp test run --passWithNoTests --project browser",
+    "browser:install": "playwright install chromium"
   },
   "dependencies": {
     "@effect-starter/contracts": "workspace:*",
@@ -32,8 +34,10 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "6.2.1",
+    "@vitest/browser-playwright": "catalog:",
     "happy-dom": "^21.0.4",
     "oxc-transform-react": "0.152.0",
+    "playwright": "catalog:",
     "vite": "catalog:",
     "vite-plus": "catalog:"
   }

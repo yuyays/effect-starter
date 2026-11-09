@@ -1,0 +1,27 @@
+{
+  "name": "effect-starter-alchemy-railway",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "pnpm --dir ../.. --filter @effect-starter/api build && node prepare.mjs",
+    "db:generate": "drizzle-kit generate",
+    "typecheck": "tsc --noEmit",
+    "plan": "pnpm build && alchemy plan --stage alchemy-spike",
+    "deploy": "pnpm build && alchemy deploy --stage alchemy-spike",
+    "destroy": "alchemy destroy --stage alchemy-spike"
+  },
+  "devDependencies": {
+    "@alchemy.run/railway": "2.0.0-beta.85",
+    "@effect/platform-bun": "4.1.2",
+    "@effect/platform-node": "4.1.2",
+    "@types/node": "26.6.6",
+    "alchemy": "2.0.0-beta.85",
+    "drizzle-kit": "1.0.0-rc.5",
+    "drizzle-orm": "1.0.0-rc.5",
+    "effect": "4.1.2",
+    "pg": "8.23.1",
+    "typescript": "7.0.2",
+    "yaml": "2.9.1"
+  },
+  "packageManager": "pnpm@11.28.6"
+}

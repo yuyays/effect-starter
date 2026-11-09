@@ -9,6 +9,10 @@ See `engines` in `package.json` for required versions. [MIT License](LICENSE).
 Skip the install if the generator already installed dependencies.
 Set `DATABASE_URL` in `apps/api/.env` to a running PostgreSQL database first.
 
+The API loads `.env` through Effect's configuration provider, with environment
+variables taking priority. The file is optional; missing required values, invalid
+values, and file read errors still fail startup. Restart the API after editing `.env`.
+
 ```sh
 {{PACKAGE_MANAGER}} install
 {{RUN}} db:generate
@@ -29,6 +33,9 @@ Set `DATABASE_URL` in `apps/api/.env` to a running PostgreSQL database first.
 {{RUN}} test
 {{RUN}} build
 ```
+
+Component tests that need a real browser (`*.browser.test.tsx`) run in Chromium:
+`{{RUN}} browser:install` once per machine, then `{{RUN}} test:browser`.
 
 {{BUN_CHECKS_NOTE}}The checks enforce the Effect rules in `AGENTS.md`, and `{{RUN}} test` proves that
 invalid examples fail. Select the workspace TypeScript version in your editor to

@@ -101,7 +101,10 @@ export default defineConfig({
       {
         // Tooling tests under tools/ and the generator measure real processes.
         files: ["apps/**", "packages/contracts/**"],
-        rules: { "starter/no-wall-clock-in-tests": "error" },
+        rules: {
+          "starter/no-wall-clock-in-tests": "error",
+          "starter/no-timer-waits-in-tests": "error",
+        },
       },
       {
         // Domain workflows and contracts parse input at their boundary instead of passing it on.
@@ -113,21 +116,8 @@ export default defineConfig({
         },
       },
       {
-        files: ["apps/web/src/**"],
-        rules: {
-          "no-restricted-imports": [
-            "error",
-            {
-              patterns: [
-                {
-                  // Scope-free so generated projects keep this line within the format width.
-                  regex: "^@[^/]+/api(?:/|$)|^(?:@/)?(?:\\.\\./)+(?:apps/)?api/src(?:/|$)",
-                  message: "Call the API through the contracts package and its HttpApi client.",
-                },
-              ],
-            },
-          ],
-        },
+        files: ["apps/**", "packages/**"],
+        rules: { "starter/workspace-imports": "error" },
       },
       {
         // The browser client module is the frontend's Effect entry point.
@@ -154,6 +144,8 @@ export default defineConfig({
       "tools/oxlint/anti-slop/**",
       "packages/create-effect-starter/template/**",
       "packages/create-effect-starter/frontends/**",
+      // This standalone workspace has a separate install, absent from root CI.
+      "examples/alchemy-railway/**",
     ],
   },
   fmt: {

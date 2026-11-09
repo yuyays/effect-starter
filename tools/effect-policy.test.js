@@ -312,6 +312,61 @@ void test("lint lets web tests run Effects", { skip: skipWithoutWeb }, async (t)
   });
 });
 
+void test("lint rejects direct timer waits in unit tests without banning event signals", async (t) => {
+  const cases = {
+    "wrapped.test.ts":
+      "export const wait = () => new Promise<void>((resolve) => setTimeout(resolve, 50));\n",
+    "callback.test.ts":
+      "export const wait = () => new Promise<void>((resolve) => globalThis.setTimeout(() => resolve(), 50));\n",
+    "nested.test.ts":
+      "export const wait = () => new Promise<void>((resolve) => queueMicrotask(() => setTimeout(resolve, 50)));\n",
+    "alias.test.ts":
+      'import { setTimeout as sleep } from "node:timers/promises";\nexport const wait = () => sleep(50);\n',
+    "namespace.test.ts":
+      'import * as timers from "node:timers/promises";\nexport const wait = () => timers.setTimeout(50);\n',
+    "default.test.ts":
+      'import timers from "timers/promises";\nexport const wait = () => timers["setTimeout"](50);\n',
+    "callback-import.test.ts":
+      'import { setTimeout as later } from "node:timers";\nexport const wait = () => new Promise<void>((resolve) => later(resolve, 50));\n',
+    "shadow-import.test.ts":
+      'import { setTimeout as sleep } from "node:timers/promises";\nexport { sleep };\n// eslint-disable-next-line no-shadow -- Verify a local function is not mistaken for the imported timer.\nexport const wait = (sleep: (ms: number) => Promise<void>) => sleep(50);\n',
+    "retry.test.ts":
+      'import { vi } from "@effect/vitest";\nexport const wait = () => vi.waitFor(() => true);\n',
+    "shadow.test.ts":
+      "export const wait = (setTimeout: (callback: () => void, ms: number) => void) => new Promise<void>((resolve) => setTimeout(resolve, 50));\n",
+    "plain.test.ts": "export const wait = (sleep: (ms: number) => Promise<void>) => sleep(50);\n",
+    "event.test.ts":
+      "export const wait = (target: EventTarget) => new Promise<void>((resolve) => target.addEventListener('ready', () => resolve(), { once: true }));\n",
+    "schedule.test.ts":
+      "export const schedule = (callback: () => void) => setTimeout(callback, 50);\n",
+    "clock.test.ts":
+      'import { Effect, TestClock } from "effect";\nexport const work = Effect.sleep(50);\nexport const advance = TestClock.adjust(50);\n',
+    "live.integration.test.ts":
+      'import { setTimeout as sleep } from "node:timers/promises";\nexport const wait = () => sleep(50);\n',
+  };
+  const codes = await lintFixtures(t, "apps/api/src", cases);
+  assertRules(codes, {
+    "wrapped.test.ts": ["starter(no-timer-waits-in-tests)"],
+    "callback.test.ts": ["starter(no-timer-waits-in-tests)"],
+    "nested.test.ts": ["starter(no-timer-waits-in-tests)"],
+    "alias.test.ts": ["starter(no-timer-waits-in-tests)"],
+    "namespace.test.ts": ["starter(no-timer-waits-in-tests)"],
+    "default.test.ts": ["starter(no-timer-waits-in-tests)"],
+    "callback-import.test.ts": ["starter(no-timer-waits-in-tests)"],
+    "shadow-import.test.ts": [],
+    "retry.test.ts": [],
+    "shadow.test.ts": [],
+    "plain.test.ts": [],
+    "event.test.ts": [],
+    "schedule.test.ts": [],
+    "clock.test.ts": [],
+    "live.integration.test.ts": [],
+  });
+  assertRules(await lintFixtures(t, "tools", { "wait.test.js": cases["alias.test.ts"] }), {
+    "wait.test.js": [],
+  });
+});
+
 void test(
   "lint enforces the React Compiler rules and JSX accessibility",
   { skip: skipWithoutReact },
@@ -357,17 +412,142 @@ void test(
       "root.ts": 'export { listUsers } from "../../../../apps/api/src/services/users.js";\n',
       "alias.ts": 'export { listUsers } from "@/../../api/src/services/users.js";\n',
       "package.ts": `export * from "${await packageName("apps/api")}";\n`,
+      "normalized.ts": 'export * from ".././../../api/src/services/users.ts";\n',
+      "dynamic.ts": `export const load = () => import("${await packageName("apps/api")}/src/http.ts");\n`,
+      "template.ts": `export const load = () => import(\`${await packageName("apps/api")}\`);\n`,
       "contracts.ts": `export { StarterApi } from "${await packageName("packages/contracts")}/http";\n`,
     });
     assertRules(codes, {
-      "relative.ts": ["eslint(no-restricted-imports)"],
-      "root.ts": ["eslint(no-restricted-imports)"],
-      "alias.ts": ["eslint(no-restricted-imports)"],
-      "package.ts": ["eslint(no-restricted-imports)"],
+      "relative.ts": ["starter(workspace-imports)"],
+      "root.ts": ["starter(workspace-imports)"],
+      "alias.ts": ["starter(workspace-imports)"],
+      "package.ts": ["starter(workspace-imports)"],
+      "normalized.ts": ["starter(workspace-imports)"],
+      "dynamic.ts": ["starter(workspace-imports)"],
+      "template.ts": ["starter(workspace-imports)"],
       "contracts.ts": [],
     });
   },
 );
+
+void test(
+  "lint keeps app configuration and backend code on public package interfaces",
+  { skip: skipWithoutWeb },
+  async (t) => {
+    const api = await packageName("apps/api");
+    const web = await packageName("apps/web");
+    assertRules(await lintFixtures(t, "apps/web", { "config.ts": `export * from "${api}";\n` }), {
+      "config.ts": ["starter(workspace-imports)"],
+    });
+    assertRules(await lintFixtures(t, "apps/api/src", { "web.ts": `export * from "${web}";\n` }), {
+      "web.ts": ["starter(workspace-imports)"],
+    });
+  },
+);
+
+void test(
+  "lint enforces workspace imports in Vue single-file components",
+  { skip: existsSync(join(root, "apps/web/src/App.vue")) ? false : "no Vue frontend" },
+  async (t) => {
+    const api = await packageName("apps/api");
+    const contracts = await packageName("packages/contracts");
+    const component = (source) =>
+      `<script setup lang="ts">\nimport * as api from "${source}";\n</script>\n<template><pre>{{ api }}</pre></template>\n`;
+    assertRules(
+      await lintFixtures(t, "apps/web/src", {
+        "private.vue": component(api),
+        "public.vue": component(`${contracts}/http`),
+      }),
+      {
+        "private.vue": ["starter(workspace-imports)"],
+        "public.vue": [],
+      },
+    );
+  },
+);
+
+void test("lint keeps contracts independent of applications", async (t) => {
+  const api = await packageName("apps/api");
+  assertRules(
+    await lintFixtures(t, "packages/contracts/src", {
+      "app.ts": `export * from "${api}";\n`,
+      "relative.ts": 'export * from "../../../../apps/api/src/db/database.ts";\n',
+      "dynamic.ts": `export const load = () => import("${api}/src/http.ts");\n`,
+      "import-type.ts": `export type App = typeof import("${api}");\n`,
+      "require.ts": `export const app = require("${api}");\n`,
+      "local.ts": 'export { UsersResponse } from "../schemas/user.ts";\n',
+    }),
+    {
+      "app.ts": ["starter(workspace-imports)"],
+      "relative.ts": ["starter(workspace-imports)"],
+      "dynamic.ts": ["starter(workspace-imports)"],
+      "import-type.ts": ["starter(workspace-imports)"],
+      "require.ts": ["starter(workspace-imports)"],
+      "local.ts": [],
+    },
+  );
+});
+
+void test("lint requires public package exports across workspaces", async (t) => {
+  const contracts = await packageName("packages/contracts");
+  assertRules(
+    await lintFixtures(t, "apps/api/src", {
+      "public.ts": `export { StarterApi } from "${contracts}/http";\n`,
+      "root.ts": `export { StarterApi } from "${contracts}";\n`,
+      "private.ts": `export { StarterApi } from "${contracts}/src/http/index.ts";\n`,
+      "type.ts": `export type { User } from "${contracts}/src/schemas/user.ts";\n`,
+      "relative.ts": 'export * from "../../../../packages/contracts/src/http/index.ts";\n',
+      "normalized.ts": 'export * from ".././../../../packages/contracts/src/http/index.ts";\n',
+      "local.ts": 'export { Database } from "../db/database.ts";\n',
+    }),
+    {
+      "public.ts": [],
+      "root.ts": [],
+      "private.ts": ["starter(workspace-imports)"],
+      "type.ts": ["starter(workspace-imports)"],
+      "relative.ts": ["starter(workspace-imports)"],
+      "normalized.ts": ["starter(workspace-imports)"],
+      "local.ts": [],
+    },
+  );
+});
+
+void test("lint respects empty export maps, conditional roots, and private pattern exclusions", async (t) => {
+  const empty = await fixture(t, "packages");
+  const library = await fixture(t, "packages");
+  await writeFile(
+    join(empty, "package.json"),
+    JSON.stringify({ name: "@policy/empty", exports: {} }),
+  );
+  await writeFile(
+    join(library, "package.json"),
+    JSON.stringify({
+      name: "@policy/library",
+      exports: {
+        ".": { import: "./src/index.ts" },
+        "./*": "./src/*.ts",
+        "./private/*": null,
+        "./blocked": null,
+      },
+    }),
+  );
+  assertRules(
+    await lintFixtures(t, "apps/api/src", {
+      "empty.ts": 'export * from "@policy/empty";\n',
+      "conditional.ts": 'export * from "@policy/library";\n',
+      "pattern.ts": 'export * from "@policy/library/users";\n',
+      "private.ts": 'export * from "@policy/library/private/users";\n',
+      "blocked.ts": 'export * from "@policy/library/blocked";\n',
+    }),
+    {
+      "empty.ts": ["starter(workspace-imports)"],
+      "conditional.ts": [],
+      "pattern.ts": [],
+      "private.ts": ["starter(workspace-imports)"],
+      "blocked.ts": ["starter(workspace-imports)"],
+    },
+  );
+});
 
 void test("lint requires explanations for lint, TypeScript, and Effect suppressions", async (t) => {
   const directory = await fixture(t);

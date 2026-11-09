@@ -7,11 +7,21 @@
 - When extending a legacy Promise-based backend operation, migrate that operation
   to Effect without rewriting unrelated operations.
 
-Run `pnpm lint`, `pnpm typecheck`, and `pnpm test` (or Bun equivalents) before finishing.
+Run `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm test:browser` where it exists
+(or Bun equivalents) before finishing.
 Name API tests that open real sockets or processes `*.integration.test.ts`.
+
+# Workspace imports
+
+- Keep app implementations private: apps share contracts through `packages/contracts`
+  and call the API through its typed client. Contracts stay independent of apps.
+- Import another workspace by its package name and declared public exports. Use
+  relative paths within a workspace; cross-workspace source paths are rejected by lint.
 
 # Test quality
 
+- Synchronize unit tests with TestClock, event signals, or retry assertions. Lint
+  rejects direct timer waits; real socket/process tests use `*.integration.test.ts`.
 - Test observable contracts and plausible failures; derive expectations independently
   of the implementation. Avoid tautologies that merely repeat mock outputs or code logic.
 - Consolidate redundant coverage. Avoid change detectors that pin private structure,

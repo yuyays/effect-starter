@@ -145,6 +145,11 @@ cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env
 ```
 
+The API loads `.env` from its working directory through Effect (`apps/api` for the
+commands below), with environment variables taking priority. The file is optional
+when the required values are supplied by the environment.
+Restart the API after editing `.env`.
+
 Set `DATABASE_URL` in `apps/api/.env` to a running PostgreSQL database, then run
 `pnpm db:generate`, `pnpm db:migrate`, and `pnpm dev`.
 Use `pnpm dev:web` or `pnpm dev:api` to run one server. The API health endpoint
@@ -197,13 +202,20 @@ commit. The package version in
 `packages/create-effect-starter/package.json` must match the tag.
 
 In GitHub Actions, run **Release generator** and enter the existing tag. The
-workflow tests and packs the generator, smoke-tests every starter, then
+workflow resolves the tag to a commit and runs the existing CI and generated-project
+checks against that commit before packaging. It smoke-tests all four starter modes
+from the archive and verifies the tag still points at the checked commit before it
 creates a GitHub release with `create-effect-starter.tgz` attached. It does not
 publish to npm. The workflow must be on the default branch before it can be run
 manually.
 
-For a manual release from a checkout of the tagged commit, use the test and
-pack commands above, then:
+Keep version tags immutable. Packaging runs with read-only permissions; a separate
+job publishes the validated archive. Its final tag comparison detects changes before
+publication but cannot lock the tag against concurrent edits.
+
+For a manual release from a checkout of the tagged commit, first run the checks in
+`.github/workflows/ci.yml` and `pnpm test:generated`. Use the test and pack commands
+above, then:
 
 ```sh
 gh release create v0.2.0 /tmp/create-effect-starter.tgz --verify-tag --generate-notes

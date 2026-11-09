@@ -2,10 +2,9 @@ import { NodeHttpServer } from "@effect/platform-node";
 import { DateTime, Effect, Layer } from "effect";
 import { HttpRouter, FetchHttpClient } from "effect/http";
 import { HttpApiClient } from "effect/http-api";
-import { EffectDrizzleQueryError } from "drizzle-orm/effect-core";
 import { StarterApi } from "@effect-starter/contracts/http";
 import { describe, expect, it } from "@effect/vitest";
-import { Database } from "./db/client.ts";
+import { Database, DatabaseError } from "./db/database.ts";
 import { HttpLive } from "./http.ts";
 
 const makeHandler = (rows: ReturnType<Database["Service"]["selectUsers"]>) =>
@@ -42,8 +41,14 @@ describe("HTTP API", () => {
       );
       expect(openapi.status).toBe(200);
       const spec = yield* Effect.promise(() => openapi.json());
-      expect(spec.paths["/api/users"].get.responses["500"]).toBeDefined();
-      expect(spec.paths["/api/health"].get.responses["200"]).toBeDefined();
+      expect(spec).toHaveProperty(
+        ["paths", "/api/users", "get", "responses", "500"],
+        expect.any(Object),
+      );
+      expect(spec).toHaveProperty(
+        ["paths", "/api/health", "get", "responses", "200"],
+        expect.any(Object),
+      );
 
       const docs = yield* Effect.promise(() => handler(new Request("http://localhost/docs")));
       expect(docs.status).toBe(200);
@@ -92,9 +97,7 @@ describe("HTTP API", () => {
     Effect.gen(function* () {
       for (const query of [
         Effect.fail(
-          new EffectDrizzleQueryError({
-            query: "select users",
-            params: [],
+          new DatabaseError({
             cause: "database unavailable",
           }),
         ),
