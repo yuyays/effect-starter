@@ -36,7 +36,7 @@
     "@vitejs/plugin-react": "6.2.1",
     "@vitest/browser-playwright": "catalog:",
     "happy-dom": "^21.0.4",
-    "oxc-transform-react": "0.152.0",
+    "oxc-transform-react": "0.157.0",
     "playwright": "catalog:",
     "vite": "catalog:",
     "vite-plus": "catalog:"
