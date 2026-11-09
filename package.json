@@ -29,8 +29,8 @@
     "test:generated": "node packages/create-effect-starter/build-template.js && node packages/create-effect-starter/verify-generated.js"
   },
   "devDependencies": {
-    "@effect/tsgo": "0.67.1",
-    "@oxlint/plugins": "1.91.0",
+    "@effect/tsgo": "0.67.5",
+    "@oxlint/plugins": "1.92.0",
     "typescript": "7.0.2",
     "vite-plus": "catalog:"
   },
