@@ -12,7 +12,7 @@ catalog:
   # Vitest's browser provider matches the Vitest override below.
   "@vitest/browser-playwright": "5.1.0"
   effect: "^4.1.2"
-  playwright: "1.64.1"
+  playwright: "1.65.0"
   # Match Vite+'s core version, Vitest override, and allowed Vite peer version below.
   vite: "npm:@voidzero-dev/vite-plus-core@1.5.0"
   vite-plus: "1.5.0"
