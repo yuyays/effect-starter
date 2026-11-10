@@ -13,10 +13,8 @@ Name API tests that open real sockets or processes `*.integration.test.ts`.
 
 # Workspace imports
 
-- Keep app implementations private: apps share contracts through `packages/contracts`
-  and call the API through its typed client. Contracts stay independent of apps.
-- Import another workspace by its package name and declared public exports. Use
-  relative paths within a workspace; cross-workspace source paths are rejected by lint.
+Share API contracts through `packages/contracts` and call the API through its typed
+client. Use relative imports within a workspace.
 
 # Test quality
 

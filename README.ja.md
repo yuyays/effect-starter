@@ -3,7 +3,7 @@
 [English](README.md) | [日本語](README.ja.md)
 
 Effect を基盤とした TypeScript アプリケーションのスターターです。
-フロントエンドは任意で、**React**、**TanStack Start**、**Vue** から選べます。
+フロントエンドは任意で、React、TanStack Start、Vue から選べます。
 Effect v4、Drizzle、Effect SQL、PostgreSQL、Vite+ を採用しています。ホスティング先はあらかじめ設定していません。
 
 ## 作った理由
@@ -14,7 +14,6 @@ Effect v4、Drizzle、Effect SQL、PostgreSQL、Vite+ を採用しています�
 Effect は、コードをどう拡張していくかの指針になります。ワークフローを型付きの値として表し、失敗を明示し、依存関係を Layer 経由で提供することで、
 新しいコードも既存のコードと同じパターンに沿って書けます。Effect のコンパイラープロファイルと VoidZero のツールチェーン
 （Vite+、Oxlint、Oxfmt）が、その構造をチェックします。実行されない Effect は型チェックで、エントリーポイント以外での Effect の実行は lint で検出されます。
-さらに `test` では、`AGENTS.md` がなくても、ルールに違反したコードを検出できることを確認します。
 
 こうした仕組みに定型的なレビューや開発基盤の保守を任せることで、プロダクトそのものに時間を使えるようにしています。
 
