@@ -2,8 +2,8 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-An Effect-based TypeScript application starter, with an optional **React**,
-**TanStack Start**, or **Vue** frontend. Built on Effect v4, Drizzle, Effect SQL,
+An Effect-based TypeScript application starter, with an optional React,
+TanStack Start, or Vue frontend. Built on Effect v4, Drizzle, Effect SQL,
 PostgreSQL, and Vite+. No hosting provider is preconfigured.
 
 ## Why I built this
