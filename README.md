@@ -15,9 +15,8 @@ can start a project and keep building on it.
 Effect gives code a direction to grow in: workflows are typed values, failures
 are explicit, and dependencies come through layers, so new code follows the same
 pattern as existing code. The Effect compiler profile and the VoidZero toolchain
-(Vite+, Oxlint, Oxfmt) enforce that shape: running Effects outside entrypoints
-fails lint, and `test` proves those rules still reject bad code even without
-`AGENTS.md`.
+(Vite+, Oxlint, Oxfmt) enforce that shape: an unexecuted Effect fails typecheck,
+and running Effects outside entrypoints fails lint.
 
 The guardrails take over the routine review and platform upkeep that used to
 take people's time, so they can spend it on the product instead.
