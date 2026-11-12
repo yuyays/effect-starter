@@ -304,6 +304,17 @@ void test("lint keeps tests on real seams, Effect test runners, and controlled c
   }
 });
 
+void test(
+  "lint keeps web Effect runtimes in the client adapters",
+  { skip: skipWithoutWeb },
+  async (t) => {
+    const source =
+      'import { Effect } from "effect";\nexport const load = () => Effect.runPromise(Effect.succeed(1));\n';
+    const codes = await lintFixtures(t, "apps/web/src", { "users-panel.ts": source });
+    assertRules(codes, { "users-panel.ts": ["starter(runtime-boundary)"] });
+  },
+);
+
 void test("lint lets web tests run Effects", { skip: skipWithoutWeb }, async (t) => {
   const source =
     'import { Effect } from "effect";\nexport const value = Effect.runSync(Effect.succeed(1));\n';

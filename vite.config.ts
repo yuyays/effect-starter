@@ -86,11 +86,18 @@ export default defineConfig({
     },
     overrides: [
       {
-        files: ["apps/api/src/**/*.ts"],
+        files: ["apps/api/src/**/*.ts", "apps/web/src/**"],
         rules: { "starter/runtime-boundary": "error" },
       },
       {
-        files: ["apps/api/src/main.ts", "apps/api/src/http.ts", ...testFiles],
+        // Entry points and the web adapters that hand Effects to the UI framework.
+        files: [
+          "apps/api/src/main.ts",
+          "apps/api/src/http.ts",
+          "apps/web/src/lib/api-client.ts",
+          "apps/web/src/lib/users.ts",
+          ...testFiles,
+        ],
         rules: { "starter/runtime-boundary": "off" },
       },
       {
