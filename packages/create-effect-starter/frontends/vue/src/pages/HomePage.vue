@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { useQuery } from "@tanstack/vue-query";
+import { computed } from "vue";
 import UsersCard from "../components/UsersCard.vue";
-import { usersQueryOptions } from "../lib/users.js";
+import { usersErrorMessage, usersQueryOptions } from "../lib/users.js";
 
-const { data, isError, isFetching, refetch } = useQuery(usersQueryOptions);
+const { data, error, isFetching, refetch } = useQuery(usersQueryOptions);
+const errorMessage = computed(() => usersErrorMessage(error.value));
 </script>
 
 <template>
@@ -19,7 +21,12 @@ const { data, isError, isFetching, refetch } = useQuery(usersQueryOptions);
           server implements.
         </p>
       </div>
-      <UsersCard :users="data" :is-error="isError" :is-fetching="isFetching" @refetch="refetch()" />
+      <UsersCard
+        :users="data"
+        :error-message="errorMessage"
+        :is-fetching="isFetching"
+        @refetch="refetch()"
+      />
     </section>
   </main>
 </template>

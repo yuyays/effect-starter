@@ -165,6 +165,28 @@ it.live("fails the run when the model never proposes within the turn limit", () 
   }).pipe(Effect.provide(layerWith(stuck)));
 });
 
+it.live("fails the run without retrying when the model proposes an invalid record", () => {
+  let calls = 0;
+  const invalid = Layer.succeed(ModelClient, {
+    respond: () =>
+      Effect.sync(
+        (): ModelTurn => (calls++, { kind: "proposal", proposal: { ...proposal, title: "" } }),
+      ),
+  });
+  return Effect.gen(function* () {
+    const runs = yield* AgentRuns;
+    const id = yield* runs.start(crypto.randomUUID(), document);
+    yield* deliver;
+    expect(yield* runs.read(id)).toMatchObject({
+      status: "failed",
+      attempts: 1,
+      proposal: null,
+      error: "Invalid model or stored data",
+    });
+    expect(calls).toBe(1);
+  }).pipe(Effect.provide(layerWith(invalid)));
+});
+
 it.live("drops a queued job when its transaction rolls back", () =>
   Effect.gen(function* () {
     const sql = yield* SqlClient.SqlClient;

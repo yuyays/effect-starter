@@ -39,13 +39,13 @@ export const HttpPublishLive = Layer.effect(
         return (yield* decodeReceipt(response)).receipt;
       },
       Effect.timeout("15 seconds"),
-      Effect.mapError((error) =>
-        error instanceof PublishError
-          ? error
-          : new PublishError({
-              message: "Publish sink unavailable or returned invalid output",
-              retryable: true,
-            }),
+      Effect.catchTag(["HttpBodyError", "HttpClientError", "SchemaError", "TimeoutError"], () =>
+        Effect.fail(
+          new PublishError({
+            message: "Publish sink unavailable or returned invalid output",
+            retryable: true,
+          }),
+        ),
       ),
     );
     return PublishSink.of({ publish });

@@ -3,12 +3,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export interface UsersCardProps {
   readonly users: ReadonlyArray<{ readonly id: string; readonly name: string }> | undefined;
-  readonly isError: boolean;
+  /** Why the last fetch failed; shown instead of any stale users. */
+  readonly errorMessage: string | undefined;
   readonly isFetching: boolean;
   readonly onRefetch: () => void;
 }
 
-export function UsersCard({ users, isError, isFetching, onRefetch }: UsersCardProps) {
+export function UsersCard({ users, errorMessage, isFetching, onRefetch }: UsersCardProps) {
   return (
     <Card>
       <CardHeader>
@@ -20,8 +21,8 @@ export function UsersCard({ users, isError, isFetching, onRefetch }: UsersCardPr
           {isFetching ? "Loading..." : "Refetch"}
         </Button>
 
-        {isError ? (
-          <p className="text-sm text-red-700">Could not load users. Is the API running?</p>
+        {errorMessage !== undefined ? (
+          <p className="text-sm text-red-700">{errorMessage}</p>
         ) : users === undefined ? (
           <p className="text-sm text-stone-600">Loading users...</p>
         ) : users.length ? (

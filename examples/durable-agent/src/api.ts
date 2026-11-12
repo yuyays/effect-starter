@@ -17,10 +17,10 @@ import {
   type Actor,
   AgentRuns,
   RunConflict,
+  type RunError,
   RunInput,
   RunInvalid,
   RunNotFound,
-  RunStorageError,
   RunUnauthorized,
   RunView,
   RunsLive,
@@ -33,14 +33,12 @@ export class CurrentActor extends Context.Service<CurrentActor, Actor>()(
 
 /** Storage failures are logged server-side; clients never see their cause. */
 class InternalError extends Schema.TaggedError<InternalError>()("InternalError", {}) {}
-const hideStorageErrors = <A, E, R>(effect: Effect.Effect<A, E | RunStorageError, R>) =>
+const hideStorageErrors = <A, R>(effect: Effect.Effect<A, RunError, R>) =>
   effect.pipe(
-    Effect.catchIf(
-      (error): error is RunStorageError => error instanceof RunStorageError,
-      (error) =>
-        Effect.logError("Run storage failed", error.cause).pipe(
-          Effect.andThen(Effect.fail(new InternalError())),
-        ),
+    Effect.catchTag("RunStorageError", (error) =>
+      Effect.logError("Run storage failed", error.cause).pipe(
+        Effect.andThen(Effect.fail(new InternalError())),
+      ),
     ),
   );
 

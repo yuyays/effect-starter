@@ -1,16 +1,17 @@
 import { createHash, randomUUID } from "node:crypto";
 import { Context, Effect, Layer, Schema } from "effect";
-import { SqlClient } from "effect/sql";
+import type { PersistedQueue } from "effect/persistence";
+import { SqlClient, type SqlError } from "effect/sql";
 import { Jobs, type Job } from "./db.ts";
 import {
   ModelClient,
-  ModelError,
+  type ModelError,
   ModelTurn,
   Proposal,
   reviewPolicy,
   type Step,
 } from "./propose.ts";
-import { PublishError, PublishSink } from "./publish.ts";
+import { type PublishError, PublishSink } from "./publish.ts";
 
 export class RunConflict extends Schema.TaggedError<RunConflict>()("RunConflict", {
   message: Schema.String,
@@ -48,7 +49,7 @@ export interface Actor {
   readonly id: string;
   readonly canApprove: boolean;
 }
-type RunError = RunConflict | RunNotFound | RunUnauthorized | RunStorageError | RunInvalid;
+export type RunError = RunConflict | RunNotFound | RunUnauthorized | RunStorageError | RunInvalid;
 
 export class AgentRuns extends Context.Service<
   AgentRuns,
@@ -76,18 +77,30 @@ export class RunJobs extends Context.Service<
   }
 >()("doc-review/RunJobs") {}
 
-const decodeView = Schema.decodeUnknownEffect(RunView);
+/** Model output or stored data that fails its schema; retrying cannot repair it. */
+class InvalidRunData extends Schema.TaggedError<InvalidRunData>()("InvalidRunData", {
+  cause: Schema.Defect(),
+}) {}
+const invalidData = (cause: Schema.SchemaError) => new InvalidRunData({ cause });
+type JobsError = PersistedQueue.PersistedQueueError | Schema.SchemaError;
+const storageError = (cause: SqlError.SqlError | InvalidRunData | RunNotFound | JobsError) =>
+  Effect.fail(new RunStorageError({ cause }));
+// Failures `start` and `decide` report as storage errors; domain errors pass through.
+const storageTags = ["SqlError", "PersistedQueueError", "SchemaError"] as const;
+
 const decodeInput = Schema.decodeUnknownEffect(RunInput);
-const decodeTurn = Schema.decodeUnknownEffect(ModelTurn);
+// Codecs for stored run data; a schema failure becomes InvalidRunData.
+const viewDecoder = Schema.decodeUnknownEffect(RunView);
+const turnDecoder = Schema.decodeUnknownEffect(ModelTurn);
+const turnEncoder = Schema.encodeEffect(Schema.fromJsonString(ModelTurn));
+const proposalEncoder = Schema.encodeEffect(Schema.fromJsonString(Proposal));
+const decodeView = (row: unknown) => viewDecoder(row).pipe(Effect.mapError(invalidData));
+const decodeTurn = (saved: unknown) => turnDecoder(saved).pipe(Effect.mapError(invalidData));
+const encodeTurn = (turn: ModelTurn) => turnEncoder(turn).pipe(Effect.mapError(invalidData));
+const encodeProposal = (proposal: Proposal) =>
+  proposalEncoder(proposal).pipe(Effect.mapError(invalidData));
 const attemptLimit = 3;
 const turnLimit = 4;
-const mapError = (cause: unknown): RunError =>
-  cause instanceof RunConflict ||
-  cause instanceof RunNotFound ||
-  cause instanceof RunUnauthorized ||
-  cause instanceof RunInvalid
-    ? cause
-    : new RunStorageError({ cause });
 
 const readRun = Effect.fn("readRun")(function* (sql: SqlClient.SqlClient, id: string) {
   const rows =
@@ -96,96 +109,88 @@ const readRun = Effect.fn("readRun")(function* (sql: SqlClient.SqlClient, id: st
   return yield* decodeView(rows[0]);
 });
 
-// Operator-facing reason; never includes storage internals.
-const failureMessage = (error: unknown) =>
-  error instanceof ModelError
-    ? `Model failed: ${error.message}`
-    : error instanceof PublishError
-      ? `Publish failed: ${error.message}`
-      : Schema.isSchemaError(error)
-        ? "Invalid model or stored data"
-        : "Processing failed";
-
 /** Request-side commands. Each state change and its queued job commit together. */
 export const RunsLive = Layer.effect(
   AgentRuns,
   Effect.gen(function* () {
     const sql = yield* SqlClient.SqlClient;
     const jobs = yield* Jobs;
-    const read = (id: string) => readRun(sql, id).pipe(Effect.mapError(mapError));
-    const start = Effect.fn("AgentRuns.start")(function* (
-      key: string,
-      input: typeof RunInput.Type,
-    ) {
-      if (!key || key.length > 200)
-        return yield* new RunInvalid({ message: "Request key must contain 1–200 characters" });
-      yield* decodeInput(input).pipe(
-        Effect.mapError(
-          () => new RunInvalid({ message: "Document must contain 1–20000 characters" }),
-        ),
-      );
-      const hash = createHash("sha256").update(input.document).digest("hex");
-      return yield* sql.withTransaction(
-        Effect.gen(function* () {
-          const rows = yield* sql<{ id: string; input_hash: string }>`
+    const read = (id: string) =>
+      readRun(sql, id).pipe(Effect.catchTag(["SqlError", "InvalidRunData"], storageError));
+    const start = Effect.fn("AgentRuns.start")(
+      function* (key: string, input: typeof RunInput.Type) {
+        if (!key || key.length > 200)
+          return yield* new RunInvalid({ message: "Request key must contain 1–200 characters" });
+        yield* decodeInput(input).pipe(
+          Effect.mapError(
+            () => new RunInvalid({ message: "Document must contain 1–20000 characters" }),
+          ),
+        );
+        const hash = createHash("sha256").update(input.document).digest("hex");
+        return yield* sql.withTransaction(
+          Effect.gen(function* () {
+            const rows = yield* sql<{ id: string; input_hash: string }>`
         INSERT INTO review_runs (id, request_key, input_hash, document)
         VALUES (${randomUUID()}, ${key}, ${hash}, ${input.document})
         ON CONFLICT (request_key) DO UPDATE SET request_key = EXCLUDED.request_key
         RETURNING id, input_hash`;
-          const row = rows[0]!;
-          if (row.input_hash !== hash)
-            return yield* new RunConflict({
-              message: "Request key already belongs to different input",
-            });
-          yield* jobs.offer({ runId: row.id, phase: "propose" }, { id: `propose:${row.id}` });
-          return row.id;
-        }),
-      );
-    }, Effect.mapError(mapError));
+            const row = rows[0]!;
+            if (row.input_hash !== hash)
+              return yield* new RunConflict({
+                message: "Request key already belongs to different input",
+              });
+            yield* jobs.offer({ runId: row.id, phase: "propose" }, { id: `propose:${row.id}` });
+            return row.id;
+          }),
+        );
+      },
+      Effect.catchTag(storageTags, storageError),
+    );
 
-    const decide = Effect.fn("AgentRuns.decide")(function* (
-      id: string,
-      version: number,
-      decision: "approve" | "reject",
-      actor: Actor,
-    ) {
-      if (!actor.canApprove) return yield* new RunUnauthorized();
-      return yield* sql.withTransaction(
-        Effect.gen(function* () {
-          const status = decision === "approve" ? "publishing" : "rejected";
-          const rows =
-            yield* sql`UPDATE review_runs SET status = ${status}, decision = ${decision}, decided_by = ${actor.id}, phase_attempts = 0
+    const decide = Effect.fn("AgentRuns.decide")(
+      function* (id: string, version: number, decision: "approve" | "reject", actor: Actor) {
+        if (!actor.canApprove) return yield* new RunUnauthorized();
+        return yield* sql.withTransaction(
+          Effect.gen(function* () {
+            const status = decision === "approve" ? "publishing" : "rejected";
+            const rows =
+              yield* sql`UPDATE review_runs SET status = ${status}, decision = ${decision}, decided_by = ${actor.id}, phase_attempts = 0
         WHERE id = ${id} AND status = 'awaitingApproval' AND version = ${version} RETURNING id`;
-          if (rows.length) {
-            return yield* decision === "approve"
-              ? jobs
-                  .offer({ runId: id, phase: "publish" }, { id: `publish:${id}:${version}` })
-                  .pipe(Effect.asVoid)
-              : Effect.void;
-          }
-          // Repeating the decision that already won is a no-op; anything else is stale.
-          const prior = yield* sql<{
-            version: number;
-            decision: string | null;
-          }>`SELECT version, decision FROM review_runs WHERE id = ${id}`;
-          if (!prior[0]) return yield* new RunNotFound();
-          const repeated = prior[0].version === version && prior[0].decision === decision;
-          return yield* repeated
-            ? Effect.void
-            : Effect.fail(new RunConflict({ message: "Proposal is stale or already decided" }));
-        }),
-      );
-    }, Effect.mapError(mapError));
+            if (rows.length) {
+              return yield* decision === "approve"
+                ? jobs
+                    .offer({ runId: id, phase: "publish" }, { id: `publish:${id}:${version}` })
+                    .pipe(Effect.asVoid)
+                : Effect.void;
+            }
+            // Repeating the decision that already won is a no-op; anything else is stale.
+            const prior = yield* sql<{
+              version: number;
+              decision: string | null;
+            }>`SELECT version, decision FROM review_runs WHERE id = ${id}`;
+            if (!prior[0]) return yield* new RunNotFound();
+            const repeated = prior[0].version === version && prior[0].decision === decision;
+            return yield* repeated
+              ? Effect.void
+              : Effect.fail(new RunConflict({ message: "Proposal is stale or already decided" }));
+          }),
+        );
+      },
+      Effect.catchTag(storageTags, storageError),
+    );
 
-    const cancel = Effect.fn("AgentRuns.cancel")(function* (id: string) {
-      const rows = yield* sql`UPDATE review_runs SET status = 'cancelled'
+    const cancel = Effect.fn("AgentRuns.cancel")(
+      function* (id: string) {
+        const rows = yield* sql`UPDATE review_runs SET status = 'cancelled'
       WHERE id = ${id} AND status IN ('processing', 'awaitingApproval') RETURNING id`;
-      // Cancelling twice is a no-op; approved, finished, or rejected runs cannot be cancelled.
-      const cancelled = rows.length > 0 || (yield* read(id)).status === "cancelled";
-      return yield* cancelled
-        ? Effect.void
-        : Effect.fail(new RunConflict({ message: "Run can no longer be cancelled" }));
-    }, Effect.mapError(mapError));
+        // Cancelling twice is a no-op; approved, finished, or rejected runs cannot be cancelled.
+        const cancelled = rows.length > 0 || (yield* read(id)).status === "cancelled";
+        return yield* cancelled
+          ? Effect.void
+          : Effect.fail(new RunConflict({ message: "Run can no longer be cancelled" }));
+      },
+      Effect.catchTag("SqlError", storageError),
+    );
     return AgentRuns.of({ start, read, decide, cancel });
   }),
 );
@@ -228,9 +233,10 @@ export const RunJobsLive = Layer.effect(
       const saved = yield* savedTurn(runId, turn);
       if (saved !== undefined) return yield* decodeTurn(saved);
       const next = yield* model.respond(document, history);
+      const response = yield* encodeTurn(next);
       // First committed response wins if a stale lease produces two responses.
       yield* sql`INSERT INTO review_model_steps (run_id, turn, response)
-        VALUES (${runId}, ${turn}, ${JSON.stringify(next)}) ON CONFLICT DO NOTHING`;
+        VALUES (${runId}, ${turn}, ${response}) ON CONFLICT DO NOTHING`;
       return yield* decodeTurn(yield* savedTurn(runId, turn));
     });
 
@@ -245,8 +251,9 @@ export const RunJobsLive = Layer.effect(
         if ((yield* read(runId)).status !== "processing") return;
         const response = yield* modelTurn(runId, turn, document, history);
         if (response.kind === "proposal") {
+          const proposal = yield* encodeProposal(response.proposal);
           yield* sql`UPDATE review_runs SET status = 'awaitingApproval', version = version + 1,
-            proposal = ${JSON.stringify(response.proposal)}, error = NULL
+            proposal = ${proposal}, error = NULL
             WHERE id = ${runId} AND status = 'processing' AND phase_attempts = ${attempt}`;
           return;
         }
@@ -279,25 +286,29 @@ export const RunJobsLive = Layer.effect(
           if (job.phase === "publish") return yield* publishApproved(job.runId, attempt);
           return yield* propose(job.runId, attempt, document);
         });
+        // Records a terminal failure; `reason` is operator-facing and omits storage internals.
+        const settle = (reason: string) =>
+          sql`UPDATE review_runs SET status = 'failed', error = ${reason}
+            WHERE id = ${job.runId} AND status = ${expected} AND phase_attempts = ${attempt}`.pipe(
+            Effect.asVoid,
+          );
+        // Fails the delivery so the queue retries, until the attempt limit settles the run.
+        const retryOrSettle = <E>(error: E, reason: string) =>
+          attempt < attemptLimit ? Effect.fail(error) : settle(reason);
         yield* perform.pipe(
-          Effect.catch((error) => {
-            const fatal =
-              Schema.isSchemaError(error) || (error instanceof PublishError && !error.retryable);
-            // Fail the delivery so the queue retries; record terminal failures on the run.
-            return !fatal && attempt < attemptLimit
-              ? Effect.fail(error)
-              : sql`UPDATE review_runs SET status = 'failed', error = ${failureMessage(error)}
-                WHERE id = ${job.runId} AND status = ${expected} AND phase_attempts = ${attempt}`.pipe(
-                  Effect.asVoid,
-                );
+          Effect.catchTags({
+            InvalidRunData: () => settle("Invalid model or stored data"),
+            ModelError: (error) => retryOrSettle(error, `Model failed: ${error.message}`),
+            PublishError: (error) =>
+              error.retryable
+                ? retryOrSettle(error, `Publish failed: ${error.message}`)
+                : settle(`Publish failed: ${error.message}`),
+            SqlError: (error) => retryOrSettle(error, "Processing failed"),
+            RunNotFound: (error) => retryOrSettle(error, "Processing failed"),
           }),
         );
       },
-      Effect.mapError((error) =>
-        error instanceof ModelError || error instanceof PublishError
-          ? error
-          : new RunStorageError({ cause: error }),
-      ),
+      Effect.catchTag(["SqlError", "RunNotFound"], storageError),
     );
     return RunJobs.of({ handle });
   }),

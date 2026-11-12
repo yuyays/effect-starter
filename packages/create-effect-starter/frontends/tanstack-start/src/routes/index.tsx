@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { UsersCard } from "@/components/users-card.js";
-import { usersQueryOptions } from "@/lib/users.js";
+import { usersErrorMessage, usersQueryOptions } from "@/lib/users.js";
 
 export const Route = createFileRoute("/")({
   component: IndexRoute,
@@ -28,7 +28,7 @@ function IndexRoute() {
 
         <UsersCard
           users={usersQuery.data}
-          isError={usersQuery.isError}
+          errorMessage={usersErrorMessage(usersQuery.error)}
           isFetching={usersQuery.isFetching}
           onRefetch={() => void usersQuery.refetch()}
         />

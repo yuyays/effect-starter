@@ -1,7 +1,8 @@
 <script setup lang="ts">
 defineProps<{
   users: ReadonlyArray<{ readonly id: string; readonly name: string }> | undefined;
-  isError: boolean;
+  /** Why the last fetch failed; shown instead of any stale users. */
+  errorMessage: string | undefined;
   isFetching: boolean;
 }>();
 
@@ -20,7 +21,7 @@ defineEmits<{ refetch: [] }>();
     >
       {{ isFetching ? "Loading..." : "Refetch" }}
     </button>
-    <p v-if="isError" class="text-sm text-red-700">Could not load users. Is the API running?</p>
+    <p v-if="errorMessage !== undefined" class="text-sm text-red-700">{{ errorMessage }}</p>
     <p v-else-if="users === undefined" class="text-sm text-stone-600">Loading users...</p>
     <ul v-else-if="users.length" class="space-y-2">
       <li v-for="user in users" :key="user.id" class="rounded-md border border-stone-200 p-3">
