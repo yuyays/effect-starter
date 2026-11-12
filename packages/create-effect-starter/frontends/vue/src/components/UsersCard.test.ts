@@ -5,7 +5,7 @@ import UsersCard from "./UsersCard.vue";
 
 afterEach(cleanup);
 
-const idle = { users: undefined, isError: false, isFetching: false };
+const idle = { users: undefined, errorMessage: undefined, isFetching: false };
 
 describe("UsersCard", () => {
   it("lists users", () => {
@@ -28,9 +28,11 @@ describe("UsersCard", () => {
   });
 
   it("shows an error instead of stale users", () => {
-    render(UsersCard, { props: { ...idle, users: [{ id: "1", name: "Ada" }], isError: true } });
+    render(UsersCard, {
+      props: { ...idle, users: [{ id: "1", name: "Ada" }], errorMessage: "API unavailable" },
+    });
 
-    expect(screen.getByText(/Could not load users/)).toBeTruthy();
+    expect(screen.getByText("API unavailable")).toBeTruthy();
     expect(screen.queryByRole("listitem")).toBeNull();
   });
 

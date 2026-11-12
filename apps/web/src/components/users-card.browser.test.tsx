@@ -5,7 +5,7 @@ import { UsersCard } from "./users-card.js";
 
 afterEach(cleanup);
 
-const idle = { users: undefined, isError: false, isFetching: false, onRefetch: () => {} };
+const idle = { users: undefined, errorMessage: undefined, isFetching: false, onRefetch: () => {} };
 
 describe("UsersCard", () => {
   it("lists users", () => {
@@ -28,9 +28,11 @@ describe("UsersCard", () => {
   });
 
   it("shows an error instead of stale users", () => {
-    render(<UsersCard {...idle} users={[{ id: "1", name: "Ada" }]} isError />);
+    render(
+      <UsersCard {...idle} users={[{ id: "1", name: "Ada" }]} errorMessage="API unavailable" />,
+    );
 
-    expect(screen.getByText(/Could not load users/)).toBeTruthy();
+    expect(screen.getByText("API unavailable")).toBeTruthy();
     expect(screen.queryByRole("listitem")).toBeNull();
   });
 
