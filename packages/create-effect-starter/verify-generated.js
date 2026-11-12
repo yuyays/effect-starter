@@ -29,9 +29,16 @@ async function freePort() {
   return port;
 }
 
+// Reads the whole body before returning, so a page that streams past the deadline counts
+// as not ready and is polled again; aborting a later body read would crash the script.
 async function response(url) {
   try {
-    return await fetch(url, { signal: AbortSignal.timeout(1000) });
+    const result = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    return new Response(await result.text(), {
+      status: result.status,
+      statusText: result.statusText,
+      headers: result.headers,
+    });
   } catch {
     return undefined;
   }
