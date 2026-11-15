@@ -3,9 +3,29 @@
 name: Examples
 
 on:
+  # Examples need the shared catalogs and the API's tsconfig, and nothing else here
+  # depends on them, so unrelated pull requests skip the PostgreSQL service.
   pull_request:
+    paths:
+      - "examples/**"
+      - "apps/api/tsconfig.json"
+      - "tsconfig.base.json"
+      - "vite.config.ts"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "package.json"
+      - ".github/workflows/examples.yml"
   push:
     branches: [main]
+    paths:
+      - "examples/**"
+      - "apps/api/tsconfig.json"
+      - "tsconfig.base.json"
+      - "vite.config.ts"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "package.json"
+      - ".github/workflows/examples.yml"
 
 permissions:
   contents: read

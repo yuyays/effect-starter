@@ -49,7 +49,8 @@ jobs:
     # `--framework none` generates the API without a frontend.
     name: ${{ matrix.framework == 'none' && 'api-only' || matrix.framework }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # A framework takes about two minutes; a hung dev server should fail fast.
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
@@ -73,7 +74,13 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # React starters' browser tests reuse this Playwright version's Chromium.
+      # React starters need this Playwright version's Chromium; cache the 130 MB download.
+      - if: matrix.framework == 'react' || matrix.framework == 'tanstack-start'
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: playwright-${{ runner.os }}-
       - if: matrix.framework == 'react' || matrix.framework == 'tanstack-start'
         run: pnpm browser:install --with-deps
       - run: pnpm test:generated ${{ matrix.framework }}

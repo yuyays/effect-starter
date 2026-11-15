@@ -143,6 +143,17 @@ for (const framework of Object.keys(frameworks)) {
     );
     const workflowPath = new URL(".github/workflows/ci.yml", destination);
     let workflow = await readFile(workflowPath, "utf8");
+    workflow = replaceRequired(
+      workflow,
+      `      # Chromium is ~130 MB; keying on the lockfile reuses it until Playwright upgrades.
+      - uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-\${{ runner.os }}-\${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: playwright-\${{ runner.os }}-
+`,
+      "",
+    );
     workflow = replaceRequired(workflow, "      - run: pnpm browser:install --with-deps\n", "");
     workflow = replaceRequired(workflow, "      - run: pnpm test:browser\n", "");
     await writeFile(workflowPath, workflow);

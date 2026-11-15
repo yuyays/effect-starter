@@ -20,7 +20,8 @@ concurrency:
 jobs:
   checks:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # The job takes about two minutes; a hang should not burn the full default.
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
         with:
@@ -35,6 +36,12 @@ jobs:
       - run: pnpm format:check
       - run: pnpm typecheck
       - run: pnpm test
+      # Chromium is ~130 MB; keying on the lockfile reuses it until Playwright upgrades.
+      - uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: playwright-${{ runner.os }}-
       - run: pnpm browser:install --with-deps
       - run: pnpm test:browser
       - run: pnpm build

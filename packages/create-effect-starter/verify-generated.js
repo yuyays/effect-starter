@@ -282,16 +282,22 @@ try {
       console.log(
         `\nVerifying ${packageManager} project with ${runtime} API: ${project.destination}`,
       );
-      // The Bun runtime only changes the API `dev`/`start` scripts and README text,
-      // so lint, typecheck, tests, and the lockfile check would repeat Bun + Node.
-      const runtimeOnly = runtime !== "node";
-      if (packageManager === "bun") run("bun", ["install"], project.destination);
-      if (!runtimeOnly) run(packageManager, ["install", "--frozen-lockfile"], project.destination);
+      // pnpm with the Node runtime is the canonical project: it runs the full suite and
+      // both smoke tests. The other combinations only differ by installer or API runtime,
+      // and their `build` already typechecks, so they skip lint, formatting, unit, and
+      // browser tests that the canonical project has proven for the same sources.
+      const canonical = packageManager === "pnpm" && runtime === "node";
+      if (packageManager === "bun") {
+        run("bun", ["install"], project.destination);
+        // Proves the generated bun.lock is complete and reproducible.
+        run("bun", ["install", "--frozen-lockfile"], project.destination);
+      } else {
+        run(packageManager, ["install", "--frozen-lockfile"], project.destination);
+      }
       // Enforcement must survive consumers replacing the agent instructions.
       await rm(join(project.destination, "AGENTS.md"));
-      const scripts = runtimeOnly
-        ? ["format:check", "build"]
-        : [
+      const scripts = canonical
+        ? [
             "lint",
             "format:check",
             "typecheck",
@@ -299,15 +305,20 @@ try {
             // React starters run component tests in Chromium (installed by CI or browser:install).
             ...(isReact(framework) ? ["test:browser"] : []),
             "build",
-          ];
+          ]
+        : ["build"];
       for (const script of scripts) {
         run(packageManager, ["run", script], project.destination);
       }
-      if (isReact(framework)) {
+      if (canonical && isReact(framework)) {
         await assertReactCompiled(project.destination);
       }
       await smokeProduction(project.destination, runtime);
-      await smokeDev(packageManager, project.destination, framework, runtime);
+      // The Bun runtime changes the generated `dev` scripts, so only that project re-proves
+      // dev serving and hot reload.
+      if (canonical || runtime === "bun") {
+        await smokeDev(packageManager, project.destination, framework, runtime);
+      }
     }
   }
 } finally {
