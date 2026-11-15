@@ -268,12 +268,16 @@ for (const framework of frameworkNames) getFramework(framework);
 const directory = await mkdtemp(join(tmpdir(), "effect-generated-check-"));
 try {
   for (const framework of frameworkNames) {
-    // Common setups end to end; unit tests cover pnpm with the Bun runtime.
-    for (const [packageManager, runtime] of [
+    // Common setups end to end; unit tests cover pnpm with the Bun runtime. The Bun
+    // runtime only rewrites the API `dev`/`start` scripts, so the API-only project proves
+    // it once: a frontend project would repeat that API smoke next to a web server its
+    // pnpm + Node project already served.
+    const combinations = [
       ["pnpm", "node"],
       ["bun", "node"],
-      ["bun", "bun"],
-    ]) {
+      ...(hasFrontend(framework) ? [] : [["bun", "bun"]]),
+    ];
+    for (const [packageManager, runtime] of combinations) {
       const project = await createProject(
         `${framework}-${packageManager}-${runtime}-app`,
         directory,
