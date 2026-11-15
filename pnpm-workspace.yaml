@@ -25,6 +25,11 @@ allowBuilds:
 overrides:
   "vite@*": "catalog:"
   "vitest@*": 5.1.0
+  # Vite+ 1.5.0 pins Oxlint 1.91.0. `@effect/tsgo` 0.67.5 supports up to 1.92.0, and
+  # Oxlint 1.92.0 declares `vite-plus: *`, so hold the toolchain's Oxlint and its plugin
+  # types at the newest version the patched engine supports instead of a second copy.
+  "oxlint": 1.92.0
+  "@oxlint/plugins": 1.92.0
 
 # Vite+ core uses the toolchain version for its Vite 8-compatible alias.
 peerDependencyRules:
