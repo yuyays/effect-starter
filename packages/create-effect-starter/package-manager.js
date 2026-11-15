@@ -41,6 +41,8 @@ function bunWorkflow(workflow, version) {
   result = replaceRequired(result, /^ {10}cache: pnpm\n/m, "");
   result = replaceRequired(result, /- run: pnpm install /, "- run: bun install ");
   result = replaceRequired(result, /- run: pnpm (?!install )/g, "- run: bun run ");
+  // React templates cache Playwright browsers keyed on the lockfile Bun generates.
+  result = result.replace("hashFiles('pnpm-lock.yaml')", "hashFiles('bun.lock')");
   if (result.includes("pnpm")) throw new Error("The Bun CI workflow still references pnpm");
   return result;
 }
