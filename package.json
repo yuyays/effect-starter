@@ -20,10 +20,10 @@
     "typecheck": "vp run --cache --concurrency-limit 4 --filter \"@effect-starter/*\" typecheck",
     "typecheck:examples": "vp run --filter \"@effect-starter-examples/*\" typecheck",
     "test:examples": "vp run --filter \"@effect-starter-examples/*\" test",
-    "test": "vp run --filter \"@effect-starter/*\" test && effect-tsgo patch --oxlint && node --test tools/effect-policy.test.js && node packages/create-effect-starter/build-template.js && node --test packages/create-effect-starter/create-project.test.js packages/create-effect-starter/install.test.js packages/create-effect-starter/dev-servers.test.js && vp run --filter \"@effect-starter-templates/vue\" test",
+    "test": "vp run --filter \"@effect-starter/*\" test && node --test tools/effect-policy.test.js && node packages/create-effect-starter/build-template.js && node --test packages/create-effect-starter/create-project.test.js packages/create-effect-starter/install.test.js packages/create-effect-starter/dev-servers.test.js && vp run --filter \"@effect-starter-templates/vue\" test",
     "test:browser": "vp run --filter \"@effect-starter/*\" test:browser",
     "browser:install": "vp run --filter \"@effect-starter/*\" browser:install",
-    "lint": "effect-tsgo patch --oxlint && vp lint .",
+    "lint": "vp lint .",
     "format:check": "vp fmt . --check",
     "prepare": "effect-tsgo patch --typescript --oxlint",
     "db:generate": "vp run @effect-starter/api#db:generate",
@@ -32,8 +32,8 @@
     "test:generated": "node packages/create-effect-starter/build-template.js && node packages/create-effect-starter/verify-generated.js"
   },
   "devDependencies": {
-    "@effect/tsgo": "0.67.5",
-    "@oxlint/plugins": "1.92.0",
+    "@effect/tsgo": "0.69.0",
+    "@oxlint/plugins": "1.93.0",
     "typescript": "7.0.2",
     "vite-plus": "catalog:"
   },
