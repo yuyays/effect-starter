@@ -1,10 +1,13 @@
 import { posix } from "node:path";
-import { parse, stringify } from "yaml";
+import { parseAllDocuments, stringify } from "yaml";
 import { hasFrontend } from "./frameworks.js";
 
-// Select only the generated workspaces from the shared, bot-maintained lockfile.
+// pnpm 12 writes the pinned package manager as its own YAML document before the project graph,
+// and a frozen install rejects a lockfile whose pin is missing. Keep every document, rewriting
+// only the graph, so generated projects install from the lockfile they ship.
 export function templateLockfile(source, framework) {
-  const lockfile = parse(source);
+  const documents = parseAllDocuments(source).map((document) => document.toJS());
+  const lockfile = documents.at(-1);
   const web =
     framework === "react" ? "apps/web" : `packages/create-effect-starter/frontends/${framework}`;
   // Keep pnpm's sorted importer order so generated lockfiles stay stable.
@@ -31,5 +34,5 @@ export function templateLockfile(source, framework) {
     importers[destinationPath] = importer;
   }
   lockfile.importers = importers;
-  return stringify(lockfile, { lineWidth: 0 });
+  return documents.map((document) => `---\n${stringify(document, { lineWidth: 0 })}`).join("");
 }

@@ -9,9 +9,17 @@ import { test } from "node:test";
 import semver from "semver";
 import { versions } from "vite-plus/versions";
 import { format } from "vite-plus/fmt";
-import { parse } from "yaml";
+import { parse, parseAllDocuments } from "yaml";
 import { createProject } from "./create-project.js";
 import { isReact } from "./frameworks.js";
+
+// pnpm 12 writes the pinned package manager as its own YAML document ahead of the project
+// graph, so a lockfile needs every document parsed to read the graph.
+function lockfileGraph(source) {
+  return parseAllDocuments(source)
+    .map((document) => document.toJS())
+    .at(-1);
+}
 
 // Reads an installed package's manifest by resolving it from a workspace, so the check
 // works with any node_modules layout (the plugin does not export its package.json).
@@ -432,7 +440,14 @@ for (const framework of ["react", "tanstack-start", "vue"]) {
       if (packageManager === "pnpm") {
         const lock = await readFile(join(project, "pnpm-lock.yaml"), "utf8");
         assert.ok(!lock.includes("packages/create-chosen-app:"));
-        const parsed = parse(lock);
+        // The pinned package manager is its own document, and a frozen install compares it with
+        // the manifest, so the two must agree or every generated project fails to install.
+        const [pin, parsed] = parseAllDocuments(lock).map((document) => document.toJS());
+        const projectManifest = JSON.parse(await readFile(join(project, "package.json"), "utf8"));
+        assert.equal(
+          pin.importers["."].packageManagerDependencies.pnpm.version,
+          projectManifest.packageManager.slice("pnpm@".length),
+        );
         const dependencies = parsed.importers["apps/web"].dependencies;
         assert.equal(
           Boolean(dependencies["@tanstack/react-start"]),
@@ -495,7 +510,7 @@ for (const packageManager of ["pnpm", "bun"]) {
     const paths = await readdir(project, { recursive: true });
     assert.ok(!paths.some((path) => path.startsWith("apps/web")));
     if (packageManager === "pnpm") {
-      const lock = parse(await readFile(join(project, "pnpm-lock.yaml"), "utf8"));
+      const lock = lockfileGraph(await readFile(join(project, "pnpm-lock.yaml"), "utf8"));
       assert.deepEqual(Object.keys(lock.importers).sort(), [".", "apps/api", "packages/contracts"]);
     }
   });
