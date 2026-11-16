@@ -440,9 +440,22 @@ for (const framework of ["react", "tanstack-start", "vue"]) {
       if (packageManager === "pnpm") {
         const lock = await readFile(join(project, "pnpm-lock.yaml"), "utf8");
         assert.ok(!lock.includes("packages/create-chosen-app:"));
-        // The pinned package manager is its own document, and a frozen install compares it with
-        // the manifest, so the two must agree or every generated project fails to install.
-        const [pin, parsed] = parseAllDocuments(lock).map((document) => document.toJS());
+        // pnpm 12 records the pinned package manager in front of the graph, and a frozen install
+        // compares it with the manifest. The pin document must survive generation untouched,
+        // integrity entries included, or installs fail before any script runs.
+        const documents = parseAllDocuments(lock).map((document) => document.toJS());
+        assert.equal(
+          documents.length,
+          2,
+          "the generated lockfile must keep the pinned pnpm document",
+        );
+        const [pin, parsed] = documents;
+        assert.deepEqual(
+          pin,
+          parseAllDocuments(
+            await readFile(new URL("../../pnpm-lock.yaml", import.meta.url), "utf8"),
+          )[0].toJS(),
+        );
         const projectManifest = JSON.parse(await readFile(join(project, "package.json"), "utf8"));
         assert.equal(
           pin.importers["."].packageManagerDependencies.pnpm.version,
