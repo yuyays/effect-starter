@@ -15,7 +15,7 @@ catalog:
   playwright: "1.65.0"
   # Match Vite+'s core version, Vitest override, and allowed Vite peer version below.
   vite: "npm:@voidzero-dev/vite-plus-core@1.5.0"
-  vite-plus: "1.5.0"
+  vite-plus: "1.6.0"
 minimumReleaseAge: 1440
 allowBuilds:
   "vue-demi": true
