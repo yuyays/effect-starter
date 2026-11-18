@@ -37,11 +37,13 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       # Chromium is ~130 MB; keying on the lockfile reuses it until Playwright upgrades.
+      # The browser binary comes from that cache and the system libraries ship with the
+      # runner image; add --with-deps if a self-hosted runner is missing them.
       - uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: playwright-${{ runner.os }}-
-      - run: pnpm browser:install --with-deps
+      - run: pnpm browser:install
       - run: pnpm test:browser
       - run: pnpm build

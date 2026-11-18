@@ -146,6 +146,8 @@ for (const framework of Object.keys(frameworks)) {
     workflow = replaceRequired(
       workflow,
       `      # Chromium is ~130 MB; keying on the lockfile reuses it until Playwright upgrades.
+      # The browser binary comes from that cache and the system libraries ship with the
+      # runner image; add --with-deps if a self-hosted runner is missing them.
       - uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
@@ -154,7 +156,7 @@ for (const framework of Object.keys(frameworks)) {
 `,
       "",
     );
-    workflow = replaceRequired(workflow, "      - run: pnpm browser:install --with-deps\n", "");
+    workflow = replaceRequired(workflow, "      - run: pnpm browser:install\n", "");
     workflow = replaceRequired(workflow, "      - run: pnpm test:browser\n", "");
     await writeFile(workflowPath, workflow);
   }
