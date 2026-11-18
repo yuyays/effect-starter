@@ -373,7 +373,7 @@ for (const framework of ["react", "tanstack-start", "vue"]) {
       assert.equal("test:browser" in rootScripts, browser);
       assert.equal("browser:install" in rootScripts, browser);
       const workflow = await readFile(join(project, ".github/workflows/ci.yml"), "utf8");
-      assert.equal(/run: \S+ (run )?browser:install --with-deps$/m.test(workflow), browser);
+      assert.equal(/run: \S+ (run )?browser:install$/m.test(workflow), browser);
       assert.equal(/run: \S+ (run )?test:browser$/m.test(workflow), browser);
       const webFiles = await readdir(join(project, "apps/web/src"), { recursive: true });
       assert.equal(

@@ -81,6 +81,7 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: playwright-${{ runner.os }}-
+      # Browsers come from the cache; the runner image ships the system libraries.
       - if: matrix.framework == 'react' || matrix.framework == 'tanstack-start'
-        run: pnpm browser:install --with-deps
+        run: pnpm browser:install
       - run: pnpm test:generated ${{ matrix.framework }}
