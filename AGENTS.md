@@ -22,6 +22,10 @@ client. Use relative imports within a workspace.
   rejects direct timer waits; real socket/process tests use `*.integration.test.ts`.
 - Test observable contracts and plausible failures; derive expectations independently
   of the implementation. Avoid tautologies that merely repeat mock outputs or code logic.
+- Replace dependencies through interfaces or Effect services, never the behavior under
+  test. Callback calls, cancellation signals, and retry or deduplication counts are valid
+  when they express a public contract.
+- A test for a change must fail on the old code and pass on the new code.
 - Consolidate redundant coverage. Avoid change detectors that pin private structure,
   source text, constants, or wording unless these are explicit contracts.
 - Delete retired-feature tests; assert code stays absent only for an explicit policy.
