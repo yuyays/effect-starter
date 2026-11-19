@@ -529,6 +529,25 @@ for (const packageManager of ["pnpm", "bun"]) {
   });
 }
 
+void test("keeps pnpm importer dependencies in pnpm's order after renaming", async (t) => {
+  const directory = await temporary(t);
+  // A late-sorting name moves the shared `@scope/contracts` package past its siblings; pnpm
+  // sorts by name, so the renamed package must follow the starter's own scoped dependencies.
+  const project = await createProject("zz-app", directory);
+  const lock = lockfileGraph(await readFile(join(project.destination, "pnpm-lock.yaml"), "utf8"));
+  assert.deepEqual(Object.keys(lock.importers), [
+    ".",
+    "apps/api",
+    "apps/web",
+    "packages/contracts",
+  ]);
+  const dependencies = Object.keys(lock.importers["apps/web"].dependencies);
+  assert.ok(
+    dependencies.indexOf("@zz-app/contracts") > dependencies.indexOf("@radix-ui/react-slot"),
+    `pnpm writes @zz-app/contracts after @radix-ui/react-slot, got ${dependencies.join(", ")}`,
+  );
+});
+
 void test("invalid frameworks and duplicate or missing framework flags do not create files", async (t) => {
   const directory = await temporary(t);
   await assert.rejects(

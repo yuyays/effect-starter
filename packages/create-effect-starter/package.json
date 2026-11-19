@@ -17,6 +17,7 @@
     "package-manager.js",
     "runtime.js",
     "runtimes",
+    "template-lockfile.js",
     "template",
     "README.md",
     "frameworks.js",

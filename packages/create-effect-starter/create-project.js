@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { getFramework, hasFrontend } from "./frameworks.js";
 import { configurePackageManager, getPackageManager } from "./package-manager.js";
 import { configureRuntime, getRuntime } from "./runtime.js";
+import { sortImporterDependencies } from "./template-lockfile.js";
 
 export async function createProject(directory, cwd = process.cwd(), options = {}) {
   const framework = options.framework ?? "react";
@@ -39,6 +40,12 @@ export async function createProject(directory, cwd = process.cwd(), options = {}
   await readdir(template);
   await mkdir(destination, { recursive: true });
   await copy(template, destination, name);
+  // The rename can reorder pnpm's importer keys; keep the format pnpm writes so the first
+  // install leaves the shipped lockfile untouched.
+  if (packageManager === "pnpm") {
+    const lockfile = join(destination, "pnpm-lock.yaml");
+    await writeFile(lockfile, sortImporterDependencies(await readFile(lockfile, "utf8")));
+  }
   for (const app of hasFrontend(framework) ? ["api", "web"] : ["api"]) {
     const example = await readFile(join(destination, "apps", app, ".env.example"));
     await writeFile(join(destination, "apps", app, ".env"), example, { flag: "wx" });

@@ -296,6 +296,20 @@ try {
         // Proves the generated bun.lock is complete and reproducible.
         run("bun", ["install", "--frozen-lockfile"], project.destination);
       } else {
+        // The shipped lockfile must already match what pnpm writes, or the first install lands a
+        // large reformat in the generated project's initial commit.
+        const lockfilePath = join(project.destination, "pnpm-lock.yaml");
+        const shipped = await readFile(lockfilePath, "utf8");
+        run(
+          packageManager,
+          ["install", "--lockfile-only", "--ignore-scripts"],
+          project.destination,
+        );
+        assert.equal(
+          await readFile(lockfilePath, "utf8"),
+          shipped,
+          "the first pnpm install must not rewrite the shipped pnpm-lock.yaml",
+        );
         run(packageManager, ["install", "--frozen-lockfile"], project.destination);
       }
       // Enforcement must survive consumers replacing the agent instructions.
