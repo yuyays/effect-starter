@@ -548,6 +548,25 @@ void test("keeps pnpm importer dependencies in pnpm's order after renaming", asy
   );
 });
 
+void test("prunes packages the generated project does not reach", async (t) => {
+  const directory = await temporary(t);
+  const project = await createProject("my-app", directory);
+  const lock = lockfileGraph(await readFile(join(project.destination, "pnpm-lock.yaml"), "utf8"));
+  const snapshots = Object.keys(lock.snapshots);
+  // Packages from the other workspaces and templates must not ship.
+  assert.ok(
+    !snapshots.some((key) => key.startsWith("@clack/")),
+    "create-effect-starter dependencies must be pruned",
+  );
+  assert.ok(
+    !snapshots.some((key) => key.startsWith("vue@")),
+    "Vue template dependencies must be pruned",
+  );
+  // The graph the generated app does use must survive.
+  assert.ok(snapshots.some((key) => key.startsWith("effect@")));
+  assert.ok(snapshots.some((key) => key.startsWith("react@")));
+});
+
 void test("invalid frameworks and duplicate or missing framework flags do not create files", async (t) => {
   const directory = await temporary(t);
   await assert.rejects(
