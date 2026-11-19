@@ -1,7 +1,7 @@
 import { NodeRuntime } from "@effect/platform-node";
 import { Effect, Layer } from "effect";
 import { DatabaseConfigLive, Jobs } from "./db.ts";
-import { OpenAIModelLive } from "./propose.ts";
+import { DemoModelLive, OpenAIModelLive } from "./propose.ts";
 import { HttpPublishLive } from "./publish.ts";
 import { RunJobs, RunJobsLive } from "./runs.ts";
 
@@ -19,11 +19,24 @@ export const work = Effect.gen(function* () {
 });
 
 if (import.meta.main) {
+  // The demo model keeps the example runnable without a model key; the database and sink
+  // are still real, so recovery behaves exactly like the OpenAI-backed worker.
+  const demo = process.argv.includes("--fake");
+  const announce = demo
+    ? Effect.logInfo("Using the deterministic demo model; OPENAI_API_KEY is not read.")
+    : Effect.void;
   NodeRuntime.runMain(
-    work.pipe(
+    announce.pipe(
+      Effect.andThen(work),
       Effect.provide(
         RunJobsLive.pipe(
-          Layer.provideMerge(Layer.mergeAll(DatabaseConfigLive, OpenAIModelLive, HttpPublishLive)),
+          Layer.provideMerge(
+            Layer.mergeAll(
+              DatabaseConfigLive,
+              demo ? DemoModelLive : OpenAIModelLive,
+              HttpPublishLive,
+            ),
+          ),
         ),
       ),
     ),
