@@ -1,0 +1,28 @@
+{
+  "name": "effect-starter-alchemy-durable-object",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "alchemy dev",
+    "deploy": "alchemy deploy",
+    "destroy": "alchemy destroy",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@alchemy.run/cloudflare": "2.0.0-beta.87",
+    "alchemy": "2.0.0-beta.87",
+    "effect": "4.1.4"
+  },
+  "devDependencies": {
+    "@alchemy.run/test": "2.0.0-beta.87",
+    "@cloudflare/workers-types": "5.20261119.1",
+    "@effect/platform-bun": "4.1.4",
+    "@effect/platform-node": "4.1.4",
+    "@effect/vitest": "4.1.4",
+    "@types/node": "26.6.6",
+    "typescript": "7.0.2",
+    "vitest": "5.1.0"
+  },
+  "packageManager": "pnpm@12.21.0"
+}
