@@ -130,6 +130,96 @@ function resolve(context, identifier) {
   return undefined;
 }
 
+const reactEffectHooks = new Set(["useEffect", "useLayoutEffect"]);
+
+function isReactObjectImport(context, node) {
+  node = unwrap(node);
+  if (node?.type !== "Identifier") return false;
+  const definition = resolve(context, node)?.variable.defs[0];
+  if (
+    definition?.type !== "ImportBinding" ||
+    definition.parent.source.value !== "react" ||
+    definition.parent.importKind === "type"
+  ) {
+    return false;
+  }
+  const specifier = definition.node;
+  return (
+    specifier.type === "ImportDefaultSpecifier" ||
+    specifier.type === "ImportNamespaceSpecifier" ||
+    (specifier.type === "ImportSpecifier" &&
+      specifier.importKind !== "type" &&
+      (specifier.imported.name ?? specifier.imported.value) === "default")
+  );
+}
+
+function staticPropertyName(key, computed) {
+  if (key.type === "Literal") return key.value;
+  if (!computed && key.type === "Identifier") return key.name;
+  if (key.type === "TemplateLiteral" && key.expressions.length === 0)
+    return key.quasis[0].value.cooked;
+  return undefined;
+}
+
+// Inspired by t3code's no-unreasoned-state-sync. Resolve bindings to React before reporting.
+const noDirectReactEffect = {
+  meta: { type: "problem", schema: [] },
+  create(context) {
+    const report = (node, hook) =>
+      context.report({
+        node,
+        message:
+          `Avoid React's ${hook}. Derive values during render, handle user actions in event handlers, ` +
+          "use TanStack Query for server data, or useSyncExternalStore for external stores. " +
+          "If this effect must synchronize with an external system, use an inline lint suppression that explains what it synchronizes and why.",
+      });
+
+    const checkDestructuring = (pattern, source) => {
+      if (pattern.type !== "ObjectPattern" || !isReactObjectImport(context, source)) return;
+      for (const property of pattern.properties) {
+        if (property.type !== "Property") continue;
+        const hook = staticPropertyName(property.key, property.computed);
+        if (reactEffectHooks.has(hook)) report(property, hook);
+      }
+    };
+
+    return {
+      ImportDeclaration(node) {
+        if (node.source.value !== "react" || node.importKind === "type") return;
+        for (const variable of context.sourceCode.getDeclaredVariables(node)) {
+          const specifier = variable.defs[0]?.node;
+          if (specifier?.type !== "ImportSpecifier" || specifier.importKind === "type") continue;
+          const hook = specifier.imported.name ?? specifier.imported.value;
+          if (!reactEffectHooks.has(hook)) continue;
+          for (const { identifier } of variable.references) {
+            if (["TSTypeQuery", "TSQualifiedName"].includes(identifier.parent?.type)) continue;
+            report(identifier, hook);
+          }
+        }
+      },
+      ExportNamedDeclaration(node) {
+        if (node.source?.value !== "react" || node.exportKind === "type") return;
+        for (const specifier of node.specifiers) {
+          const hook = specifier.local.name ?? specifier.local.value;
+          if (specifier.exportKind !== "type" && reactEffectHooks.has(hook))
+            report(specifier, hook);
+        }
+      },
+      MemberExpression(node) {
+        const hook = staticPropertyName(node.property, node.computed);
+        if (reactEffectHooks.has(hook) && isReactObjectImport(context, node.object))
+          report(node, hook);
+      },
+      VariableDeclarator(node) {
+        checkDestructuring(node.id, node.init);
+      },
+      AssignmentExpression(node) {
+        checkDestructuring(node.left, node.right);
+      },
+    };
+  },
+};
+
 // A module-level or imported binding can be referenced from module scope.
 function isModuleBinding(context, node) {
   while (node?.type === "MemberExpression") node = unwrap(node.object);
@@ -357,6 +447,7 @@ export default {
   meta: { name: "starter" },
   rules: {
     "workspace-imports": workspaceImports,
+    "no-direct-react-effect": noDirectReactEffect,
     "no-wall-clock-in-tests": noWallClockInTests,
     "no-timer-waits-in-tests": noTimerWaitsInTests,
     "runtime-boundary": runtimeBoundary,

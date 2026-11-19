@@ -364,6 +364,73 @@ void test("lint keeps web Effect runtimes in the client adapters", { skip: skipW
   assertRules(codesFor("web-runtime"), { "users-panel.ts": ["starter(runtime-boundary)"] });
 });
 
+fixtureSet(
+  "react-effects",
+  "apps/web/src",
+  {
+    "named.ts": `import { useEffect as effect } from "react";
+export const schedule = effect;
+export function defer(effect: () => void) { return effect; }`,
+    "namespace.ts": `import * as React from "react";
+export const schedule = React[\`useEffect\`];`,
+    "default.ts": `import React from "react";
+export function useMeasure() { React.useLayoutEffect(() => {}, []); }`,
+    "destructured.ts": `import React from "react";
+const { useLayoutEffect: measure } = React;
+export { measure };`,
+    "assigned.ts": `import React from "react";
+export function register(hooks: { run: typeof React.useEffect }) {
+  ({ useEffect: hooks.run } = React);
+}`,
+    "reexport.ts": `export { useEffect as schedule } from "react";`,
+    "allowed.ts": `import { useEffect as effect, useInsertionEffect, useState } from "react";
+export type EffectCallback = Parameters<typeof effect>[0];
+export const effects = { useEffect: useInsertionEffect };
+export function useSettings() { return useState(false); }
+export function defer(useEffect: () => void) { return useEffect; }
+export function useDialogListener() {
+  // oxlint-disable-next-line starter/no-direct-react-effect -- Subscribes to a browser event.
+  effect(() => {
+    const close = () => window.dispatchEvent(new Event("dialog-closed"));
+    window.addEventListener("popstate", close);
+    return () => window.removeEventListener("popstate", close);
+  }, []);
+}`,
+    "bare.ts": `import { useLayoutEffect } from "react";
+export function useMeasure() {
+  // oxlint-disable-next-line starter/no-direct-react-effect
+  useLayoutEffect(() => {}, []);
+}`,
+  },
+  skipWithoutReact,
+);
+
+void test(
+  "lint restricts direct React effects and requires reasons for exceptions",
+  { skip: skipWithoutReact },
+  () => {
+    const codes = codesFor("react-effects");
+    assertRules(codes, {
+      "named.ts": ["starter(no-direct-react-effect)"],
+      "namespace.ts": ["starter(no-direct-react-effect)"],
+      "default.ts": ["starter(no-direct-react-effect)"],
+      "destructured.ts": ["starter(no-direct-react-effect)"],
+      "assigned.ts": ["starter(no-direct-react-effect)"],
+      "reexport.ts": ["starter(no-direct-react-effect)"],
+      "allowed.ts": [],
+      "bare.ts": ["starter(suppression-reason)"],
+    });
+    assert.equal(
+      diagnosticsFor("react-effects", "named.ts").filter(
+        (diagnostic) => diagnostic.code === "starter(no-direct-react-effect)",
+      ).length,
+      1,
+      "only the imported hook reference must be reported",
+    );
+    assert.ok(!codes.get("bare.ts").has("starter(no-direct-react-effect)"));
+  },
+);
+
 const webTestSource =
   'import { Effect } from "effect";\nexport const value = Effect.runSync(Effect.succeed(1));\n';
 fixtureSet("web-tests", "apps/web/src", { "client.test.ts": webTestSource }, skipWithoutWeb);
