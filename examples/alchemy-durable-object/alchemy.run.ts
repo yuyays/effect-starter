@@ -5,7 +5,7 @@ import Worker from "./src/worker.ts";
 
 export default Alchemy.Stack(
   "effect-starter-alchemy-durable-object",
-  { providers: Cloudflare.providers(), state: Cloudflare.state() },
+  { providers: Cloudflare.providers(), state: Alchemy.localState() },
   Effect.gen(function* () {
     const worker = yield* Worker;
     return { url: worker.url };

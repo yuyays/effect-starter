@@ -7,7 +7,6 @@ import Stack from "../alchemy.run.ts";
 
 const { test, beforeAll, deploy } = Test.make({
   providers: Cloudflare.providers(),
-  state: Cloudflare.state(),
   dev: true,
 });
 
