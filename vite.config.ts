@@ -86,6 +86,10 @@ export default defineConfig({
     },
     overrides: [
       {
+        files: ["apps/web/src/**"],
+        rules: { "starter/no-direct-react-effect": "error" },
+      },
+      {
         files: ["apps/api/src/**/*.ts", "apps/web/src/**"],
         rules: { "starter/runtime-boundary": "error" },
       },
