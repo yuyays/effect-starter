@@ -77,6 +77,10 @@ An experimental [Alchemy + Railway example](examples/alchemy-railway/README.md)
 packages the existing Node API with PostgreSQL. It has a separate dependency
 install and is not included in generated projects.
 
+An [Alchemy + Cloudflare Durable Object example](examples/alchemy-durable-object/README.md)
+shows construction, call, and retained scopes. It also has its own install and is
+not included in generated projects.
+
 ```sh
 git clone https://github.com/yuyays/effect-starter.git
 cd effect-starter
