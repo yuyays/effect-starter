@@ -1,4 +1,5 @@
-# Optional examples need real PostgreSQL. A separate workflow keeps them out of the
+# One job per optional example. durable-agent needs real PostgreSQL; the Alchemy
+# Durable Object example runs in workerd. A separate workflow keeps both out of the
 # ci.yml that generated apps inherit, and keeps the base checks database-free.
 name: Examples
 
@@ -62,3 +63,22 @@ jobs:
       - run: pnpm test:examples
         env:
           DOC_REVIEW_TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+
+  alchemy-durable-object:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: examples/alchemy-durable-object/pnpm-lock.yaml
+      # Standalone workspace: install and test without the root workspace.
+      - run: pnpm install --frozen-lockfile
+        working-directory: examples/alchemy-durable-object
+      - run: pnpm test
+        working-directory: examples/alchemy-durable-object
+      - run: pnpm typecheck
+        working-directory: examples/alchemy-durable-object
