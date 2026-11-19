@@ -6,12 +6,12 @@ packages:
 # Shared versions: packages declare these as `catalog:` so they stay aligned.
 # TypeScript is not here because the Vue starter pins its own version.
 catalog:
-  "@effect/platform-node": "^4.1.2"
-  "@effect/sql-pg": "^4.1.2"
-  "@effect/vitest": "4.1.2"
+  "@effect/platform-node": "^4.1.4"
+  "@effect/sql-pg": "^4.1.4"
+  "@effect/vitest": "4.1.4"
   # Vitest's browser provider matches the Vitest override below.
   "@vitest/browser-playwright": "5.1.0"
-  effect: "^4.1.2"
+  effect: "^4.1.4"
   playwright: "1.65.0"
   # Match Vite+'s core version, Vitest override, and allowed Vite peer version below.
   vite: "npm:@voidzero-dev/vite-plus-core@1.6.0"
