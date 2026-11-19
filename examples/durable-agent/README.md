@@ -38,6 +38,18 @@ pnpm --filter @effect-starter-examples/durable-agent dev     # API on :3001
 pnpm --filter @effect-starter-examples/durable-agent worker  # in another shell
 ```
 
+### Run without a model key
+
+`worker:fake` swaps the OpenAI client for a deterministic model: one `lookup_policy`
+turn, then a fixed invoice proposal. The OpenAI layer is never built in this mode, so
+`OPENAI_API_KEY` and `OPENAI_MODEL` are not read. The database, tokens, and publish
+settings are still real, so the queue and recovery code is unchanged; because the demo
+model never fails, OpenAI request failures and their retries are not exercised.
+
+```sh
+pnpm --filter @effect-starter-examples/durable-agent worker:fake
+```
+
 ```sh
 curl -X POST localhost:3001/runs -H 'authorization: Bearer <SUBMITTER_TOKEN>' \
   -H 'idempotency-key: invoice-42' -H 'content-type: application/json' \
@@ -51,7 +63,8 @@ curl -X POST localhost:3001/runs/<id>/decision -H 'authorization: Bearer <REVIEW
 Once publishing has been approved, the run can no longer be cancelled. Either token
 may submit, read, or cancel; only the reviewer token may decide. The two static tokens
 stand in for a real identity provider. The API needs only `DATABASE_URL` and the
-tokens; the worker needs the model and sink settings.
+tokens; the worker needs the model and sink settings, and `worker:fake` needs
+`DATABASE_URL` plus the sink settings.
 
 ## Test it
 

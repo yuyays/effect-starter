@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "node --env-file=.env --watch src/api.ts",
     "worker": "node --env-file=.env src/worker.ts",
+    "worker:fake": "node --env-file=.env src/worker.ts --fake",
     "typecheck": "effect-tsgo tsc --noEmit",
     "test": "vp test run"
   },

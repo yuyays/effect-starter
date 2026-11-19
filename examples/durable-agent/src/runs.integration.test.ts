@@ -4,7 +4,14 @@ import { PgClient } from "@effect/sql-pg";
 import { ConfigProvider, Effect, Fiber, Layer, Option, Queue, Redacted } from "effect";
 import { SqlClient } from "effect/sql";
 import { DatabaseLive, Jobs } from "./db.ts";
-import { ModelClient, ModelError, type ModelTurn } from "./propose.ts";
+import {
+  DemoModelLive,
+  DemoProposal,
+  demoTurn,
+  ModelClient,
+  ModelError,
+  type ModelTurn,
+} from "./propose.ts";
 import { HttpPublishLive, PublishError, PublishSink } from "./publish.ts";
 import { AgentRuns, RunConflict, RunJobs, RunJobsLive, RunUnauthorized, RunsLive } from "./runs.ts";
 
@@ -24,19 +31,9 @@ const database = Layer.unwrap(
   }),
 ).pipe(Layer.provide(PgClient.layer({ url })));
 
-const proposal = {
-  title: "Office supplies",
-  category: "invoice",
-  summary: "Invoice for office supplies",
-} as const;
-const policyThenPropose = (history: ReadonlyArray<unknown>): ModelTurn =>
-  history.length ? { kind: "proposal", proposal } : { kind: "lookup_policy" };
-const model = Layer.succeed(ModelClient, {
-  respond: (_document, history) => Effect.succeed(policyThenPropose(history)),
-});
 const sink = Layer.succeed(PublishSink, { publish: () => Effect.succeed("receipt-1") });
 const layerWith = (
-  models: Layer.Layer<ModelClient> = model,
+  models: Layer.Layer<ModelClient> = DemoModelLive,
   sinks: Layer.Layer<PublishSink> = sink,
 ) =>
   Layer.mergeAll(RunsLive, RunJobsLive).pipe(
@@ -71,7 +68,7 @@ it.live("keeps a versioned proposal until an authorized reviewer decides", () =>
     const id = yield* runs.start(crypto.randomUUID(), document);
     yield* deliver;
     const view = yield* runs.read(id);
-    expect(view).toMatchObject({ status: "awaitingApproval", proposal });
+    expect(view).toMatchObject({ status: "awaitingApproval", proposal: DemoProposal });
     const stale = yield* runs.decide(id, view.version - 1, "approve", reviewer).pipe(Effect.flip);
     expect(stale).toBeInstanceOf(RunConflict);
     const reader = yield* runs
@@ -90,7 +87,7 @@ it.live("replays committed model responses after a failed delivery", () => {
     respond: (_document, history) =>
       ++calls === 2
         ? Effect.fail(new ModelError({ message: "connection reset" }))
-        : Effect.succeed(policyThenPropose(history)),
+        : Effect.succeed(demoTurn(history)),
   });
   return Effect.gen(function* () {
     const runs = yield* AgentRuns;
@@ -170,7 +167,7 @@ it.live("fails the run without retrying when the model proposes an invalid recor
   const invalid = Layer.succeed(ModelClient, {
     respond: () =>
       Effect.sync(
-        (): ModelTurn => (calls++, { kind: "proposal", proposal: { ...proposal, title: "" } }),
+        (): ModelTurn => (calls++, { kind: "proposal", proposal: { ...DemoProposal, title: "" } }),
       ),
   });
   return Effect.gen(function* () {
@@ -206,7 +203,7 @@ it.live("drops a queued job when its transaction rolls back", () =>
 it.live("cancellation stops pending work but cannot revoke approved publishing", () => {
   let calls = 0;
   const counted = Layer.succeed(ModelClient, {
-    respond: (_document, history) => Effect.sync(() => (calls++, policyThenPropose(history))),
+    respond: (_document, history) => Effect.sync(() => (calls++, demoTurn(history))),
   });
   return Effect.gen(function* () {
     const runs = yield* AgentRuns;
@@ -282,8 +279,8 @@ it.live("publishes one sink record when the worker fails after the sink accepts"
       const view = yield* runs.read(id);
       expect(view.status).toBe("published");
       expect(records.size).toBe(1);
-      expect(JSON.parse([...records.values()][0]!)).toEqual(proposal);
+      expect(JSON.parse([...records.values()][0]!)).toEqual(DemoProposal);
       expect(view.receipt).toBe(`r-${[...records.keys()][0]}`);
-    }).pipe(Effect.provide(layerWith(model, lossy)));
+    }).pipe(Effect.provide(layerWith(DemoModelLive, lossy)));
   }),
 );

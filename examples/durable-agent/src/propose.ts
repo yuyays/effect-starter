@@ -122,3 +122,21 @@ export const OpenAIModelLive = Layer.effect(
     return ModelClient.of({ respond });
   }),
 ).pipe(Layer.provide(FetchHttpClient.layer));
+
+/** Fixed proposal for the credential-free demo; tests use the same deterministic turns. */
+export const DemoProposal: Proposal = {
+  title: "Office supplies",
+  category: "invoice",
+  summary: "Invoice for office supplies",
+};
+
+/** One policy lookup, then a fixed proposal. No credentials or tool calls. */
+export const demoTurn = (history: ReadonlyArray<Step>): ModelTurn =>
+  history.length > 0 ? { kind: "proposal", proposal: DemoProposal } : { kind: "lookup_policy" };
+
+/** Runs the example without `OPENAI_API_KEY`; the queue and database are still required. */
+export const DemoModelLive = Layer.succeed(ModelClient, {
+  respond: Effect.fn("ModelClient.respond")((_document, history) =>
+    Effect.succeed(demoTurn(history)),
+  ),
+});
