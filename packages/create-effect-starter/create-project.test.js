@@ -11,7 +11,6 @@ import { versions } from "vite-plus/versions";
 import { format } from "vite-plus/fmt";
 import { parse, parseAllDocuments } from "yaml";
 import { createProject } from "./create-project.js";
-import { isReact } from "./frameworks.js";
 
 // pnpm 12 writes the pinned package manager as its own YAML document ahead of the project
 // graph, so a lockfile needs every document parsed to read the graph.
@@ -366,45 +365,36 @@ for (const framework of ["react", "tanstack-start"]) {
       assert.ok(!result.stdout.includes("Running "));
       assert.match(result.stdout, /^  react /m);
       const project = join(directory, "chosen-app");
-      const browser = isReact(framework);
       const rootScripts = JSON.parse(await readFile(join(project, "package.json"), "utf8")).scripts;
-      assert.equal("test:browser" in rootScripts, browser);
-      assert.equal("browser:install" in rootScripts, browser);
+      assert.ok("test:browser" in rootScripts);
+      assert.ok("browser:install" in rootScripts);
       const workflow = await readFile(join(project, ".github/workflows/ci.yml"), "utf8");
-      assert.equal(/run: \S+ (run )?browser:install$/m.test(workflow), browser);
-      assert.equal(/run: \S+ (run )?test:browser$/m.test(workflow), browser);
+      assert.match(workflow, /run: \S+ (run )?browser:install$/m);
+      assert.match(workflow, /run: \S+ (run )?test:browser$/m);
       const webFiles = await readdir(join(project, "apps/web/src"), { recursive: true });
-      assert.equal(
-        webFiles.some((file) => file.endsWith(".browser.test.tsx")),
-        browser,
+      assert.ok(webFiles.some((file) => file.endsWith(".browser.test.tsx")));
+      assert.ok((await readFile(join(project, "README.md"), "utf8")).includes("test:browser"));
+      // The React Compiler's native transform must stay inside the Vite plugin's peer range.
+      assert.match(
+        await readFile(join(project, "apps/web/vite.config.ts"), "utf8"),
+        /react\(\{ compiler: true \}\)/,
       );
-      assert.equal(
-        (await readFile(join(project, "README.md"), "utf8")).includes("test:browser"),
-        browser,
+      const webManifest = JSON.parse(
+        await readFile(join(project, "apps/web/package.json"), "utf8"),
       );
-      if (isReact(framework)) {
-        // The React Compiler's native transform must stay inside the Vite plugin's peer range.
-        assert.match(
-          await readFile(join(project, "apps/web/vite.config.ts"), "utf8"),
-          /react\(\{ compiler: true \}\)/,
-        );
-        const webManifest = JSON.parse(
-          await readFile(join(project, "apps/web/package.json"), "utf8"),
-        );
-        const source =
-          framework === "react"
-            ? "apps/web"
-            : `packages/create-effect-starter/frontends/${framework}`;
-        const plugin = await installedManifest(source, "@vitejs/plugin-react");
-        // Generated projects pin the plugin whose peer range is checked here, Bun included.
-        assert.equal(webManifest.devDependencies["@vitejs/plugin-react"], plugin.version);
-        const compiler = webManifest.devDependencies["oxc-transform-react"];
-        const range = plugin.peerDependencies["oxc-transform-react"];
-        assert.ok(
-          semver.satisfies(compiler, range),
-          `oxc-transform-react ${compiler} must satisfy @vitejs/plugin-react ${plugin.version}'s peer ${range}`,
-        );
-      }
+      const source =
+        framework === "react"
+          ? "apps/web"
+          : `packages/create-effect-starter/frontends/${framework}`;
+      const plugin = await installedManifest(source, "@vitejs/plugin-react");
+      // Generated projects pin the plugin whose peer range is checked here, Bun included.
+      assert.equal(webManifest.devDependencies["@vitejs/plugin-react"], plugin.version);
+      const compiler = webManifest.devDependencies["oxc-transform-react"];
+      const range = plugin.peerDependencies["oxc-transform-react"];
+      assert.ok(
+        semver.satisfies(compiler, range),
+        `oxc-transform-react ${compiler} must satisfy @vitejs/plugin-react ${plugin.version}'s peer ${range}`,
+      );
       const instructions = await readFile(join(project, "AGENTS.md"), "utf8");
       assert.equal(
         instructions,
