@@ -1,5 +1,5 @@
 import { copyFile, cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import { format } from "vite-plus/fmt";
+import { parseDocument } from "yaml";
 import { frameworks, hasFrontend, isReact } from "./frameworks.js";
 import { templateLockfile } from "./template-lockfile.js";
 
@@ -35,11 +35,21 @@ const copyOptions = {
   },
 };
 
-// Fail the build when source text changes shape instead of silently skipping an edit.
-function replaceRequired(text, search, replacement) {
-  if (!text.includes(search)) throw new Error(`Template source no longer contains: ${search}`);
-  return text.replace(search, replacement);
+// Substitutes named sections in a template. Fails the build when the source no longer
+// carries a placeholder, so a reworded document cannot silently ship a stale variant.
+function render(text, values) {
+  let out = text;
+  for (const [key, value] of Object.entries(values)) {
+    const token = `{{${key}}}`;
+    if (!out.includes(token)) throw new Error(`Template source is missing ${token}`);
+    out = out.replaceAll(token, value);
+  }
+  return out;
 }
+
+// Workspace entries that only make sense in this repository: the generator's own
+// frontend overlays and the examples. Generated projects never contain them.
+const repositoryOnly = [/^examples\//, /^packages\/create-effect-starter\//];
 
 await rm(template, { recursive: true, force: true });
 const lockfile = await readFile(new URL("pnpm-lock.yaml", root), "utf8");
@@ -66,87 +76,63 @@ for (const framework of Object.keys(frameworks)) {
     await writeFile(webManifestPath, `${JSON.stringify(webManifest, null, 2)}\n`);
   }
   const workspacePath = new URL("pnpm-workspace.yaml", destination);
-  const workspace = await readFile(workspacePath, "utf8");
-  await writeFile(
-    workspacePath,
-    replaceRequired(
-      replaceRequired(workspace, '  - "packages/create-effect-starter/frontends/*"\n', ""),
-      '  - "examples/durable-workflow"\n',
-      "",
-    ),
+  // Edit the YAML document rather than its text: the catalog comments must survive,
+  // and a package rename must not depend on matching an exact line.
+  const workspace = parseDocument(await readFile(workspacePath, "utf8"));
+  const packages = workspace.get("packages");
+  if (!packages?.items) throw new Error("Template workspace has no package list");
+  workspace.set(
+    "packages",
+    packages.items
+      .map((item) => item.value)
+      .filter((entry) => !repositoryOnly.some((pattern) => pattern.test(String(entry)))),
   );
+  await writeFile(workspacePath, workspace.toString());
   if (framework === "tanstack-start") {
     for (const entry of ["index.html", "src/main.tsx", "src/lib/query-client.ts"]) {
       await rm(new URL(entry, web));
     }
   }
-  const configPath = new URL("vite.config.ts", destination);
-  let config = await readFile(configPath, "utf8");
-  // Template source files are not part of generated projects.
-  config = config.replace(/^\s*"packages\/create-effect-starter\/[^"\n]+",\n/gm, "");
+  // The lint config is copied whole, but its two variant-dependent modules are
+  // replaced: a generated project must not name this repository's own paths, and the
+  // API-only starter must not carry React rules that apply to plain .ts helpers.
+  await writeFile(
+    new URL("tools/lint/repository-only.ts", destination),
+    `/** Generated projects do not contain this repository's own paths. */
+export const repositoryOnlyLintPaths: string[] = [];
+export const repositoryOnlyFormatPaths: string[] = [];
+`,
+  );
   if (!frontend) {
-    // `apps/web/**` overrides stay: they are inert until someone adds a frontend.
-    config = replaceRequired(
-      config,
-      '["react", "jsx-a11y", "typescript", "import", "vitest", "effecttsgo"]',
-      '["typescript", "import", "vitest", "effecttsgo"]',
-    ).replace(/^      "react\/.*\n/gm, "");
-  }
-  // Removing source-only ignore paths can change how arrays should wrap.
-  const formatted = await format("vite.config.ts", config);
-  if (formatted.errors.length) {
-    throw new Error(`Cannot format ${framework} config: ${JSON.stringify(formatted.errors)}`);
-  }
-  await writeFile(configPath, formatted.code);
-  let readme = await readFile(new URL("./PROJECT_README.md", import.meta.url), "utf8");
-  if (frontend) {
-    const stack =
-      framework === "react"
-        ? "React, TanStack Router/Query"
-        : "TanStack Start (React), TanStack Query";
-    readme = readme.replace("React, TanStack Router/Query", stack);
-  } else {
-    readme = replaceRequired(
-      readme,
-      "Full-stack TypeScript app with React, TanStack Router/Query, Effect v4, Drizzle,\nPostgreSQL, and Vite+,",
-      "TypeScript API with Effect v4, Drizzle, PostgreSQL, and Vite+,",
-    );
-    readme = replaceRequired(
-      readme,
-      "`{{RUN}} dev:web` or `{{RUN}} dev:api` starts one server. The web app proxies\n`/api` and `/docs` to the API; ports are set in `apps/web/vite.config.ts` and\n`apps/api/.env`.",
-      "`{{RUN}} dev` watches the API and restarts it when it or the contracts change. The\nport is set in `apps/api/.env`, and API docs are served at `/docs`. Clients call the\nAPI through the HttpApi contract in `packages/contracts`.",
+    await writeFile(
+      new URL("tools/lint/frontend.ts", destination),
+      `/** The API-only starter has no React frontend. */
+export const frontendPlugins: string[] = [];
+export const frontendRules = {};
+`,
     );
   }
+  const intro = frontend
+    ? framework === "react"
+      ? "Full-stack TypeScript app with React, TanStack Router/Query, Effect v4, Drizzle,\nPostgreSQL, and Vite+"
+      : "Full-stack TypeScript app with TanStack Start (React), TanStack Query, Effect v4,\nDrizzle, PostgreSQL, and Vite+"
+    : "TypeScript API with Effect v4, Drizzle, PostgreSQL, and Vite+";
+  const devNote = frontend
+    ? "`{{RUN}} dev:web` or `{{RUN}} dev:api` starts one server. The web app proxies\n`/api` and `/docs` to the API; ports are set in `apps/web/vite.config.ts` and\n`apps/api/.env`."
+    : "`{{RUN}} dev` watches the API and restarts it when it or the contracts change. The\nport is set in `apps/api/.env`, and API docs are served at `/docs`. Clients call the\nAPI through the HttpApi contract in `packages/contracts`.";
+  const browserNote = isReact(framework)
+    ? "Component tests that need a real browser (`*.browser.test.tsx`) run in Chromium:\n`{{RUN}} browser:install` once per machine, then `{{RUN}} test:browser`.\n\n"
+    : "";
+  let readme = render(await readFile(new URL("./PROJECT_README.md", import.meta.url), "utf8"), {
+    INTRO: intro,
+    DEV_NOTE: devNote,
+    BROWSER_NOTE: browserNote,
+  });
   if (framework === "tanstack-start") {
     readme +=
       "\n## Server rendering\n\nTanStack Start renders the page on the server; the example users query runs in the browser.\nEach request gets its own router and query client. For server-side API calls, use\n`API_URL` in `apps/web/.env` (default `http://localhost:3000`). `VITE_API_URL`\nis public and only configures browser requests.\n\nProduction hosting needs a TanStack Start server adapter as well as the Effect API.\nSee https://tanstack.com/start/latest/docs/framework/react/guide/hosting.\nConfigure your production reverse proxy for `/api` and `/docs`, or set `VITE_API_URL`.\n";
   }
   const browserTests = isReact(framework);
-  if (!browserTests) {
-    readme = replaceRequired(
-      readme,
-      "\nComponent tests that need a real browser (`*.browser.test.tsx`) run in Chromium:\n`{{RUN}} browser:install` once per machine, then `{{RUN}} test:browser`.\n",
-      "",
-    );
-    const workflowPath = new URL(".github/workflows/ci.yml", destination);
-    let workflow = await readFile(workflowPath, "utf8");
-    workflow = replaceRequired(
-      workflow,
-      `      # Chromium is ~130 MB; keying on the lockfile reuses it until Playwright upgrades.
-      # The browser binary comes from that cache and the system libraries ship with the
-      # runner image; add --with-deps if a self-hosted runner is missing them.
-      - uses: actions/cache@v6
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-\${{ runner.os }}-\${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: playwright-\${{ runner.os }}-
-`,
-      "",
-    );
-    workflow = replaceRequired(workflow, "      - run: pnpm browser:install\n", "");
-    workflow = replaceRequired(workflow, "      - run: pnpm test:browser\n", "");
-    await writeFile(workflowPath, workflow);
-  }
   await writeFile(new URL("README.md", destination), readme);
   const manifestPath = new URL("package.json", destination);
   const manifest = JSON.parse(await readFile(manifestPath, "utf8"));

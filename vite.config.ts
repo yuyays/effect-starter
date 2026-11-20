@@ -1,5 +1,10 @@
 import { recommended as effectRecommended } from "@effect/tsgo/oxlint-presets";
 import { defineConfig } from "vite-plus";
+import { frontendPlugins, frontendRules } from "./tools/lint/frontend.ts";
+import {
+  repositoryOnlyFormatPaths,
+  repositoryOnlyLintPaths,
+} from "./tools/lint/repository-only.ts";
 
 // Local agent tooling is not project source.
 const agentDirectories = [
@@ -26,7 +31,7 @@ export default defineConfig({
       perf: "warn",
     },
     // `effecttsgo` requires the Oxlint integration patched by `effect-tsgo patch --oxlint`.
-    plugins: ["react", "jsx-a11y", "typescript", "import", "vitest", "effecttsgo"],
+    plugins: [...frontendPlugins, "typescript", "import", "vitest", "effecttsgo"],
     jsPlugins: [
       "./tools/oxlint/index.js",
       "./tools/oxlint/anti-slop/index.ts",
@@ -34,6 +39,7 @@ export default defineConfig({
     ],
     rules: {
       ...effectRecommended.rules,
+      ...frontendRules,
       "effecttsgo/catch-all-tag-dispatch-to-catch-tag": "error",
       "effecttsgo/catch-if-tag-to-catch-tag": "error",
       "effecttsgo/schema-struct-with-tag": "error",
@@ -41,25 +47,6 @@ export default defineConfig({
       "effecttsgo/lazy-effect": "off",
       // Branding every Schema class adds ceremony without a starter use case.
       "effecttsgo/schema-class-missing-brand": "off",
-      "react/exhaustive-deps": "warn",
-      "react/rules-of-hooks": "error",
-      "react/react-in-jsx-scope": "off",
-      "react/purity": "error",
-      "react/refs": "error",
-      "react/set-state-in-effect": "error",
-      "react/static-components": "error",
-      "react/no-unstable-nested-components": "error",
-      // The rest of the React Compiler's Rules-of-React checks.
-      "react/capitalized-calls": "error",
-      "react/exhaustive-effect-dependencies": "error",
-      "react/globals": "error",
-      "react/hooks": "error",
-      "react/immutability": "error",
-      "react/memo-dependencies": "error",
-      "react/no-array-index-key": "error",
-      "react/preserve-manual-memoization": "error",
-      "react/set-state-in-render": "error",
-      "react/unsupported-syntax": "error",
       "typescript/consistent-type-imports": "error",
       "typescript/no-base-to-string": "warn",
       "typescript/no-floating-promises": "warn",
@@ -153,10 +140,7 @@ export default defineConfig({
       "**/node_modules/**",
       "apps/web/src/routeTree.gen.ts",
       "tools/oxlint/anti-slop/**",
-      "packages/create-effect-starter/template/**",
-      "packages/create-effect-starter/frontends/**",
-      // These standalone workspaces have separate installs, absent from root CI.
-      "examples/alchemy-durable-object/**",
+      ...repositoryOnlyLintPaths,
     ],
   },
   fmt: {
@@ -164,8 +148,7 @@ export default defineConfig({
       ...agentDirectories,
       "apps/web/src/routeTree.gen.ts",
       "tools/oxlint/anti-slop/**",
-      "packages/create-effect-starter/template/**",
-      "packages/create-effect-starter/frontends/**/pnpm-lock.yaml",
+      ...repositoryOnlyFormatPaths,
     ],
   },
 });

@@ -52,7 +52,28 @@ export async function createProject(directory, cwd = process.cwd(), options = {}
   }
   await configurePackageManager(destination, packageManager);
   await configureRuntime(destination, runtime);
+  // Placeholders are filled by the builder and by these two steps; a missed one would
+  // otherwise ship as literal text in a project the user is about to read.
+  await assertRendered(destination);
   return { destination, name, packageManager, framework, runtime };
+}
+
+const textFile = /\.(md|json|ya?ml|ts|tsx|js|jsx|mjs|cjs|html|css|example|toml)$/;
+
+/** Fails when any generated text file still contains a `{{PLACEHOLDER}}`. */
+async function assertRendered(directory, relative = "") {
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    const path = join(directory, entry.name);
+    const label = join(relative, entry.name);
+    if (entry.isDirectory()) {
+      await assertRendered(path, label);
+      continue;
+    }
+    if (!entry.isFile() || !textFile.test(entry.name)) continue;
+    // Uppercase only: `${{ ... }}` in a workflow is an expression, not a placeholder.
+    const unresolved = (await readFile(path, "utf8")).match(/\{\{[A-Z_]+\}\}/);
+    if (unresolved) throw new Error(`${label} still contains ${unresolved[0]}`);
+  }
 }
 
 async function copy(source, destination, name) {
