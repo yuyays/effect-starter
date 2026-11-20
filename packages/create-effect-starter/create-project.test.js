@@ -95,6 +95,7 @@ void test("CLI generates a renamed project without generator artifacts", async (
   assert.equal(workspace.peerDependencyRules.allowedVersions.vite, catalog.vite.split("@").at(-1));
   // The browser test provider is part of Vitest and must match its overridden version.
   assert.equal(catalog["@vitest/browser-playwright"], workspace.overrides["vitest@*"]);
+  assert.equal(workspace.overrides["vitest@*"], versions.vitest);
   for (const location of [".", "apps/api", "apps/web", "packages/contracts"]) {
     const pkg = JSON.parse(await readFile(join(project, location, "package.json"), "utf8"));
     for (const field of ["dependencies", "devDependencies"]) {
@@ -208,7 +209,7 @@ void test("Bun CLI emits Bun configuration, instructions, and CI", async (t) => 
   assert.equal(manifest.devDependencies["vite-plus"], "catalog:");
   assert.equal(manifest.overrides.vite, catalog.vite);
   assert.equal(manifest.devDependencies.vite, "catalog:");
-  assert.equal(manifest.overrides.vitest, versions.vitest);
+  assert.equal(manifest.overrides.vitest, catalog["@vitest/browser-playwright"]);
   assert.ok(manifest.trustedDependencies.includes("esbuild"));
   const files = await readdir(project);
   assert.ok(!files.some((file) => file.startsWith("pnpm")));
