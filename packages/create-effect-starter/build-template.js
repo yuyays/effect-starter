@@ -89,7 +89,7 @@ for (const framework of Object.keys(frameworks)) {
   );
   await writeFile(workspacePath, workspace.toString());
   if (framework === "tanstack-start") {
-    for (const entry of ["index.html", "src/main.tsx", "src/lib/query-client.ts"]) {
+    for (const entry of ["index.html", "src/main.tsx"]) {
       await rm(new URL(entry, web));
     }
   }
@@ -115,7 +115,7 @@ export const frontendRules = {};
   const intro = frontend
     ? framework === "react"
       ? "Full-stack TypeScript app with React, TanStack Router/Query, Effect v4, Drizzle,\nPostgreSQL, and Vite+"
-      : "Full-stack TypeScript app with TanStack Start (React), TanStack Query, Effect v4,\nDrizzle, PostgreSQL, and Vite+"
+      : "Full-stack TypeScript app with TanStack Start (React), Effect v4, Drizzle,\nPostgreSQL, and Vite+"
     : "TypeScript API with Effect v4, Drizzle, PostgreSQL, and Vite+";
   const devNote = frontend
     ? "`{{RUN}} dev:web` or `{{RUN}} dev:api` starts one server. The web app proxies\n`/api` and `/docs` to the API; ports are set in `apps/web/vite.config.ts` and\n`apps/api/.env`."
@@ -130,7 +130,7 @@ export const frontendRules = {};
   });
   if (framework === "tanstack-start") {
     readme +=
-      "\n## Server rendering\n\nTanStack Start renders the page on the server; the example users query runs in the browser.\nEach request gets its own router and query client. For server-side API calls, use\n`API_URL` in `apps/web/.env` (default `http://localhost:3000`). `VITE_API_URL`\nis public and only configures browser requests.\n\nProduction hosting needs a TanStack Start server adapter as well as the Effect API.\nSee https://tanstack.com/start/latest/docs/framework/react/guide/hosting.\nConfigure your production reverse proxy for `/api` and `/docs`, or set `VITE_API_URL`.\n";
+      "\n## Server rendering\n\nTanStack Start renders the page on the server; the example users query runs in the browser.\nEach request gets its own router and atom registry. For server-side API calls, use\n`API_URL` in `apps/web/.env` (default `http://localhost:3000`). `VITE_API_URL`\nis public and only configures browser requests.\n\nProduction hosting needs a TanStack Start server adapter as well as the Effect API.\nSee https://tanstack.com/start/latest/docs/framework/react/guide/hosting.\nConfigure your production reverse proxy for `/api` and `/docs`, or set `VITE_API_URL`.\n";
   }
   const browserTests = isReact(framework);
   await writeFile(new URL("README.md", destination), readme);
