@@ -17,7 +17,6 @@ export class RunConflict extends Schema.TaggedError<RunConflict>()("RunConflict"
   message: Schema.String,
 }) {}
 export class RunNotFound extends Schema.TaggedError<RunNotFound>()("RunNotFound", {}) {}
-export class RunUnauthorized extends Schema.TaggedError<RunUnauthorized>()("RunUnauthorized", {}) {}
 export class RunStorageError extends Schema.TaggedError<RunStorageError>()("RunStorageError", {
   cause: Schema.Defect(),
 }) {}
@@ -29,15 +28,7 @@ export const RunInput = Schema.Struct({
 });
 export const RunView = Schema.Struct({
   id: Schema.String,
-  status: Schema.Literals([
-    "processing",
-    "awaitingApproval",
-    "publishing",
-    "published",
-    "rejected",
-    "failed",
-    "cancelled",
-  ]),
+  status: Schema.Literals(["processing", "publishing", "published", "failed", "cancelled"]),
   version: Schema.Int,
   attempts: Schema.Int,
   proposal: Schema.NullOr(Proposal),
@@ -45,11 +36,7 @@ export const RunView = Schema.Struct({
   error: Schema.NullOr(Schema.String),
 });
 export type RunView = typeof RunView.Type;
-export interface Actor {
-  readonly id: string;
-  readonly canApprove: boolean;
-}
-export type RunError = RunConflict | RunNotFound | RunUnauthorized | RunStorageError | RunInvalid;
+export type RunError = RunConflict | RunNotFound | RunStorageError | RunInvalid;
 
 export class AgentRuns extends Context.Service<
   AgentRuns,
@@ -59,12 +46,6 @@ export class AgentRuns extends Context.Service<
       input: typeof RunInput.Type,
     ) => Effect.Effect<string, RunError>;
     readonly read: (runId: string) => Effect.Effect<RunView, RunError>;
-    readonly decide: (
-      runId: string,
-      version: number,
-      decision: "approve" | "reject",
-      actor: Actor,
-    ) => Effect.Effect<void, RunError>;
     readonly cancel: (runId: string) => Effect.Effect<void, RunError>;
   }
 >()("doc-review/AgentRuns") {}
@@ -73,7 +54,12 @@ export class AgentRuns extends Context.Service<
 export class RunJobs extends Context.Service<
   RunJobs,
   {
-    readonly handle: (job: Job) => Effect.Effect<void, ModelError | PublishError | RunStorageError>;
+    readonly handle: (
+      job: Job,
+    ) => Effect.Effect<
+      void,
+      ModelError | PublishError | PersistedQueue.PersistedQueueError | RunStorageError
+    >;
   }
 >()("doc-review/RunJobs") {}
 
@@ -85,7 +71,7 @@ const invalidData = (cause: Schema.SchemaError) => new InvalidRunData({ cause })
 type JobsError = PersistedQueue.PersistedQueueError | Schema.SchemaError;
 const storageError = (cause: SqlError.SqlError | InvalidRunData | RunNotFound | JobsError) =>
   Effect.fail(new RunStorageError({ cause }));
-// Failures `start` and `decide` report as storage errors; domain errors pass through.
+// Failures `start` reports as storage errors; domain errors pass through.
 const storageTags = ["SqlError", "PersistedQueueError", "SchemaError"] as const;
 
 const decodeInput = Schema.decodeUnknownEffect(RunInput);
@@ -147,43 +133,11 @@ export const RunsLive = Layer.effect(
       Effect.catchTag(storageTags, storageError),
     );
 
-    const decide = Effect.fn("AgentRuns.decide")(
-      function* (id: string, version: number, decision: "approve" | "reject", actor: Actor) {
-        if (!actor.canApprove) return yield* new RunUnauthorized();
-        return yield* sql.withTransaction(
-          Effect.gen(function* () {
-            const status = decision === "approve" ? "publishing" : "rejected";
-            const rows =
-              yield* sql`UPDATE review_runs SET status = ${status}, decision = ${decision}, decided_by = ${actor.id}, phase_attempts = 0
-        WHERE id = ${id} AND status = 'awaitingApproval' AND version = ${version} RETURNING id`;
-            if (rows.length) {
-              return yield* decision === "approve"
-                ? jobs
-                    .offer({ runId: id, phase: "publish" }, { id: `publish:${id}:${version}` })
-                    .pipe(Effect.asVoid)
-                : Effect.void;
-            }
-            // Repeating the decision that already won is a no-op; anything else is stale.
-            const prior = yield* sql<{
-              version: number;
-              decision: string | null;
-            }>`SELECT version, decision FROM review_runs WHERE id = ${id}`;
-            if (!prior[0]) return yield* new RunNotFound();
-            const repeated = prior[0].version === version && prior[0].decision === decision;
-            return yield* repeated
-              ? Effect.void
-              : Effect.fail(new RunConflict({ message: "Proposal is stale or already decided" }));
-          }),
-        );
-      },
-      Effect.catchTag(storageTags, storageError),
-    );
-
     const cancel = Effect.fn("AgentRuns.cancel")(
       function* (id: string) {
         const rows = yield* sql`UPDATE review_runs SET status = 'cancelled'
-      WHERE id = ${id} AND status IN ('processing', 'awaitingApproval') RETURNING id`;
-        // Cancelling twice is a no-op; approved, finished, or rejected runs cannot be cancelled.
+      WHERE id = ${id} AND status = 'processing' RETURNING id`;
+        // Cancelling twice is a no-op; work that already started publishing cannot be revoked.
         const cancelled = rows.length > 0 || (yield* read(id)).status === "cancelled";
         return yield* cancelled
           ? Effect.void
@@ -191,7 +145,7 @@ export const RunsLive = Layer.effect(
       },
       Effect.catchTag("SqlError", storageError),
     );
-    return AgentRuns.of({ start, read, decide, cancel });
+    return AgentRuns.of({ start, read, cancel });
   }),
 );
 
@@ -202,10 +156,11 @@ export const RunJobsLive = Layer.effect(
     const sql = yield* SqlClient.SqlClient;
     const model = yield* ModelClient;
     const sink = yield* PublishSink;
+    const jobs = yield* Jobs;
     const read = (id: string) => readRun(sql, id);
 
     // The key is stable per proposal version, so a redelivery cannot publish twice.
-    const publishApproved = Effect.fn("RunJobs.publishApproved")(function* (
+    const publishProposal = Effect.fn("RunJobs.publishProposal")(function* (
       runId: string,
       attempt: number,
     ) {
@@ -252,9 +207,21 @@ export const RunJobsLive = Layer.effect(
         const response = yield* modelTurn(runId, turn, document, history);
         if (response.kind === "proposal") {
           const proposal = yield* encodeProposal(response.proposal);
-          yield* sql`UPDATE review_runs SET status = 'awaitingApproval', version = version + 1,
-            proposal = ${proposal}, error = NULL
-            WHERE id = ${runId} AND status = 'processing' AND phase_attempts = ${attempt}`;
+          // The proposal and the intent to publish commit together: a crash after the
+          // proposal is stored must not leave a run that nobody will publish.
+          yield* sql.withTransaction(
+            Effect.gen(function* () {
+              const updated = yield* sql<{ version: number }>`UPDATE review_runs
+                SET status = 'publishing', version = version + 1, proposal = ${proposal}, error = NULL
+                WHERE id = ${runId} AND status = 'processing' AND phase_attempts = ${attempt}
+                RETURNING version`;
+              if (!updated[0]) return;
+              yield* jobs.offer(
+                { runId, phase: "publish" },
+                { id: `publish:${runId}:${updated[0].version}` },
+              );
+            }),
+          );
           return;
         }
         // This tool returns immutable example policy; replay has the same output.
@@ -283,7 +250,7 @@ export const RunJobsLive = Layer.effect(
         // and was re-claimed elsewhere cannot overwrite the newer claim's outcome.
         const { document, phase_attempts: attempt } = claimed[0];
         const perform = Effect.gen(function* () {
-          if (job.phase === "publish") return yield* publishApproved(job.runId, attempt);
+          if (job.phase === "publish") return yield* publishProposal(job.runId, attempt);
           return yield* propose(job.runId, attempt, document);
         });
         // Records a terminal failure; `reason` is operator-facing and omits storage internals.
@@ -298,17 +265,19 @@ export const RunJobsLive = Layer.effect(
         yield* perform.pipe(
           Effect.catchTags({
             InvalidRunData: () => settle("Invalid model or stored data"),
+            SchemaError: () => settle("Invalid model or stored data"),
             ModelError: (error) => retryOrSettle(error, `Model failed: ${error.message}`),
             PublishError: (error) =>
               error.retryable
                 ? retryOrSettle(error, `Publish failed: ${error.message}`)
                 : settle(`Publish failed: ${error.message}`),
             SqlError: (error) => retryOrSettle(error, "Processing failed"),
+            PersistedQueueError: (error) => retryOrSettle(error, "Processing failed"),
             RunNotFound: (error) => retryOrSettle(error, "Processing failed"),
           }),
         );
       },
-      Effect.catchTag(["SqlError", "RunNotFound"], storageError),
+      Effect.catchTag(["SqlError", "PersistedQueueError", "RunNotFound"], storageError),
     );
     return RunJobs.of({ handle });
   }),

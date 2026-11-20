@@ -13,7 +13,7 @@ import {
   type ModelTurn,
 } from "./propose.ts";
 import { HttpPublishLive, PublishError, PublishSink } from "./publish.ts";
-import { AgentRuns, RunConflict, RunJobs, RunJobsLive, RunUnauthorized, RunsLive } from "./runs.ts";
+import { AgentRuns, RunConflict, RunJobs, RunJobsLive, RunsLive } from "./runs.ts";
 
 const databaseUrl = process.env.DOC_REVIEW_TEST_DATABASE_URL;
 if (!databaseUrl)
@@ -47,7 +47,6 @@ const deliver = Effect.gen(function* () {
   return yield* jobs.take(handle);
 });
 
-const reviewer = { id: "reviewer", canApprove: true };
 const document = { document: "Invoice for office supplies" };
 
 it.live("admits duplicate requests once and rejects conflicting input", () =>
@@ -62,21 +61,16 @@ it.live("admits duplicate requests once and rejects conflicting input", () =>
   }).pipe(Effect.provide(layerWith())),
 );
 
-it.live("keeps a versioned proposal until an authorized reviewer decides", () =>
+it.live("publishes the stored proposal automatically after the model proposes", () =>
   Effect.gen(function* () {
     const runs = yield* AgentRuns;
     const id = yield* runs.start(crypto.randomUUID(), document);
     yield* deliver;
-    const view = yield* runs.read(id);
-    expect(view).toMatchObject({ status: "awaitingApproval", proposal: DemoProposal });
-    const stale = yield* runs.decide(id, view.version - 1, "approve", reviewer).pipe(Effect.flip);
-    expect(stale).toBeInstanceOf(RunConflict);
-    const reader = yield* runs
-      .decide(id, view.version, "approve", { id: "reader", canApprove: false })
-      .pipe(Effect.flip);
-    expect(reader).toBeInstanceOf(RunUnauthorized);
-    yield* runs.decide(id, view.version, "reject", reviewer);
-    expect((yield* runs.read(id)).status).toBe("rejected");
+    const proposing = yield* runs.read(id);
+    expect(proposing).toMatchObject({ status: "publishing", proposal: DemoProposal });
+    expect(proposing.version).toBe(1);
+    yield* deliver;
+    expect(yield* runs.read(id)).toMatchObject({ status: "published", receipt: "receipt-1" });
   }).pipe(Effect.provide(layerWith())),
 );
 
@@ -94,7 +88,7 @@ it.live("replays committed model responses after a failed delivery", () => {
     const id = yield* runs.start(crypto.randomUUID(), document);
     yield* deliver.pipe(Effect.flip);
     yield* deliver;
-    expect((yield* runs.read(id)).status).toBe("awaitingApproval");
+    expect((yield* runs.read(id)).status).toBe("publishing");
     expect(calls).toBe(3);
   }).pipe(Effect.provide(layerWith(flaky)));
 });
@@ -200,7 +194,7 @@ it.live("drops a queued job when its transaction rolls back", () =>
   }).pipe(Effect.provide(layerWith())),
 );
 
-it.live("cancellation stops pending work but cannot revoke approved publishing", () => {
+it.live("cancellation stops pending work but cannot revoke publishing", () => {
   let calls = 0;
   const counted = Layer.succeed(ModelClient, {
     respond: (_document, history) => Effect.sync(() => (calls++, demoTurn(history))),
@@ -213,10 +207,9 @@ it.live("cancellation stops pending work but cannot revoke approved publishing",
     expect((yield* runs.read(cancelled)).status).toBe("cancelled");
     expect(calls).toBe(0);
 
-    const approved = yield* runs.start(crypto.randomUUID(), document);
+    const published = yield* runs.start(crypto.randomUUID(), document);
     yield* deliver;
-    yield* runs.decide(approved, (yield* runs.read(approved)).version, "approve", reviewer);
-    expect(yield* runs.cancel(approved).pipe(Effect.flip)).toBeInstanceOf(RunConflict);
+    expect(yield* runs.cancel(published).pipe(Effect.flip)).toBeInstanceOf(RunConflict);
   }).pipe(Effect.provide(layerWith(counted)));
 });
 
@@ -273,7 +266,6 @@ it.live("publishes one sink record when the worker fails after the sink accepts"
       const runs = yield* AgentRuns;
       const id = yield* runs.start(crypto.randomUUID(), document);
       yield* deliver;
-      yield* runs.decide(id, (yield* runs.read(id)).version, "approve", reviewer);
       yield* deliver.pipe(Effect.flip);
       yield* deliver;
       const view = yield* runs.read(id);
