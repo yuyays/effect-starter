@@ -21,6 +21,8 @@ service constructor. Upstream's formatting, naming, and `typeof` rules are omitt
 ## Local deviations
 
 - `index.ts` and `effect/index.ts` register only the vendored rules.
+- Imports of `@oxlint/plugins` become `vite-plus/lint/plugins`, so the plugin API matches the
+  Oxlint bundled with Vite+ and nothing pins a second copy separately.
 - `rules/no-module-mocking.ts` also recognizes `vi` imported from `vite-plus/test` and
   `@effect/vitest`, which re-export Vitest's `vi`.
 - `vite.config.ts` scopes the rules and exempts test wire-format fixtures; see its `overrides`.
