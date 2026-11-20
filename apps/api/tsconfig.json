@@ -11,6 +11,7 @@
         "includeSuggestionsInTsc": false,
         "ignoreEffectWarningsInTscExitCode": true,
         "ignoreEffectErrorsInTscExitCode": false,
+        // Replaces the base plugin block: base entries do not apply here, so mirror new ones.
         "allowedUnstableApis": [
           "effect/http",
           "effect/http-api",
