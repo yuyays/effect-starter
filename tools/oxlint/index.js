@@ -170,7 +170,7 @@ const noDirectReactEffect = {
         node,
         message:
           `Avoid React's ${hook}. Derive values during render, handle user actions in event handlers, ` +
-          "use TanStack Query for server data, or useSyncExternalStore for external stores. " +
+          "use Effect atoms for server data, or useSyncExternalStore for external stores. " +
           "If this effect must synchronize with an external system, use an inline lint suppression that explains what it synchronizes and why.",
       });
 

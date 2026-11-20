@@ -33,9 +33,9 @@ the [CLI guide](packages/create-effect-starter/README.md#launch-with-pnpm-or-bun
 
 The wizard asks for:
 
-- **Starter:** React (TanStack Router and Query), TanStack Start (server rendering),
-  or no frontend, for API servers and backends that agents, CLIs, or other services
-  call. All share the same Effect API and contracts.
+- **Starter:** React (TanStack Router and Effect atoms), TanStack Start (server
+  rendering), or no frontend, for API servers and backends that agents, CLIs, or
+  other services call. All share the same Effect API and contracts.
 - **Package manager:** pnpm or Bun.
 - **API runtime:** Node.js or Bun. Vite+ and the checks always run on Node.js.
 
@@ -89,6 +89,6 @@ Enter `../my-app` to generate an app beside the checkout. See the
 testing, dependency updates, and releases. Effect conventions are in
 [AGENTS.md](AGENTS.md). The optional
 [durable workflow example](examples/durable-workflow/README.md) shows a durable
-run with human approval; generated apps don't include it.
+run that publishes the model's proposal; generated apps don't include it.
 
 [MIT License](LICENSE)

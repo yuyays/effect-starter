@@ -22,7 +22,7 @@ npx --yes https://github.com/yuyays/effect-starter/releases/latest/download/crea
 The wizard asks for a project name, starter, and package manager. Use arrow keys
 and Enter to choose:
 
-- **React**: a single-page app with TanStack Router and Query.
+- **React**: a single-page app with TanStack Router and Effect atoms.
 - **TanStack Start**: React with server rendering and a separate Effect API.
 
 The React and TanStack Start picker is available in **v0.2.0 and later**.
