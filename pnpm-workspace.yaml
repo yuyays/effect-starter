@@ -13,7 +13,7 @@ catalog:
   "@effect/sql-pg": "^4.1.4"
   "@effect/vitest": "4.1.4"
   # Vitest's browser provider matches the Vitest override below.
-  "@vitest/browser-playwright": "5.1.0"
+  "@vitest/browser-playwright": "5.1.1"
   effect: "^4.1.4"
   playwright: "1.65.1"
   # Use the core version bundled by Vite+ across the workspace.
