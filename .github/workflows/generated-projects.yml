@@ -54,7 +54,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        framework: [react, tanstack-start, vue, none]
+        framework: [react, tanstack-start, none]
     steps:
       - uses: actions/checkout@v7
         with:

@@ -3,7 +3,7 @@
 [English](README.md) | [日本語](README.ja.md)
 
 Effect を基盤とした TypeScript アプリケーションのスターターです。
-フロントエンドは任意で、React、TanStack Start、Vue から選べます。
+フロントエンドは任意で、React または TanStack Start を選べます。
 Effect v4、Drizzle、Effect SQL、PostgreSQL、Vite+ を採用しています。ホスティング先はあらかじめ設定していません。
 
 ## 作った理由
@@ -29,7 +29,7 @@ npx --yes https://github.com/yuyays/effect-starter/releases/latest/download/crea
 ウィザードでは、次の項目を選びます。
 
 - **スターター:** React（TanStack Router と Query）、TanStack Start（サーバーレンダリング）、
-  Vue（Vue Router と TanStack Query）、またはフロントエンドなし。
+  またはフロントエンドなし。
   フロントエンドなしは、エージェント、CLI、ほかのサービスから呼び出す API サーバーやバックエンド向けです。
   どの構成でも、同じ Effect API とコントラクトを使用します。
 - **パッケージマネージャー:** pnpm または Bun。

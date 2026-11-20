@@ -1,6 +1,6 @@
 # create-effect-starter
 
-Create an Effect-based TypeScript application with an optional React, TanStack Start, or Vue frontend.
+Create an Effect-based TypeScript application with an optional React or TanStack Start frontend.
 Requires Node.js 24.11+ and pnpm 12 or Bun 1.4.2. The API runs on Node.js by
 default; Bun is an optional API runtime with either package manager.
 
@@ -24,9 +24,8 @@ and Enter to choose:
 
 - **React**: a single-page app with TanStack Router and Query.
 - **TanStack Start**: React with server rendering and a separate Effect API.
-- **Vue**: a single-page app with Vue Router and TanStack Query.
 
-The React, TanStack Start, and Vue picker is available in **v0.2.0 and later**.
+The React and TanStack Start picker is available in **v0.2.0 and later**.
 Older releases, including v0.1.0, provide the React starter only. The `latest`
 URL points at the newest GitHub release, so new versions do not require a new
 command.
@@ -98,10 +97,10 @@ node effect-starter-cli/package/cli.js
 Interactive users can just pick from the menus. Flags skip individual prompts:
 
 ```sh
-pnpm create:app ../my-app --framework vue --package-manager pnpm --runtime node
+pnpm create:app ../my-app --framework tanstack-start --package-manager pnpm --runtime node
 ```
 
-Supported framework values are `react`, `tanstack-start`, `vue`, and `none`
+Supported framework values are `react`, `tanstack-start`, and `none`
 (the API and shared contracts without `apps/web`).
 Supported runtime values are `node` and `bun`.
 Noninteractive creation requires a directory and defaults to React, pnpm, and the
@@ -189,11 +188,9 @@ directory keyed on `bun.lock`.
 ### `vp check` and type checking
 
 `vp check` combines formatting and linting, but it only runs TypeScript type
-checks when `lint.options.typeCheck` is enabled. The Vue starter needs
-`vue-tsc` for single-file components, and enabling `typeCheck` makes `vp check`
-fail on `.vue` imports.
-Keep separate `lint`, `format:check`, and `typecheck` steps rather than
-replacing them with `vp check` in CI.
+checks when `lint.options.typeCheck` is enabled. Keep separate `lint`,
+`format:check`, and `typecheck` steps rather than replacing them with
+`vp check` in CI.
 
 ## Publish a GitHub Release
 
@@ -226,8 +223,8 @@ CI workflow and exclude this repository's release workflow.
 
 ## Maintain frontend templates
 
-The React frontend comes from `apps/web`. `frontends/tanstack-start` overlays it;
-`frontends/vue` contains the Vue frontend. The API and contracts remain shared.
+The React frontend comes from `apps/web`. `frontends/tanstack-start` overlays it.
+The API and contracts remain shared.
 `build-template.js` assembles each complete project into `template/<framework>`.
 
 All frontend manifests are part of the source pnpm workspace. Their source-only
@@ -240,8 +237,8 @@ single lockfile and rebases workspace links. There are no separately maintained
 template lockfiles. Run `pnpm test:generated` to verify every starter with
 pnpm + Node.js, Bun + Node.js, and Bun + the Bun API runtime. The Bun runtime
 project only re-runs what the runtime changes: formatting, the build, and the
-production and dev smoke tests. Pass a framework name (for example `pnpm test:generated vue`) to
-check only that starter.
+production and dev smoke tests. Pass a framework name (for example
+`pnpm test:generated tanstack-start`) to check only that starter.
 
 ## Dependency updates
 
@@ -249,9 +246,9 @@ Dependabot checks the workspace and GitHub Actions every Monday. Related
 Vite+/Vitest packages and Effect packages are grouped into reviewable PRs;
 other minor and patch updates are grouped separately. Releases must be at least
 one day old. Major migrations and the paired Drizzle release-candidate pins
-require manual review. Vue's frontend stays on TypeScript 5.9 until its native
-TypeScript integration is adopted.
+require manual review.
 
-Every dependency PR runs the repository checks and all six generated-app checks.
+Every dependency PR runs the repository checks and the generated-app checks for every
+starter.
 Dependabot configuration takes effect after it is merged into the default branch.
 It does not merge PRs or publish releases automatically.

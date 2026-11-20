@@ -12,11 +12,11 @@
 The starter is deliberately small and provider-neutral:
 
 - Effect `4.1.2`, Drizzle `1.0.0-rc.5`, `@effect/sql-pg` `4.1.2`, Node `>=24.11.0` (`package.json`, `pnpm-workspace.yaml`). `[Certain]`
-- One API app with a health endpoint and a users endpoint, an HttpApi contract package, and optional React/TanStack Start/Vue frontends (`apps/api/src/http.ts`, `packages/contracts/src/http/index.ts`, `packages/create-effect-starter/frameworks.js`). `[Certain]`
+- One API app with a health endpoint and a users endpoint, an HttpApi contract package, and optional React or TanStack Start frontends (`apps/api/src/http.ts`, `packages/contracts/src/http/index.ts`, `packages/create-effect-starter/frameworks.js`). `[Certain]`
 - PostgreSQL is the only database path: `PgClient` + `drizzle-orm/effect-postgres` + `pg-core` schema (`apps/api/src/db/client.ts`, `apps/api/src/db/schema.ts`, `apps/api/drizzle.config.ts`). `[Certain]`
 - No auth, tenancy, job queue, event log, agent/session model, or provider adapter exists. `[Certain]`
 - The README already points agent/CLI/MCP builders at the no-frontend starter, but that starter is still only the API + contracts skeleton (`README.md`). `[Certain]`
-- The generator matrix is four starters × two package managers × two API runtimes, with generated-project tests. Adding an agent dimension multiplies template and test surface (`packages/create-effect-starter/build-template.js`, `create-project.test.js`). `[Certain]`
+- The generator matrix is three starters × two package managers × two API runtimes, with generated-project tests. Adding an agent dimension multiplies template and test surface (`packages/create-effect-starter/build-template.js`, `create-project.test.js`). `[Certain]`
 
 The base is a good **domain application** skeleton. It is not an agent harness, and its README does not claim to be one.
 

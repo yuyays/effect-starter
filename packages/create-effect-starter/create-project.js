@@ -50,7 +50,7 @@ export async function createProject(directory, cwd = process.cwd(), options = {}
     const example = await readFile(join(destination, "apps", app, ".env.example"));
     await writeFile(join(destination, "apps", app, ".env"), example, { flag: "wx" });
   }
-  await configurePackageManager(destination, packageManager, framework);
+  await configurePackageManager(destination, packageManager);
   await configureRuntime(destination, runtime);
   return { destination, name, packageManager, framework, runtime };
 }

@@ -92,7 +92,7 @@ export function nextSteps(packageManager, { installed = false } = {}) {
   ];
 }
 
-export async function configurePackageManager(destination, packageManager, framework = "react") {
+export async function configurePackageManager(destination, packageManager) {
   const manager = getPackageManager(packageManager);
   const manifestPath = join(destination, "package.json");
   let manifest = JSON.parse(await readFile(manifestPath, "utf8"));
@@ -120,12 +120,7 @@ export async function configurePackageManager(destination, packageManager, frame
       ...workspace,
       engines,
       packageManager: pin,
-      trustedDependencies: [
-        "@parcel/watcher",
-        "esbuild",
-        "msgpackr-extract",
-        ...(framework === "vue" ? ["vue-demi"] : []),
-      ],
+      trustedDependencies: ["@parcel/watcher", "esbuild", "msgpackr-extract"],
     };
     await rm(join(destination, "pnpm-workspace.yaml"));
     await rm(join(destination, "pnpm-lock.yaml"));

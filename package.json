@@ -20,7 +20,7 @@
     "typecheck": "vp run --cache --concurrency-limit 4 --filter \"@effect-starter/*\" typecheck",
     "typecheck:examples": "vp run --filter \"@effect-starter-examples/*\" typecheck",
     "test:examples": "vp run --filter \"@effect-starter-examples/*\" test",
-    "test": "vp run --filter \"@effect-starter/*\" test && node --test tools/effect-policy.test.js && node packages/create-effect-starter/build-template.js && node --test packages/create-effect-starter/create-project.test.js packages/create-effect-starter/install.test.js packages/create-effect-starter/dev-servers.test.js && vp run --filter \"@effect-starter-templates/vue\" test",
+    "test": "vp run --filter \"@effect-starter/*\" test && node --test tools/effect-policy.test.js && node packages/create-effect-starter/build-template.js && node --test packages/create-effect-starter/create-project.test.js packages/create-effect-starter/install.test.js packages/create-effect-starter/dev-servers.test.js",
     "test:browser": "vp run --filter \"@effect-starter/*\" test:browser",
     "browser:install": "vp run --filter \"@effect-starter/*\" browser:install",
     "lint": "vp lint .",

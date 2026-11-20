@@ -53,7 +53,7 @@ for (const framework of Object.keys(frameworks)) {
   }
   const frontend = hasFrontend(framework);
   const web = new URL("apps/web/", destination);
-  if (frontend && framework !== "vue") {
+  if (frontend) {
     await cp(new URL("apps/web/", root), web, copyOptions);
   }
   if (frontend && framework !== "react") {
@@ -84,13 +84,6 @@ for (const framework of Object.keys(frameworks)) {
   let config = await readFile(configPath, "utf8");
   // Template source files are not part of generated projects.
   config = config.replace(/^\s*"packages\/create-effect-starter\/[^"\n]+",\n/gm, "");
-  if (framework === "vue") {
-    config = replaceRequired(
-      config,
-      '["react", "jsx-a11y", "typescript", "import", "vitest", "effecttsgo"]',
-      '["vue", "typescript", "import", "vitest", "effecttsgo"]',
-    ).replace(/^      "react\/.*\n/gm, "");
-  }
   if (!frontend) {
     // `apps/web/**` overrides stay: they are inert until someone adds a frontend.
     config = replaceRequired(
@@ -110,9 +103,7 @@ for (const framework of Object.keys(frameworks)) {
     const stack =
       framework === "react"
         ? "React, TanStack Router/Query"
-        : framework === "vue"
-          ? "Vue, Vue Router, TanStack Query"
-          : "TanStack Start (React), TanStack Query";
+        : "TanStack Start (React), TanStack Query";
     readme = readme.replace("React, TanStack Router/Query", stack);
   } else {
     readme = replaceRequired(
@@ -125,10 +116,6 @@ for (const framework of Object.keys(frameworks)) {
       "`{{RUN}} dev:web` or `{{RUN}} dev:api` starts one server. The web app proxies\n`/api` and `/docs` to the API; ports are set in `apps/web/vite.config.ts` and\n`apps/api/.env`.",
       "`{{RUN}} dev` watches the API and restarts it when it or the contracts change. The\nport is set in `apps/api/.env`, and API docs are served at `/docs`. Clients call the\nAPI through the HttpApi contract in `packages/contracts`.",
     );
-  }
-  if (framework === "vue") {
-    readme +=
-      "\nVue single-file components use `vue-tsc` and a frontend-local TypeScript 5.9.\nThe API and shared contracts keep the root native TypeScript compiler and Effect diagnostics.\n";
   }
   if (framework === "tanstack-start") {
     readme +=

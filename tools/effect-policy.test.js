@@ -19,7 +19,6 @@ const skipWithoutReact =
   existsSync(join(root, "apps/web/src/router.tsx"))
     ? false
     : "no React frontend";
-const skipWithoutVue = existsSync(join(root, "apps/web/src/App.vue")) ? false : "no Vue frontend";
 
 function run(binary, args) {
   const result = spawnSync(process.execPath, [binary, ...args], {
@@ -603,29 +602,6 @@ void test(
     });
     assertRules(codesFor("api-web-import"), {
       "web.ts": ["starter(workspace-imports)"],
-    });
-  },
-);
-
-const vueComponent = (source) =>
-  `<script setup lang="ts">\nimport * as api from "${source}";\n</script>\n<template><pre>{{ api }}</pre></template>\n`;
-fixtureSet(
-  "vue-imports",
-  "apps/web/src",
-  {
-    "private.vue": vueComponent(apiName),
-    "public.vue": vueComponent(`${contractsName}/http`),
-  },
-  skipWithoutVue,
-);
-
-void test(
-  "lint enforces workspace imports in Vue single-file components",
-  { skip: skipWithoutVue },
-  () => {
-    assertRules(codesFor("vue-imports"), {
-      "private.vue": ["starter(workspace-imports)"],
-      "public.vue": [],
     });
   },
 );
