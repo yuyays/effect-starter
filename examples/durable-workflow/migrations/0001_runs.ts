@@ -9,13 +9,11 @@ export default Effect.gen(function* () {
     input_hash TEXT NOT NULL,
     document TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'processing' CHECK (status IN
-      ('processing', 'awaitingApproval', 'publishing', 'published', 'rejected', 'failed', 'cancelled')),
+      ('processing', 'publishing', 'published', 'failed', 'cancelled')),
     version INTEGER NOT NULL DEFAULT 0,
     proposal JSONB,
     attempts INTEGER NOT NULL DEFAULT 0,
     phase_attempts INTEGER NOT NULL DEFAULT 0,
-    decided_by TEXT,
-    decision TEXT,
     receipt TEXT,
     error TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
