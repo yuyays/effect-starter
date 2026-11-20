@@ -61,6 +61,4 @@ Object constructor, and do not assume a finalizer will run on eviction.
 ## Version
 
 Alchemy, `@alchemy.run/cloudflare` and `@alchemy.run/test` are pinned to
-`2.0.0-beta.87`; these APIs are still beta. The
-[Railway example](../alchemy-railway/README.md) is a separate experiment on
-`2.0.0-beta.85` and is unchanged by this one.
+`2.0.0-beta.87`; these APIs are still beta.

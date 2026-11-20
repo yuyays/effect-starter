@@ -156,7 +156,6 @@ export default defineConfig({
       "packages/create-effect-starter/template/**",
       "packages/create-effect-starter/frontends/**",
       // These standalone workspaces have separate installs, absent from root CI.
-      "examples/alchemy-railway/**",
       "examples/alchemy-durable-object/**",
     ],
   },

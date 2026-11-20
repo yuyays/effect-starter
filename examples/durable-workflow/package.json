@@ -1,5 +1,5 @@
 {
-  "name": "@effect-starter-examples/durable-agent",
+  "name": "@effect-starter-examples/durable-workflow",
   "private": true,
   "type": "module",
   "scripts": {

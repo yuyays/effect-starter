@@ -1,4 +1,4 @@
-# One job per optional example. durable-agent needs real PostgreSQL; the Alchemy
+# One job per optional example. durable-workflow needs real PostgreSQL; the Alchemy
 # Durable Object example runs in workerd. A separate workflow keeps both out of the
 # ci.yml that generated apps inherit, and keeps the base checks database-free.
 name: Examples
@@ -36,7 +36,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  durable-agent:
+  durable-workflow:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     services:
