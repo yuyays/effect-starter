@@ -30,7 +30,7 @@ export default defineConfig({
       suspicious: "error",
       perf: "warn",
     },
-    // `effecttsgo` requires the Oxlint integration patched by `effect-tsgo patch --oxlint`.
+    // `effecttsgo` requires the Oxlint and tsrs patches applied by `prepare`.
     plugins: [...frontendPlugins, "typescript", "import", "vitest", "effecttsgo"],
     jsPlugins: [
       "./tools/oxlint/index.js",
