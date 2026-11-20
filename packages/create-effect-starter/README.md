@@ -1,6 +1,7 @@
 # create-effect-starter
 
-Create an Effect-based TypeScript application with an optional React or TanStack Start frontend.
+Create an Effect-based TypeScript application with an optional React or TanStack Start frontend,
+or none for API servers, CLIs, and agents.
 Requires Node.js 24.11+ and pnpm 12 or Bun 1.4.2. The API runs on Node.js by
 default; Bun is an optional API runtime with either package manager.
 

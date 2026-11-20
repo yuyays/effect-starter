@@ -4,6 +4,7 @@
 
 Effect を基盤とした TypeScript アプリケーションのスターターです。
 フロントエンドは任意で、React または TanStack Start を選べます。
+API サーバー、CLI、エージェント向けに、フロントエンドなしも選べます。
 Effect v4、Drizzle、Effect SQL、PostgreSQL、Vite+ を採用しています。ホスティング先はあらかじめ設定していません。
 
 ## 作った理由
