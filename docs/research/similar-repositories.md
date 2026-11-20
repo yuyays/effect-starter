@@ -33,7 +33,7 @@ Independent reviewer: OpenCode provider, `opencode-go/deepseek-v4.1-flash`, `var
 
 The official **[Effect-TS/examples create-effect-app](https://github.com/Effect-TS/examples/blob/main/packages/create-effect-app/README.md)** already provides interactive/noninteractive generation of basic, CLI, monorepo, and HTTP-server examples. An Effect generator itself is not novel; the local frontend/runtime matrix and database-integrated application architecture are the more specific comparison.
 
-**[effect-app/boilerplate](https://github.com/effect-app/boilerplate)** is another credible Vue-side comparison: its README documents Nuxt plus an API, and its current [frontend manifest](https://github.com/effect-app/boilerplate/blob/main/frontend/package.json) uses Effect v4, Effect Atom Vue, and TanStack Vue Query. Its [API manifest](https://github.com/effect-app/boilerplate/blob/main/api/package.json) includes the separate `effect-app` framework, Express, SQLite, and Azure SDKs. This was a manifest-level check; its complete persistence and deployment architecture were not audited.
+**[effect-app/boilerplate](https://github.com/effect-app/boilerplate)** is another credible Nuxt-side comparison: its README documents Nuxt plus an API, and its current [frontend manifest](https://github.com/effect-app/boilerplate/blob/main/frontend/package.json) uses Effect v4 and Effect Atom. Its [API manifest](https://github.com/effect-app/boilerplate/blob/main/api/package.json) includes the separate `effect-app` framework, Express, SQLite, and Azure SDKs. This was a manifest-level check; its complete persistence and deployment architecture were not audited.
 
 ## Assessment and limits
 
