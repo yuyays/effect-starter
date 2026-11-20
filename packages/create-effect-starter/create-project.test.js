@@ -7,6 +7,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import semver from "semver";
+import vitePlusManifest from "vite-plus/package.json" with { type: "json" };
 import { versions } from "vite-plus/versions";
 import { format } from "vite-plus/fmt";
 import { parse, parseAllDocuments } from "yaml";
@@ -89,11 +90,12 @@ void test("CLI generates a renamed project without generator artifacts", async (
   const { catalog } = workspace;
   assert.match(catalog.effect, /^\^?4\./);
   // Vite+ and its Vite-compatible core must move together when either is bumped.
-  assert.equal(catalog.vite, `npm:@voidzero-dev/vite-plus-core@${catalog["vite-plus"]}`);
+  assert.equal(catalog.vite, vitePlusManifest.dependencies.vite);
   assert.equal(workspace.overrides["vite@*"], "catalog:");
-  assert.equal(workspace.peerDependencyRules.allowedVersions.vite, catalog["vite-plus"]);
+  assert.equal(workspace.peerDependencyRules.allowedVersions.vite, catalog.vite.split("@").at(-1));
   // The browser test provider is part of Vitest and must match its overridden version.
   assert.equal(catalog["@vitest/browser-playwright"], workspace.overrides["vitest@*"]);
+  assert.equal(workspace.overrides["vitest@*"], versions.vitest);
   for (const location of [".", "apps/api", "apps/web", "packages/contracts"]) {
     const pkg = JSON.parse(await readFile(join(project, location, "package.json"), "utf8"));
     for (const field of ["dependencies", "devDependencies"]) {
@@ -207,8 +209,7 @@ void test("Bun CLI emits Bun configuration, instructions, and CI", async (t) => 
   assert.equal(manifest.devDependencies["vite-plus"], "catalog:");
   assert.equal(manifest.overrides.vite, catalog.vite);
   assert.equal(manifest.devDependencies.vite, "catalog:");
-  assert.equal(manifest.overrides.vite, `npm:@voidzero-dev/vite-plus-core@${catalog["vite-plus"]}`);
-  assert.equal(manifest.overrides.vitest, versions.vitest);
+  assert.equal(manifest.overrides.vitest, catalog["@vitest/browser-playwright"]);
   assert.ok(manifest.trustedDependencies.includes("esbuild"));
   const files = await readdir(project);
   assert.ok(!files.some((file) => file.startsWith("pnpm")));
