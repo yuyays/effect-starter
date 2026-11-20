@@ -24,7 +24,12 @@
         "name": "@effect/language-service",
         "includeSuggestionsInTsc": false,
         "ignoreEffectWarningsInTscExitCode": true,
-        "allowedUnstableApis": ["effect/http", "effect/http-api"]
+        "allowedUnstableApis": [
+          "effect/http",
+          "effect/http-api",
+          "effect/reactivity",
+          "@effect/atom-react"
+        ]
       }
     ]
   }
