@@ -93,12 +93,29 @@ for (const framework of Object.keys(frameworks)) {
       await rm(new URL(entry, web));
     }
   }
-  // The lint config is copied whole. Its `apps/web/**` overrides and React plugin
-  // entries are inert in the API-only starter, which keeps this file free of surgery.
+  // The lint config is copied whole, but its two variant-dependent modules are
+  // replaced: a generated project must not name this repository's own paths, and the
+  // API-only starter must not carry React rules that apply to plain .ts helpers.
+  await writeFile(
+    new URL("tools/lint/repository-only.ts", destination),
+    `/** Generated projects do not contain this repository's own paths. */
+export const repositoryOnlyLintPaths: string[] = [];
+export const repositoryOnlyFormatPaths: string[] = [];
+`,
+  );
+  if (!frontend) {
+    await writeFile(
+      new URL("tools/lint/frontend.ts", destination),
+      `/** The API-only starter has no React frontend. */
+export const frontendPlugins: string[] = [];
+export const frontendRules = {};
+`,
+    );
+  }
   const intro = frontend
     ? framework === "react"
       ? "Full-stack TypeScript app with React, TanStack Router/Query, Effect v4, Drizzle,\nPostgreSQL, and Vite+"
-      : "Full-stack TypeScript app with TanStack Start (React), Effect v4, Drizzle,\nPostgreSQL, and Vite+"
+      : "Full-stack TypeScript app with TanStack Start (React), TanStack Query, Effect v4,\nDrizzle, PostgreSQL, and Vite+"
     : "TypeScript API with Effect v4, Drizzle, PostgreSQL, and Vite+";
   const devNote = frontend
     ? "`{{RUN}} dev:web` or `{{RUN}} dev:api` starts one server. The web app proxies\n`/api` and `/docs` to the API; ports are set in `apps/web/vite.config.ts` and\n`apps/api/.env`."

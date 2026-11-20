@@ -39,7 +39,7 @@ jobs:
       # Chromium is ~130 MB; keying on the lockfile reuses it until Playwright upgrades.
       # The browser binary comes from that cache and the system libraries ship with the
       # runner image; add --with-deps if a self-hosted runner is missing them.
-      # The API-only starter has no apps/web, so these steps skip themselves.
+      # Skipped when the project has no web app.
       - uses: actions/cache@v6
         if: ${{ hashFiles('apps/web/package.json') != '' }}
         with:
