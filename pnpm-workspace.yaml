@@ -7,6 +7,8 @@ packages:
 # TypeScript stays out of the catalog: it is pinned in the root manifest because
 # @effect/tsgo patches that exact compiler build.
 catalog:
+  # Pinned: 4.1.5 is blocked by minimumReleaseAge until a day after release.
+  "@effect/atom-react": "4.1.4"
   "@effect/platform-node": "^4.1.4"
   "@effect/sql-pg": "^4.1.4"
   "@effect/vitest": "4.1.4"

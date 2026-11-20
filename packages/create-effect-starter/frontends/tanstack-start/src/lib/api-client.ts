@@ -1,12 +1,18 @@
 import { FetchHttpClient } from "effect/http";
-import { HttpApiClient } from "effect/http-api";
+import { AtomHttpApi } from "effect/reactivity";
 import { StarterApi } from "@effect-starter/contracts/http";
-import { Effect } from "effect";
 
+// SSR resolves the API directly; the browser uses the same-origin proxy in dev.
 const baseUrl = import.meta.env.SSR
   ? (process.env.API_URL ?? "http://localhost:3000")
   : (import.meta.env.VITE_API_URL ?? "");
 
-export const apiClient = Effect.runSync(
-  HttpApiClient.make(StarterApi, { baseUrl }).pipe(Effect.provide(FetchHttpClient.layer)),
-);
+/**
+ * The generated client as an atom runtime. `query` and `runtime.atom` read through
+ * this service, so a test can provide its own layer instead of stubbing `fetch`.
+ */
+export class Api extends AtomHttpApi.Service<Api>()("web/Api", {
+  api: StarterApi,
+  httpClient: FetchHttpClient.layer,
+  ...(baseUrl === "" ? {} : { baseUrl }),
+}) {}

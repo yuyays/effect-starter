@@ -1,14 +1,20 @@
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { useAtomRefresh, useAtomValue } from "@effect/atom-react";
+import { AsyncResult, Atom } from "effect/reactivity";
 import { UsersCard } from "@/components/users-card.js";
-import { usersErrorMessage, usersQueryOptions } from "@/lib/users.js";
+import { usersAtom, usersErrorMessage } from "@/lib/users.js";
+
+// Server rendering uses the initial value: without this the atom would fetch during
+// SSR and discard the result, then fetch again in the browser.
+const users = Atom.withServerValueInitial(usersAtom);
 
 export const Route = createFileRoute("/")({
   component: IndexRoute,
 });
 
 function IndexRoute() {
-  const usersQuery = useQuery({ ...usersQueryOptions, enabled: !import.meta.env.SSR });
+  const result = useAtomValue(users);
+  const refresh = useAtomRefresh(users);
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_#ecfeff,_transparent_34rem),linear-gradient(135deg,_#fafaf9,_#f5f5f4)] px-6 py-10 text-stone-950">
@@ -21,16 +27,22 @@ function IndexRoute() {
             TanStack Start, Effect Platform API, shared contracts.
           </h1>
           <p className="max-w-2xl text-lg text-stone-600">
-            TanStack Query calls an Effect HttpApiClient generated from the same API contract the
-            server implements.
+            An Effect atom calls the HttpApiClient generated from the same API contract the server
+            implements.
           </p>
         </div>
 
         <UsersCard
-          users={usersQuery.data}
-          errorMessage={usersErrorMessage(usersQuery.error)}
-          isFetching={usersQuery.isFetching}
-          onRefetch={() => void usersQuery.refetch()}
+          users={AsyncResult.isSuccess(result) ? result.value : undefined}
+          errorMessage={AsyncResult.matchWithError(result, {
+            onInitial: () => undefined,
+            onSuccess: () => undefined,
+            onError: (error) => usersErrorMessage(error),
+            // A defect never reaches the API contract, so treat it as unreachable.
+            onDefect: () => usersErrorMessage(undefined),
+          })}
+          isFetching={AsyncResult.isInitial(result) || AsyncResult.isWaiting(result)}
+          onRefetch={refresh}
         />
       </section>
     </main>

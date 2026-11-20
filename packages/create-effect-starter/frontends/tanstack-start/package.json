@@ -13,9 +13,9 @@
   },
   "dependencies": {
     "@effect-starter/contracts": "workspace:*",
+    "@effect/atom-react": "catalog:",
     "@radix-ui/react-slot": "^1.5.0",
     "@tailwindcss/vite": "^4.3.5",
-    "@tanstack/react-query": "^5.108.0",
     "@tanstack/react-router": "^1.170.46",
     "@tanstack/react-start": "^1.169.5",
     "class-variance-authority": "^0.7.1",
@@ -24,6 +24,7 @@
     "lucide-react": "^1.75.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
+    "scheduler": "^0.28.0",
     "tailwind-merge": "^3.7.0",
     "tailwindcss": "^4.3.5"
   },
