@@ -1,6 +1,6 @@
-# Durable agent example: document review
+# Durable workflow example: document review
 
-An optional example of a durable domain agent built on this starter's stack. It is
+An optional example of a durable workflow built on this starter's stack. It is
 not copied into generated apps.
 
 A submitted document goes through these steps:
@@ -33,9 +33,9 @@ reported as an unknown outcome, because the sink may already hold the record.
 ## Run it
 
 ```sh
-cp examples/durable-agent/.env.example examples/durable-agent/.env  # then fill it in
-pnpm --filter @effect-starter-examples/durable-agent dev     # API on :3001
-pnpm --filter @effect-starter-examples/durable-agent worker  # in another shell
+cp examples/durable-workflow/.env.example examples/durable-workflow/.env  # then fill it in
+pnpm --filter @effect-starter-examples/durable-workflow dev     # API on :3001
+pnpm --filter @effect-starter-examples/durable-workflow worker  # in another shell
 ```
 
 ### Run without a model key
@@ -47,7 +47,7 @@ settings are still real, so the queue and recovery code is unchanged; because th
 model never fails, OpenAI request failures and their retries are not exercised.
 
 ```sh
-pnpm --filter @effect-starter-examples/durable-agent worker:fake
+pnpm --filter @effect-starter-examples/durable-workflow worker:fake
 ```
 
 ```sh
