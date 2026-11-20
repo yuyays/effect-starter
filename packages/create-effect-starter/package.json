@@ -1,6 +1,6 @@
 {
   "name": "create-effect-starter",
-  "version": "0.4.3",
+  "version": "0.5.0",
   "description": "Create an Effect-based TypeScript application with an optional React or TanStack Start frontend",
   "license": "MIT",
   "repository": {
