@@ -25,14 +25,14 @@
     "browser:install": "vp run --filter \"@effect-starter/*\" browser:install",
     "lint": "vp lint .",
     "format:check": "vp fmt . --check",
-    "prepare": "effect-tsgo patch --typescript --oxlint",
+    "prepare": "effect-tsgo patch --typescript --oxlint --tsrs",
     "db:generate": "vp run @effect-starter/api#db:generate",
     "db:migrate": "vp run @effect-starter/api#db:migrate",
     "db:studio": "vp run @effect-starter/api#db:studio",
     "test:generated": "node packages/create-effect-starter/build-template.js && node packages/create-effect-starter/verify-generated.js"
   },
   "devDependencies": {
-    "@effect/tsgo": "0.69.0",
+    "@effect/tsgo": "0.73.2",
     "typescript": "7.0.2",
     "vite-plus": "catalog:"
   },
