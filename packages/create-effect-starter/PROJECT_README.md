@@ -1,7 +1,6 @@
 # effect-starter
 
-Full-stack TypeScript app with React, TanStack Router/Query, Effect v4, Drizzle,
-PostgreSQL, and Vite+, managed with {{PACKAGE_MANAGER}}. {{RUNTIME_NOTE}}
+{{INTRO}}, managed with {{PACKAGE_MANAGER}}. {{RUNTIME_NOTE}}
 See `engines` in `package.json` for required versions. [MIT License](LICENSE).
 
 ## Setup
@@ -20,9 +19,7 @@ values, and file read errors still fail startup. Restart the API after editing `
 {{RUN}} dev
 ```
 
-`{{RUN}} dev:web` or `{{RUN}} dev:api` starts one server. The web app proxies
-`/api` and `/docs` to the API; ports are set in `apps/web/vite.config.ts` and
-`apps/api/.env`.
+{{DEV_NOTE}}
 
 ## Verify changes
 
@@ -34,10 +31,7 @@ values, and file read errors still fail startup. Restart the API after editing `
 {{RUN}} build
 ```
 
-Component tests that need a real browser (`*.browser.test.tsx`) run in Chromium:
-`{{RUN}} browser:install` once per machine, then `{{RUN}} test:browser`.
-
-{{BUN_CHECKS_NOTE}}The checks enforce the Effect rules in `AGENTS.md`, and `{{RUN}} test` proves that
+{{BROWSER_NOTE}}{{BUN_CHECKS_NOTE}}The checks enforce the Effect rules in `AGENTS.md`, and `{{RUN}} test` proves that
 invalid examples fail. Select the workspace TypeScript version in your editor to
 see Effect diagnostics there.
 

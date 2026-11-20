@@ -488,9 +488,10 @@ for (const packageManager of ["pnpm", "bun"]) {
     const manifest = JSON.parse(await readFile(join(project, "package.json"), "utf8"));
     assert.ok(!("dev:web" in manifest.scripts));
     assert.ok(!("test:browser" in manifest.scripts) && !("browser:install" in manifest.scripts));
-    assert.doesNotMatch(
+    // The API-only starter keeps the browser steps but skips them without a web app.
+    assert.match(
       await readFile(join(project, ".github/workflows/ci.yml"), "utf8"),
-      /browser:install|test:browser/,
+      /hashFiles\('apps\/web\/package\.json'\)/,
     );
     assert.match(manifest.scripts["dev:api"], /--filter @api-app\/api/);
     const config = await readFile(join(project, "vite.config.ts"), "utf8");

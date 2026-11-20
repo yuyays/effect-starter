@@ -39,11 +39,15 @@ jobs:
       # Chromium is ~130 MB; keying on the lockfile reuses it until Playwright upgrades.
       # The browser binary comes from that cache and the system libraries ship with the
       # runner image; add --with-deps if a self-hosted runner is missing them.
+      # The API-only starter has no apps/web, so these steps skip themselves.
       - uses: actions/cache@v6
+        if: ${{ hashFiles('apps/web/package.json') != '' }}
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: playwright-${{ runner.os }}-
       - run: pnpm browser:install
+        if: ${{ hashFiles('apps/web/package.json') != '' }}
       - run: pnpm test:browser
+        if: ${{ hashFiles('apps/web/package.json') != '' }}
       - run: pnpm build
