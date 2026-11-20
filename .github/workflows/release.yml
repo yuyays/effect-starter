@@ -62,7 +62,7 @@ jobs:
       - name: Verify all starters in the archive run through npx
         working-directory: ${{ runner.temp }}
         run: |
-          for framework in react tanstack-start vue none; do
+          for framework in react tanstack-start none; do
             npx --yes --package "$RUNNER_TEMP/create-effect-starter.tgz" -- \
               create-effect-starter "release-smoke-$framework" \
               --framework "$framework" --package-manager pnpm --no-install

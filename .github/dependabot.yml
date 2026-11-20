@@ -37,8 +37,8 @@ updates:
         patterns:
           - "*"
     ignore:
-      # The Vue starter stays on TypeScript 5.9 until vue-tsc supports
-      # TypeScript 7's package layout. Major upgrades need manual review.
+      # @effect/tsgo patches a specific TypeScript build, so a major upgrade
+      # needs manual review rather than an automated bump.
       - dependency-name: typescript
         update-types:
           - version-update:semver-major

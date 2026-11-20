@@ -345,7 +345,7 @@ void test("invalid package managers and CLI flags fail before creating files", a
   assert.deepEqual(await readdir(directory), []);
 });
 
-for (const framework of ["react", "tanstack-start", "vue"]) {
+for (const framework of ["react", "tanstack-start"]) {
   for (const packageManager of ["pnpm", "bun"]) {
     void test(`generates an isolated ${framework} frontend with ${packageManager}`, async (t) => {
       const directory = await temporary(t);
@@ -364,10 +364,8 @@ for (const framework of ["react", "tanstack-start", "vue"]) {
       assert.equal(result.status, 0, result.stderr);
       assert.match(result.stdout, /Packages to install/);
       assert.ok(!result.stdout.includes("Running "));
-      assert.equal(/^  react /m.test(result.stdout), framework !== "vue");
-      assert.equal(/^  vue /m.test(result.stdout), framework === "vue");
+      assert.match(result.stdout, /^  react /m);
       const project = join(directory, "chosen-app");
-      // React starters also run component tests in Chromium; Vue keeps its happy-dom tests.
       const browser = isReact(framework);
       const rootScripts = JSON.parse(await readFile(join(project, "package.json"), "utf8")).scripts;
       assert.equal("test:browser" in rootScripts, browser);
@@ -384,7 +382,7 @@ for (const framework of ["react", "tanstack-start", "vue"]) {
         (await readFile(join(project, "README.md"), "utf8")).includes("test:browser"),
         browser,
       );
-      if (framework !== "vue") {
+      if (isReact(framework)) {
         // The React Compiler's native transform must stay inside the Vite plugin's peer range.
         assert.match(
           await readFile(join(project, "apps/web/vite.config.ts"), "utf8"),
@@ -418,24 +416,18 @@ for (const framework of ["react", "tanstack-start", "vue"]) {
       const web = JSON.parse(await readFile(join(project, "apps/web/package.json"), "utf8"));
       const files = await readdir(join(project, "apps/web"), { recursive: true });
       assert.equal(web.dependencies["@chosen-app/contracts"], "workspace:*");
-      assert.equal(Boolean(web.dependencies.vue), framework === "vue");
-      assert.equal(Boolean(web.dependencies.react), framework !== "vue");
+      assert.ok(web.dependencies.react);
       assert.equal(
         Boolean(web.dependencies["@tanstack/react-start"]),
         framework === "tanstack-start",
       );
       assert.equal(files.includes("src/main.tsx"), framework === "react");
       assert.equal(files.includes("src/router.tsx"), framework === "tanstack-start");
-      assert.equal(files.includes("src/pages/HomePage.vue"), framework === "vue");
       const readme = await readFile(join(project, "README.md"), "utf8");
       assert.ok(!readme.includes("{{"));
       assert.match(
         readme,
-        framework === "vue"
-          ? /Vue Router/
-          : framework === "tanstack-start"
-            ? /Server rendering/
-            : /React, TanStack Router/,
+        framework === "tanstack-start" ? /Server rendering/ : /React, TanStack Router/,
       );
       if (packageManager === "pnpm") {
         const lock = await readFile(join(project, "pnpm-lock.yaml"), "utf8");
@@ -466,7 +458,6 @@ for (const framework of ["react", "tanstack-start", "vue"]) {
           Boolean(dependencies["@tanstack/react-start"]),
           framework === "tanstack-start",
         );
-        assert.equal(Boolean(dependencies["@tanstack/vue-query"]), framework === "vue");
         assert.deepEqual(Object.keys(parsed.importers).sort(), [
           ".",
           "apps/api",
@@ -558,10 +549,6 @@ void test("prunes packages the generated project does not reach", async (t) => {
     !snapshots.some((key) => key.startsWith("@clack/")),
     "create-effect-starter dependencies must be pruned",
   );
-  assert.ok(
-    !snapshots.some((key) => key.startsWith("vue@")),
-    "Vue template dependencies must be pruned",
-  );
   // The graph the generated app does use must survive.
   assert.ok(snapshots.some((key) => key.startsWith("effect@")));
   assert.ok(snapshots.some((key) => key.startsWith("react@")));
@@ -571,13 +558,13 @@ void test("invalid frameworks and duplicate or missing framework flags do not cr
   const directory = await temporary(t);
   await assert.rejects(
     createProject("my-app", directory, { framework: "angular" }),
-    /Unsupported framework: angular\. Choose react, tanstack-start, vue, none\./,
+    /Unsupported framework: angular\. Choose react, tanstack-start, none\./,
   );
   const cli = fileURLToPath(new URL("./cli.js", import.meta.url));
   for (const flags of [
     ["--framework", "angular"],
     ["--framework"],
-    ["--framework", "vue", "--framework", "react"],
+    ["--framework", "tanstack-start", "--framework", "react"],
   ]) {
     const result = spawnSync(process.execPath, [cli, "my-app", ...flags], {
       cwd: directory,
@@ -588,7 +575,7 @@ void test("invalid frameworks and duplicate or missing framework flags do not cr
   assert.deepEqual(await readdir(directory), []);
 });
 
-for (const framework of ["react", "tanstack-start", "vue", "none"]) {
+for (const framework of ["react", "tanstack-start", "none"]) {
   void test(`generated root configs are formatted for ${framework}`, async (t) => {
     const directory = await temporary(t);
     const project = await createProject(

@@ -4,7 +4,8 @@ packages:
   - "packages/*"
   - "packages/create-effect-starter/frontends/*"
 # Shared versions: packages declare these as `catalog:` so they stay aligned.
-# TypeScript is not here because the Vue starter pins its own version.
+# TypeScript stays out of the catalog: it is pinned in the root manifest because
+# @effect/tsgo patches that exact compiler build.
 catalog:
   "@effect/platform-node": "^4.1.4"
   "@effect/sql-pg": "^4.1.4"
@@ -18,7 +19,6 @@ catalog:
   vite-plus: "1.6.0"
 minimumReleaseAge: 1440
 allowBuilds:
-  "vue-demi": true
   "@parcel/watcher": true
   esbuild: true
   msgpackr-extract: true

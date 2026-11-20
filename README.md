@@ -2,8 +2,8 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-An Effect-based TypeScript application starter, with an optional React,
-TanStack Start, or Vue frontend. Built on Effect v4, Drizzle, Effect SQL,
+An Effect-based TypeScript application starter, with an optional React or
+TanStack Start frontend. Built on Effect v4, Drizzle, Effect SQL,
 PostgreSQL, and Vite+. No hosting provider is preconfigured.
 
 ## Why I built this
@@ -34,8 +34,8 @@ the [CLI guide](packages/create-effect-starter/README.md#launch-with-pnpm-or-bun
 The wizard asks for:
 
 - **Starter:** React (TanStack Router and Query), TanStack Start (server rendering),
-  Vue (Vue Router and TanStack Query), or no frontend, for API servers and backends
-  that agents, CLIs, or other services call. All share the same Effect API and contracts.
+  or no frontend, for API servers and backends that agents, CLIs, or other services
+  call. All share the same Effect API and contracts.
 - **Package manager:** pnpm or Bun.
 - **API runtime:** Node.js or Bun. Vite+ and the checks always run on Node.js.
 
