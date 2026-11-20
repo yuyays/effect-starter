@@ -32,7 +32,7 @@
     "test:generated": "node packages/create-effect-starter/build-template.js && node packages/create-effect-starter/verify-generated.js"
   },
   "devDependencies": {
-    "@effect/tsgo": "0.69.0",
+    "@effect/tsgo": "0.73.2",
     "typescript": "7.0.2",
     "vite-plus": "catalog:"
   },
