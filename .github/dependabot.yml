@@ -42,6 +42,12 @@ updates:
       - dependency-name: typescript
         update-types:
           - version-update:semver-major
+      # Vite+ bundles Vitest, and @vitest/browser-playwright peers on that exact
+      # version. Bumping the provider alone leaves the override pointing at the
+      # bundled one, which pnpm installs anyway and the browser project rejects.
+      # Bump vitest, the provider and vite-plus together.
+      - dependency-name: vitest
+      - dependency-name: "@vitest/browser-playwright"
   - package-ecosystem: github-actions
     directory: /
     schedule:
