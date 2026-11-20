@@ -248,6 +248,7 @@ other minor and patch updates are grouped separately. Releases must be at least
 one day old. Major migrations and the paired Drizzle release-candidate pins
 require manual review.
 
-Every dependency PR runs the repository checks and all six generated-app checks.
+Every dependency PR runs the repository checks and the generated-app checks for every
+starter.
 Dependabot configuration takes effect after it is merged into the default branch.
 It does not merge PRs or publish releases automatically.
