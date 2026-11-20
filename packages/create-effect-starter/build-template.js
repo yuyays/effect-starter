@@ -114,7 +114,7 @@ export const frontendRules = {};
   }
   const intro = frontend
     ? framework === "react"
-      ? "Full-stack TypeScript app with React, TanStack Router/Query, Effect v4, Drizzle,\nPostgreSQL, and Vite+"
+      ? "Full-stack TypeScript app with React, TanStack Router, Effect v4 atoms, Drizzle,\nPostgreSQL, and Vite+"
       : "Full-stack TypeScript app with TanStack Start (React), Effect v4, Drizzle,\nPostgreSQL, and Vite+"
     : "TypeScript API with Effect v4, Drizzle, PostgreSQL, and Vite+";
   const devNote = frontend

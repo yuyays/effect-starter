@@ -4,6 +4,7 @@
 
 Effect を基盤とした TypeScript アプリケーションのスターターです。
 フロントエンドは任意で、React または TanStack Start を選べます。
+API サーバー、CLI、エージェント向けに、フロントエンドなしも選べます。
 Effect v4、Drizzle、Effect SQL、PostgreSQL、Vite+ を採用しています。ホスティング先はあらかじめ設定していません。
 
 ## 作った理由
@@ -28,7 +29,7 @@ npx --yes https://github.com/yuyays/effect-starter/releases/latest/download/crea
 
 ウィザードでは、次の項目を選びます。
 
-- **スターター:** React（TanStack Router と Query）、TanStack Start（サーバーレンダリング）、
+- **スターター:** React（TanStack Router と Effect の atom）、TanStack Start（サーバーレンダリング）、
   またはフロントエンドなし。
   フロントエンドなしは、エージェント、CLI、ほかのサービスから呼び出す API サーバーやバックエンド向けです。
   どの構成でも、同じ Effect API とコントラクトを使用します。
@@ -69,6 +70,10 @@ Vite+ をグローバルにインストールしている場合は、`vp run <�
 
 ## スターター自体の開発
 
+[Alchemy と Cloudflare Durable Object のサンプル](examples/alchemy-durable-object/README.md)では、
+リソースの構築・呼び出し・スコープの保持を確認できます。依存関係は自分でインストールする必要があり、
+生成されるプロジェクトには含まれません。
+
 ```sh
 git clone https://github.com/yuyays/effect-starter.git
 cd effect-starter
@@ -79,5 +84,7 @@ pnpm create:app
 出力先に `../my-app` と入力すると、チェックアウトしたディレクトリの隣にアプリを生成できます。
 フラグ、テスト、依存関係の更新、リリースについては、[CLI・メンテナンスガイド（英語）](packages/create-effect-starter/README.md)を参照してください。
 Effect の実装規約は [AGENTS.md](AGENTS.md) に記載しています。
+任意の [durable workflow サンプル](examples/durable-workflow/README.md)では、
+モデルの提案が公開されるまでの永続的な実行を確認できます。生成されるプロジェクトには含まれません。
 
 [MIT ライセンス](LICENSE)

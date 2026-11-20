@@ -1,6 +1,6 @@
 export const frameworks = {
   // `react: true` marks the React starters: React Compiler and Chromium component tests.
-  react: { label: "React", hint: "Single-page app with TanStack Router and Query", react: true },
+  react: { label: "React", hint: "Single-page app with TanStack Router and atoms", react: true },
   "tanstack-start": { label: "TanStack Start", hint: "React with server rendering", react: true },
   // API servers, agent backends, and services that other clients call.
   none: { label: "No frontend", hint: "Effect API and shared contracts only", frontend: false },
