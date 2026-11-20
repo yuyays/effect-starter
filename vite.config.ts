@@ -30,7 +30,7 @@ export default defineConfig({
       suspicious: "error",
       perf: "warn",
     },
-    // `effecttsgo` requires the Oxlint and tsrs patches applied by `prepare`.
+    // `prepare` patches Oxlint and the bundled tsrs binary that runs the type-aware Effect rules.
     plugins: [...frontendPlugins, "typescript", "import", "vitest", "effecttsgo"],
     jsPlugins: [
       "./tools/oxlint/index.js",

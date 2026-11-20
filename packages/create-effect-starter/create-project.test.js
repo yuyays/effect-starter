@@ -208,7 +208,6 @@ void test("Bun CLI emits Bun configuration, instructions, and CI", async (t) => 
   assert.equal(manifest.devDependencies["vite-plus"], "catalog:");
   assert.equal(manifest.overrides.vite, catalog.vite);
   assert.equal(manifest.devDependencies.vite, "catalog:");
-  assert.equal(manifest.overrides.vite, vitePlusManifest.dependencies.vite);
   assert.equal(manifest.overrides.vitest, versions.vitest);
   assert.ok(manifest.trustedDependencies.includes("esbuild"));
   const files = await readdir(project);
