@@ -29,7 +29,8 @@
           "effect/http-api",
           "effect/reactivity",
           "@effect/atom-react"
-        ]
+        ],
+        "diagnosticSeverity": { "unstableApiUsage": "error" }
       }
     ]
   }

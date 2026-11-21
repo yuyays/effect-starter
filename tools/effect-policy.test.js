@@ -185,6 +185,44 @@ export const untypedSdkCall = Effect.tryPromise({
   }
 });
 
+void test("API compiler enforces the unstable-API allowlist", async (t) => {
+  const source =
+    'import { AtomRegistry } from "effect/reactivity";\nexport const registry = AtomRegistry.make();\n';
+  const project = async (allowlist) => {
+    const directory = await fixture(t, "apps/api");
+    const config = join(directory, "tsconfig.json");
+    await writeFile(
+      config,
+      JSON.stringify({
+        extends: "../tsconfig.json",
+        include: ["*.ts"],
+        compilerOptions: {
+          plugins: [
+            {
+              name: "@effect/language-service",
+              includeSuggestionsInTsc: false,
+              allowedUnstableApis: allowlist,
+              diagnosticSeverity: { unstableApiUsage: "error" },
+            },
+          ],
+        },
+      }),
+    );
+    await writeFile(join(directory, "unstable.ts"), source);
+    return run(compiler, ["tsc", "--noEmit", "-p", config]);
+  };
+
+  const listed = await project(["effect/reactivity"]);
+  assert.equal(listed.status, 0, listed.output);
+
+  const unlisted = await project([]);
+  assert.notEqual(unlisted.status, 0, unlisted.output);
+  assert.match(
+    unlisted.output,
+    /unstable\.ts\(\d+,\d+\): error TS\d+:.*effect\(unstableApiUsage\)/,
+  );
+});
+
 const runtimeCases = [
   ["service.ts", 'import { Effect as Fx } from "effect"; export const run = Fx.runPromise;', false],
   ["computed.ts", 'import * as Fx from "effect/Effect"; export const run = Fx["runSync"];', false],
