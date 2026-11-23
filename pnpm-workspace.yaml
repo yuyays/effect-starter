@@ -8,13 +8,13 @@ packages:
 # @effect/tsgo patches that exact compiler build.
 catalog:
   # Pinned: 4.1.5 is blocked by minimumReleaseAge until a day after release.
-  "@effect/atom-react": "4.1.4"
-  "@effect/platform-node": "^4.1.4"
-  "@effect/sql-pg": "^4.1.4"
-  "@effect/vitest": "4.1.4"
+  "@effect/atom-react": "4.1.5"
+  "@effect/platform-node": "^4.1.5"
+  "@effect/sql-pg": "^4.1.5"
+  "@effect/vitest": "4.1.5"
   # Vitest's browser provider matches the Vitest override below.
   "@vitest/browser-playwright": "5.1.0"
-  effect: "^4.1.4"
+  effect: "^4.1.5"
   playwright: "1.65.1"
   # Use the core version bundled by Vite+ across the workspace.
   vite: "npm:@voidzero-dev/vite-plus-core@8.3.8000"
