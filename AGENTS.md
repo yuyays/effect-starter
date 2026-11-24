@@ -1,11 +1,11 @@
 # Effect architecture
 
-- Compose backend workflows directly in Effect; wrapping first-party async workflows
-  in `Effect.promise` is insufficient. Pure functions and UI callbacks need no conversion.
-- Give resources and background fibers an owning scope, cleanup, and failure reporting;
-  forward cancellation to external SDKs where supported.
-- When extending a legacy Promise-based backend operation, migrate that operation
-  to Effect without rewriting unrelated operations.
+- Compose backend steps as Effects. Use `Effect.fn` or `Effect.gen` with `yield*` for
+  multi-step workflows. Use Promise adapters only at boundaries that require them,
+  such as calls to Promise-based SDKs. Pure helpers and UI callbacks can stay plain
+  TypeScript.
+- Close resources and stop background tasks when the service or operation that started
+  them ends. Report failures and pass cancellation signals to SDKs that accept them.
 
 Run `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm test:browser` where it exists
 (or Bun equivalents) before finishing.
